@@ -1,0 +1,104 @@
+@page "/administracion/accesos"
+@model ErpAndahuasi.Pages.Administracion.AccesosModel
+@{
+  ViewData["Title"] = "Accesos";
+}
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<div class="d-flex justify-content-between mb-4">
+  <div>
+    <h4 class="mb-1">Accesos</h4>
+    <p class="text-muted mb-0">Vistas, URLs y permisos por rol o usuario.</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#drawer" id="btnNuevo">Nuevo acceso</button>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tabla">
+      <thead><tr><th>Módulo</th><th>Categoría</th><th>Nombre</th><th>URL</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
+    </table>
+  </div>
+</div>
+<div class="offcanvas offcanvas-end" id="drawer" tabindex="-1">
+  <div class="offcanvas-header border-bottom"><h5 class="offcanvas-title" id="title">Nuevo acceso</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="accesoId" />
+    <div class="mb-3"><label class="form-label">Módulo</label><select class="form-select" id="moduloId"></select></div>
+    <div class="mb-3"><label class="form-label">Categoría</label><select class="form-select" id="categoriaId"></select></div>
+    <div class="mb-3"><label class="form-label">Nombre</label><input class="form-control" id="accNombre" /></div>
+    <div class="mb-3"><label class="form-label">URL</label><input class="form-control" id="accURL" placeholder="/paltos/..." /></div>
+    <div class="mb-3"><label class="form-label">Tipo</label>
+      <select class="form-select" id="accTipo"><option>F</option><option>R</option><option>P</option><option>C</option></select>
+    </div>
+    <div class="mb-3"><label class="form-label">Icono</label><input class="form-control" id="accIcono" /></div>
+    <div class="mb-3"><label class="form-label">Orden</label><input type="number" class="form-control" id="accOrden" /></div>
+    <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" id="accActivo" checked /><label class="form-check-label" for="accActivo">Activo</label></div>
+    <button class="btn btn-primary w-100" id="btnGuardar">Guardar</button>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  let table, categorias = [];
+  const drawer = new bootstrap.Offcanvas('#drawer');
+  function filterCats() {
+    const mid = Number($('#moduloId').val());
+    $('#categoriaId').html(categorias.filter(c => c.moduloId === mid).map(c => `<option value="${c.categoriaId}">${c.catNombre}</option>`).join(''));
+  }
+  async function load() {
+    const [list, lookups] = await Promise.all([erp.get('?handler=Lista'), erp.get('?handler=Lookups')]);
+    categorias = lookups?.categorias || [];
+    $('#moduloId').html((lookups?.modulos || []).map(m => `<option value="${m.moduloId}">${m.modNombre}</option>`).join(''));
+    filterCats();
+    table.clear().rows.add(list?.data || []).draw();
+  }
+  $(function () {
+    table = $('#tabla').DataTable({
+      data: [],
+      columns: [
+        { data: 'moduloNombre' }, { data: 'categoriaNombre' }, { data: 'accNombre' }, { data: 'accURL' }, { data: 'accTipo' },
+        { data: 'accActivo', render: v => v ? '<span class="badge bg-label-success">Activo</span>' : '<span class="badge bg-label-secondary">Inactivo</span>' },
+        { data: null, orderable: false, render: () => `<button class="btn btn-sm btn-text-secondary edit"><i class="ri ri-pencil-line"></i></button>
+          <button class="btn btn-sm btn-text-danger del"><i class="ri ri-delete-bin-line"></i></button>` }
+      ]
+    });
+    load();
+    $('#moduloId').on('change', filterCats);
+    $('#btnNuevo').on('click', () => { $('#title').text('Nuevo acceso'); $('#accesoId,#accNombre,#accURL,#accIcono,#accOrden').val(''); $('#accActivo').prop('checked', true); });
+    $('#tabla').on('click', '.edit', function () {
+      const r = table.row($(this).closest('tr')).data();
+      $('#title').text('Editar acceso');
+      $('#accesoId').val(r.accesoId); $('#moduloId').val(r.moduloId); filterCats(); $('#categoriaId').val(r.categoriaId);
+      $('#accNombre').val(r.accNombre); $('#accURL').val(r.accURL); $('#accTipo').val(r.accTipo); $('#accIcono').val(r.accIcono); $('#accOrden').val(r.accOrden);
+      $('#accActivo').prop('checked', r.accActivo); drawer.show();
+    });
+    $('#tabla').on('click', '.del', async function () {
+      const r = table.row($(this).closest('tr')).data();
+      if (!await erp.confirm('¿Eliminar acceso?')) return;
+      const res = await erp.post('?handler=Eliminar', { accesoId: r.accesoId, categoriaId: r.categoriaId, moduloId: r.moduloId });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Listo'); load();
+    });
+    $('#btnGuardar').on('click', async () => {
+      const res = await erp.post('?handler=Guardar', {
+        accesoId: $('#accesoId').val() ? Number($('#accesoId').val()) : null,
+        moduloId: Number($('#moduloId').val()),
+        categoriaId: Number($('#categoriaId').val()),
+        accNombre: $('#accNombre').val(),
+        accURL: $('#accURL').val(),
+        accTipo: $('#accTipo').val(),
+        accIcono: $('#accIcono').val(),
+        accOrden: $('#accOrden').val() ? Number($('#accOrden').val()) : null,
+        accActivo: $('#accActivo').is(':checked')
+      });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+      if (res.success) { drawer.hide(); load(); }
+    });
+  });
+</script>
+}

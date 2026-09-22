@@ -1,0 +1,53 @@
+@using ErpAndahuasi.Menu
+@{
+  TempData.Keep();
+  var currentPage = Context.Request.Path.Value ?? "/";
+  var modulos = ErpSession.IsAuthenticated ? await MenuProvider.GetModulosAsync() : [];
+}
+
+<aside id="layout-menu" class="layout-menu menu-vertical menu">
+  <div class='app-brand demo @((@ViewData["navbarFull"] != null && Convert.ToBoolean(@ViewData["navbarFull"])) ? "d-xl-none" : "")'>
+    <a asp-page="/Index" class="app-brand-link gap-xl-0 gap-2">
+      <span class="app-brand-logo demo me-1">
+        <img src="~/img/branding/logo_andahuasi.png" alt="Andahuasi" class="erp-brand-logo" onerror="this.style.display='none'" />
+      </span>
+    </a>
+    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+      <i class="menu-toggle-icon d-xl-inline-block align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-inner-shadow"></div>
+
+  <ul class="menu-inner py-1">
+    @foreach (var modulo in modulos)
+    {
+      <li class="menu-header small mt-4">
+        <span class="menu-header-text">@modulo.ModNombre</span>
+      </li>
+      @foreach (var categoria in modulo.Categorias)
+      {
+        var categoryOpen = categoria.Accesos.Any(a => MenuUrl.Normalize(a.AccURL) != "#" && currentPage.StartsWith(MenuUrl.Normalize(a.AccURL), StringComparison.OrdinalIgnoreCase));
+        <li class="menu-item@(categoryOpen ? " open" : "")">
+          <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ri @(categoria.CatIcono ?? "ri-folder-line")"></i>
+            <div>@categoria.CatNombre</div>
+          </a>
+          <ul class="menu-sub">
+            @foreach (var acceso in categoria.Accesos)
+            {
+              var href = MenuUrl.Normalize(acceso.AccURL);
+              var active = href != "#" && (string.Equals(currentPage, href, StringComparison.OrdinalIgnoreCase) || currentPage.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
+              <li class="menu-item@(active ? " active" : "")">
+                <a href="@href" class="menu-link">
+                  <i class="menu-icon icon-base ri @MenuUrl.Icon(acceso)"></i>
+                  <div>@acceso.AccNombre</div>
+                </a>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    }
+  </ul>
+</aside>

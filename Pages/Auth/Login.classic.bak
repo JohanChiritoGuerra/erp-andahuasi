@@ -1,0 +1,75 @@
+@page "/login"
+@model ErpAndahuasi.Pages.Auth.LoginModel
+@{
+  Layout = "Layouts/_BlankLayout";
+  ViewData["Title"] = "Iniciar sesión";
+}
+
+<main class="erp-login" style="background: linear-gradient(135deg, #111827 0%, #172554 52%, @Model.Tenant.PrimaryColor 160%);">
+  <video class="erp-login__video" autoplay loop muted playsinline>
+    <source src="~/videos/login-background.mp4" type="video/mp4" />
+  </video>
+  <div class="erp-login__overlay" style="background: linear-gradient(135deg, rgba(5, 11, 25, 0.78), @(Model.Tenant.PrimaryColor)66);"></div>
+
+  <section class="erp-login__card">
+    <header class="erp-login__brand">
+      <img class="erp-login__logo" src="@Model.Tenant.LogoBlanco" alt="@Model.Tenant.Nombre" onerror="this.style.display='none'" />
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+      <div class="erp-login__alert">
+        <div class="alert @(Model.SessionExpired ? "alert-warning" : "alert-danger")">@Model.ErrorMessage</div>
+      </div>
+    }
+
+    <form method="post" class="erp-login__form" id="erp-login-form" novalidate autocomplete="off">
+      <div>
+        <label class="erp-login__label" asp-for="Usuario">Usuario</label>
+        <input asp-for="Usuario" class="form-control erp-login__input" placeholder="Ingrese su usuario" autocomplete="username" maxlength="20" autofocus />
+      </div>
+      <div>
+        <label class="erp-login__label" asp-for="Password">Contraseña</label>
+        <div class="input-group">
+          <input asp-for="Password" type="password" class="form-control erp-login__input" placeholder="••••••••" autocomplete="current-password" />
+          <span class="input-group-text cursor-pointer" id="erp-login-toggle-password" role="button" aria-label="Mostrar contraseña">
+            <i class="icon-base ri ri-eye-off-line icon-20px"></i>
+          </span>
+        </div>
+      </div>
+      <div class="form-check">
+        <input asp-for="RememberMe" class="form-check-input" />
+        <label asp-for="RememberMe" class="form-check-label">Recordarme</label>
+      </div>
+      <button type="submit" class="erp-login__submit w-100" id="erp-login-submit">Iniciar sesión</button>
+    </form>
+  </section>
+</main>
+
+@section PageScripts {
+<script>
+  (function () {
+    const toggle = document.getElementById('erp-login-toggle-password');
+    const form = document.getElementById('erp-login-form');
+    const submit = document.getElementById('erp-login-submit');
+    toggle?.addEventListener('click', () => {
+      const input = document.getElementById('Password');
+      const icon = toggle.querySelector('i');
+      if (!input || !icon) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('ri-eye-off-line', 'ri-eye-line');
+        toggle.setAttribute('aria-label', 'Ocultar contraseña');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('ri-eye-line', 'ri-eye-off-line');
+        toggle.setAttribute('aria-label', 'Mostrar contraseña');
+      }
+    });
+    form?.addEventListener('submit', () => {
+      submit.disabled = true;
+      submit.textContent = 'Ingresando…';
+    });
+  })();
+</script>
+}

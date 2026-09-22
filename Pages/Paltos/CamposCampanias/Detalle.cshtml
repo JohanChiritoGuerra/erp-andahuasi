@@ -1,0 +1,104 @@
+@page "/paltos/campos-campanias/{campoPaltoId:long}"
+@model ErpAndahuasi.Pages.Paltos.CamposCampanias.DetalleModel
+@{
+  ViewData["Title"] = Model.Campo?.NombreActual ?? "Campo";
+  var campo = Model.Campo;
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<a href="/paltos/campos-campanias" class="btn btn-text-secondary mb-3"><i class="ri ri-arrow-left-line"></i> Volver</a>
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert alert-danger">@Model.ErrorMessage</div> }
+@if (campo is null) { <div class="alert alert-warning">Campo no encontrado.</div> }
+else
+{
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4 class="mb-1">@campo.CodigoCampo — @campo.NombreActual</h4>
+      <p class="text-muted mb-0">@campo.AreaActualHa.ToString("N2") ha · @campo.Variedad · @campo.Patron</p>
+    </div>
+  </div>
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between">
+      <h5 class="mb-0">Nueva campaña</h5>
+    </div>
+    <div class="card-body row g-3">
+      <input type="hidden" id="campoPaltoId" value="@campo.CampoPaltoId" />
+      <div class="col-md-3"><label class="form-label">Código</label><input class="form-control" id="codigo" /></div>
+      <div class="col-md-3"><label class="form-label">Nombre</label><input class="form-control" id="nombre" /></div>
+      <div class="col-md-2"><label class="form-label">Inicio</label><input type="date" class="form-control" id="fechaInicio" /></div>
+      <div class="col-md-2"><label class="form-label">Fin</label><input type="date" class="form-control" id="fechaFin" /></div>
+      <div class="col-md-2"><label class="form-label">Área</label><input type="number" step="0.01" class="form-control" id="areaHa" value="@campo.AreaActualHa" /></div>
+      <div class="col-12"><button class="btn btn-primary" id="btnCrear">Crear campaña</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>Campaña</th><th>Estado</th><th>Periodo</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in new[] { campo.CampaniaActiva, campo.CampaniaPlanificacion }.Where(x => x != null).Concat(campo.Historial))
+        {
+          <tr>
+            <td>@c!.Codigo @c.Nombre</td>
+            <td><span class="badge bg-label-primary">@c.Estado</span></td>
+            <td>@c.FechaInicio.ToString("dd/MM/yyyy") - @c.FechaFin.ToString("dd/MM/yyyy")</td>
+            <td>
+              @if (c.Estado == "EN_PLANIFICACION")
+              {
+                <button class="btn btn-sm btn-success accionar" data-id="@c.CampoCampaniaId" data-accion="Activar">Activar</button>
+              }
+              @if (c.Estado == "ACTIVA")
+              {
+                <button class="btn btn-sm btn-warning accionar" data-id="@c.CampoCampaniaId" data-accion="Cerrar">Cerrar</button>
+              }
+              @if (c.Estado is "EN_PLANIFICACION" or "ACTIVA")
+              {
+                <button class="btn btn-sm btn-outline-danger accionar" data-id="@c.CampoCampaniaId" data-accion="Cancelar">Cancelar</button>
+              }
+              <a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/presupuesto?campoCampaniaId=@c.CampoCampaniaId">Presupuesto</a>
+              <a class="btn btn-sm btn-outline-success" href="/paltos/fertilizacion/control?campoCampaniaId=@c.CampoCampaniaId">Control</a>
+              @if (c.Estado is "EN_PLANIFICACION" or "ACTIVA")
+              {
+                <button class="btn btn-sm btn-outline-secondary reimportar" data-id="@c.CampoCampaniaId" type="button">Reimportar presupuesto</button>
+              }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+@section PageScripts {
+<script>
+  $('#btnCrear').on('click', async () => {
+    const res = await erp.post('?handler=Campania', {
+      campoPaltoId: Number($('#campoPaltoId').val()),
+      codigo: $('#codigo').val(),
+      nombre: $('#nombre').val(),
+      fechaInicio: $('#fechaInicio').val(),
+      fechaFin: $('#fechaFin').val(),
+      areaHa: Number($('#areaHa').val())
+    });
+    erp.toast(res.success ? 'success' : 'error', res.message || 'Creada');
+    if (res.success) location.reload();
+  });
+  $('.accionar').on('click', async function () {
+    const accion = $(this).data('accion');
+    let motivo = '';
+    if (accion === 'Cancelar') motivo = prompt('Motivo') || '';
+    const res = await erp.post(`?handler=Accion&campoCampaniaId=${$(this).data('id')}&accion=${accion}`, { motivo });
+    erp.toast(res.success ? 'success' : 'error', res.message || 'Listo');
+    if (res.success) location.reload();
+  });
+  $('.reimportar').on('click', async function () {
+    const fuente = prompt('ID de campaña fuente (campoCampaniaId) para heredar presupuesto');
+    if (!fuente) return;
+    const res = await erp.post(`?handler=Reimportar&campoCampaniaId=${$(this).data('id')}`, { campoCampaniaFuenteId: Number(fuente) });
+    erp.toast(res.success ? 'success' : 'error', res.message || 'Reimportado');
+    if (res.success) location.reload();
+  });
+</script>
+}

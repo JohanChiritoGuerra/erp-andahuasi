@@ -1,0 +1,80 @@
+@page "/paltos/fertilizacion/control"
+@model ErpAndahuasi.Pages.Paltos.Fertilizacion.Control.IndexModel
+@{
+  ViewData["Title"] = "Control de fertilización";
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<h4 class="mb-1">Control</h4>
+<p class="text-muted mb-4">Avance mensual frente al presupuesto.</p>
+<div class="card mb-4">
+  <div class="card-body">
+    <label class="form-label">Campaña</label>
+    <select class="form-select" id="campoCampaniaId"></select>
+  </div>
+</div>
+<div id="resumen" class="mb-4"></div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tablaMeses">
+      <thead><tr><th>Mes</th><th>Estado</th><th>Cobertura</th><th>Salidas</th><th>Pendientes</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  const params = new URLSearchParams(location.search);
+  function monthName(mes) { return ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mes-1] || mes; }
+  function render(c) {
+    if (!c) { $('#resumen').html(''); $('#tablaMeses tbody').empty(); return; }
+    $('#resumen').html(`<div class="row g-3">
+      <div class="col-md-3"><div class="card"><div class="card-body"><small>Campo</small><h6 class="mb-0">${c.codigoCampo} ${c.nombreCampo}</h6></div></div></div>
+      <div class="col-md-3"><div class="card"><div class="card-body"><small>Cobertura</small><h6 class="mb-0">${Number(c.coberturaPorcentaje||0).toFixed(1)}%</h6></div></div></div>
+      <div class="col-md-3"><div class="card"><div class="card-body"><small>Salidas</small><h6 class="mb-0">${c.salidasConsideradas}</h6></div></div></div>
+      <div class="col-md-3"><div class="card"><div class="card-body"><small>Ítems pendientes</small><h6 class="mb-0">${c.itemsPendientes}</h6></div></div></div>
+    </div>`);
+    const rows = (c.meses||[]).map(m => `<tr>
+      <td>${monthName(m.mes)} ${m.anio}</td>
+      <td><span class="badge ${m.estadoCierre==='CERRADO'?'bg-label-secondary':'bg-label-success'}">${m.estadoCierre}</span></td>
+      <td>${Number(m.coberturaPorcentaje||0).toFixed(1)}%</td>
+      <td>${m.salidas}</td>
+      <td>${m.itemsPendientes}</td>
+      <td>
+        <a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/control/${c.campoCampaniaId}/salidas?anio=${m.anio}&mes=${m.mes}">Salidas</a>
+        ${m.estadoCierre==='CERRADO'
+          ? `<button class="btn btn-sm btn-outline-warning reabrir" data-anio="${m.anio}" data-mes="${m.mes}">Reabrir</button>`
+          : `<button class="btn btn-sm btn-outline-secondary cerrar" data-anio="${m.anio}" data-mes="${m.mes}">Cerrar</button>`}
+      </td></tr>`).join('');
+    $('#tablaMeses tbody').html(rows);
+  }
+  async function load(id) {
+    const res = await erp.get('?handler=Data&campoCampaniaId=' + id);
+    render(res?.data);
+  }
+  erp.get('?handler=Campanias').then(res => {
+    const items = res?.data || [];
+    $('#campoCampaniaId').html(items.map(c => `<option value="${c.campoCampaniaId}">${c.codigoCampo} · ${c.codigo}</option>`).join(''));
+    const selected = params.get('campoCampaniaId') || items[0]?.campoCampaniaId;
+    if (selected) { $('#campoCampaniaId').val(selected); load(selected); }
+  });
+  $('#campoCampaniaId').on('change', function () { load(this.value); });
+  $('#tablaMeses').on('click', '.cerrar', async function () {
+    if (!await erp.confirm('¿Cerrar mes?')) return;
+    const id = $('#campoCampaniaId').val();
+    const res = await erp.post(`?handler=Cerrar&campoCampaniaId=${id}`, { anio: Number($(this).data('anio')), mes: Number($(this).data('mes')) });
+    erp.toast(res.success ? 'success' : 'error', res.message || 'Cerrado');
+    if (res.data) render(res.data);
+  });
+  $('#tablaMeses').on('click', '.reabrir', async function () {
+    const motivo = prompt('Motivo para reabrir') || '';
+    if (!motivo) return;
+    const id = $('#campoCampaniaId').val();
+    const res = await erp.post(`?handler=Reabrir&campoCampaniaId=${id}`, { anio: Number($(this).data('anio')), mes: Number($(this).data('mes')), motivo });
+    erp.toast(res.success ? 'success' : 'error', res.message || 'Reabierto');
+    if (res.data) render(res.data);
+  });
+</script>
+}

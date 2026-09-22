@@ -1,0 +1,17 @@
+@page
+@model ErpAndahuasi.Pages.ErrorModel
+@{
+  ViewData["Title"] = Model.Code == 401 ? "No autorizado" : "Error";
+}
+
+<div class="container-xxl container-p-y">
+  <div class="misc-wrapper text-center">
+    <h2 class="mb-2 mx-2">@(Model.Code == 401 ? "No autorizado" : "Ha ocurrido un error")</h2>
+    <p class="mb-6 mx-2">
+      @(Model.Code == 401
+        ? "No tiene acceso a esta vista. Contacte al Dpto. de Sistemas si considera que es un error."
+        : "Intente nuevamente o vuelva al inicio.")
+    </p>
+    <a href="/" class="btn btn-primary">Volver al inicio</a>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ErpAndahuasi</RootNamespace>
+    <AssemblyName>ErpAndahuasi</AssemblyName>
+    <UserSecretsId>erp-andahuasi-bff</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

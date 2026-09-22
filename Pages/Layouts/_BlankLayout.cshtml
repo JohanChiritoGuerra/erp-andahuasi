@@ -1,0 +1,25 @@
+@await Html.PartialAsync("Layouts/Sections/_Variables")
+@{
+  TempData.Keep();
+  Layout = "Layouts/_CommonMasterLayout";
+  ViewData["customizerHidden"] = "customizer-hide";
+  ViewData["skipTemplateMain"] = true;
+}
+
+@section VendorStyles {
+  @RenderSection("VendorStyles", required: false)
+}
+
+@section PageStyles {
+  @RenderSection("PageStyles", required: false)
+}
+
+@RenderBody()
+
+@section VendorScripts {
+  @RenderSection("VendorScripts", required: false)
+}
+
+@section PageScripts {
+  @RenderSection("PageScripts", required: false)
+}

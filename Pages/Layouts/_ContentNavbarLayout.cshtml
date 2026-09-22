@@ -1,0 +1,34 @@
+@await Html.PartialAsync("Layouts/Sections/_Variables")
+@{
+  TempData.Keep();
+  Layout = "Layouts/_CommonMasterLayout";
+  TempData["menuHorizontal"] = false;
+  ViewData["skipTemplateMain"] = true;
+}
+
+@section VendorStyles {
+  @RenderSection("VendorStyles", required: false)
+}
+
+@section PageStyles {
+  @RenderSection("PageStyles", required: false)
+}
+
+@section VendorScripts {
+  @RenderSection("VendorScripts", required: false)
+}
+
+@section PageScripts {
+  <script src="~/js/erp-sigerp.js" asp-append-version="true"></script>
+  @RenderSection("PageScripts", required: false)
+}
+
+<div class="sigerp" id="sigerp-shell">
+  @await Html.PartialAsync("Layouts/Sections/Menu/_SigerpSidebar")
+  <main class="sigerp-main">
+    <div class="sigerp-main__inner">
+      @RenderBody()
+      <form id="erp-antiforgery" class="d-none">@Html.AntiForgeryToken()</form>
+    </div>
+  </main>
+</div>

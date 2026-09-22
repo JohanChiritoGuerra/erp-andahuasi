@@ -1,0 +1,36 @@
+@page "/paltos/fertilizacion/configuracion-items"
+@model ErpAndahuasi.Pages.Paltos.Fertilizacion.ConfiguracionItems.IndexModel
+@{
+  ViewData["Title"] = "Configuración de ítems";
+}
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<h4 class="mb-1">Configuración de ítems</h4>
+<p class="text-muted mb-4">Catálogo de fertilizantes y su composición.</p>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tabla">
+      <thead><tr><th>Código</th><th>Nombre</th><th>Unidad</th><th>Clasificación</th><th>Estado</th><th>Reporte</th><th></th></tr></thead>
+    </table>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  $(function () {
+    const table = $('#tabla').DataTable({
+      data: [],
+      columns: [
+        { data: 'codigoItem' }, { data: 'nombreItem' }, { data: 'unidadSalida' }, { data: 'clasificacion' },
+        { data: 'estadoValidacion' }, { data: 'estadoReporte' },
+        { data: null, orderable: false, render: r => `<a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/configuracion-items/${r.grpAlmId}-${r.clsAlmId}-${r.iteAlmId}">Editar</a>` }
+      ]
+    });
+    erp.get('?handler=Lista').then(r => table.clear().rows.add(r?.data || []).draw());
+  });
+</script>
+}

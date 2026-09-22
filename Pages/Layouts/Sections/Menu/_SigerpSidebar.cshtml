@@ -1,0 +1,160 @@
+@using ErpAndahuasi.Menu
+@{
+  TempData.Keep();
+  var currentPage = Context.Request.Path.Value ?? "/";
+  var tenant = Tenants.Resolve(TenantResolver.ResolveEmpresaId(Context));
+  var user = ErpSession.Current;
+  var nombreSaludo = string.IsNullOrWhiteSpace(user.FirstName)
+    ? user.DisplayName?.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(2).FirstOrDefault()
+    : user.FirstName;
+  var inicial = string.IsNullOrWhiteSpace(user.FirstName) ? "U" : user.FirstName[0].ToString().ToUpperInvariant();
+
+  bool IsActive(string? href)
+  {
+    var url = MenuUrl.Normalize(href);
+    return url != "#" && (string.Equals(currentPage, url, StringComparison.OrdinalIgnoreCase)
+      || (currentPage?.StartsWith(url + "/", StringComparison.OrdinalIgnoreCase) ?? false));
+  }
+
+  var modulos = ErpSession.IsAuthenticated
+    ? (await MenuProvider.GetModulosAsync())
+      .Select(modulo => new ModuloMenuData
+      {
+        ModuloId = modulo.ModuloId,
+        ModNombre = modulo.ModNombre,
+        ModIcono = modulo.ModIcono,
+        ModOrden = modulo.ModOrden,
+        Categorias = modulo.Categorias
+          .Select(categoria => new CategoriaMenuData
+          {
+            CategoriaId = categoria.CategoriaId,
+            CatNombre = categoria.CatNombre,
+            CatIcono = categoria.CatIcono,
+            CatOrden = categoria.CatOrden,
+            Accesos = categoria.Accesos.Where(acceso => MenuUrl.Normalize(acceso.AccURL) != "/rrhh/perfil").ToList()
+          })
+          .Where(categoria => categoria.Accesos.Count > 0)
+          .ToList()
+      })
+      .Where(modulo => modulo.Categorias.Count > 0)
+      .ToList()
+    : [];
+}
+
+<aside class="sigerp-sidebar" id="sigerp-sidebar" style="background-color: @tenant.PrimaryColor;">
+  <header class="sigerp-sidebar__header">
+    <button type="button" class="sigerp-icon-btn d-md-none" id="sigerp-mobile-toggle" aria-label="Abrir menú">
+      <i class="ri-menu-line"></i>
+    </button>
+    <div class="sigerp-sidebar__hello d-md-none">
+      Hola@(string.IsNullOrWhiteSpace(nombreSaludo) ? "" : $", {nombreSaludo}")
+    </div>
+    <img src="@tenant.LogoBlanco" alt="@tenant.Nombre" class="sigerp-sidebar__logo d-none d-md-block" />
+    <button type="button" class="sigerp-icon-btn d-none d-md-inline-flex ms-auto" id="sigerp-pin" aria-label="Contraer barra lateral">
+      <i class="ri-pushpin-fill" id="sigerp-pin-icon"></i>
+    </button>
+    <div class="sigerp-sidebar__mobile-actions d-md-none ms-auto">
+      <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" aria-label="Notificaciones">
+        <i class="ri-notification-2-fill"></i>
+      </button>
+      <a class="sigerp-avatar" href="/rrhh/perfil" aria-label="Mi perfil">
+        @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
+        {
+          <img src="@user.PhotoUrl" alt="@user.DisplayName" />
+        }
+        else
+        {
+          <span>@inicial</span>
+        }
+      </a>
+    </div>
+  </header>
+
+  <nav class="sigerp-sidebar__nav" id="sigerp-nav" aria-label="Navegación principal">
+    <div class="sigerp-sidebar__mobile-brand d-md-none" style="background-color: @tenant.PrimaryColor;">
+      <img src="@tenant.LogoBlanco" alt="@tenant.Nombre" />
+    </div>
+    @foreach (var modulo in modulos)
+    {
+      var moduleActive = modulo.Categorias.Any(c => c.Accesos.Any(a => IsActive(a.AccURL)));
+      <section class="sigerp-module@(moduleActive ? " is-active" : "")" data-module="@modulo.ModuloId">
+        <button type="button" class="sigerp-item sigerp-item--module@(moduleActive ? " is-current" : "")" data-sigerp-toggle="module">
+          <i class="@(modulo.ModIcono ?? "ri-box-3-line")"></i>
+          <span class="sigerp-item__text sigerp-item__text--overline">@modulo.ModNombre</span>
+          <i class="ri-arrow-up-s-line sigerp-item__chevron d-none d-md-inline"></i>
+        </button>
+        <div class="sigerp-module__body">
+          @foreach (var categoria in modulo.Categorias)
+          {
+            var hasSingle = categoria.Accesos.Count == 1;
+            var first = categoria.Accesos[0];
+            var categoryActive = categoria.Accesos.Any(a => IsActive(a.AccURL));
+            if (hasSingle)
+            {
+              var href = MenuUrl.Normalize(first.AccURL);
+              <a href="@href" class="sigerp-item@(categoryActive ? " is-current" : "")">
+                <i class="@(categoria.CatIcono ?? "ri-folder-line")"></i>
+                <span class="sigerp-item__text">@categoria.CatNombre</span>
+              </a>
+            }
+            else
+            {
+              <div class="sigerp-category is-open@(categoryActive ? " is-current" : "")">
+                <button type="button" class="sigerp-item@(categoryActive ? " is-current" : "")" data-sigerp-toggle="category">
+                  <i class="@(categoria.CatIcono ?? "ri-folder-line")"></i>
+                  <span class="sigerp-item__text">@categoria.CatNombre</span>
+                  <i class="ri-arrow-up-s-line sigerp-item__chevron"></i>
+                </button>
+                <div class="sigerp-category__body">
+                  @foreach (var acceso in categoria.Accesos)
+                  {
+                    var href = MenuUrl.Normalize(acceso.AccURL);
+                    var active = IsActive(href);
+                    <a href="@href" class="sigerp-item sigerp-item--nested@(active ? " is-current" : "")">
+                      <i class="@MenuUrl.Icon(acceso)"></i>
+                      <span class="sigerp-item__text">@acceso.AccNombre</span>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
+  </nav>
+
+  <footer class="sigerp-sidebar__footer d-none d-md-block">
+    <div class="sigerp-user">
+      <div class="dropdown">
+        <button type="button" class="sigerp-avatar" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">
+          @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
+          {
+            <img src="@user.PhotoUrl" alt="@user.DisplayName" />
+          }
+          else
+          {
+            <span>@inicial</span>
+          }
+        </button>
+        <ul class="dropdown-menu shadow">
+          <li><a class="dropdown-item" href="/rrhh/perfil"><i class="ri-user-3-line me-2"></i>Ver mi perfil</a></li>
+          <li><hr class="dropdown-divider" /></li>
+          <li class="px-3 py-2">
+            <a class="btn btn-danger btn-sm w-100 d-flex justify-content-center align-items-center" href="/logout">
+              Cerrar sesión <i class="ri-logout-box-r-line ms-2"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="sigerp-user__meta">
+        <div class="sigerp-user__name">@(string.IsNullOrWhiteSpace(user.DisplayName) ? "Mi perfil" : user.DisplayName)</div>
+        <div class="sigerp-user__email">@(string.IsNullOrWhiteSpace(user.Email) ? user.UsuaId : user.Email)</div>
+      </div>
+      <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" aria-label="Notificaciones">
+        <i class="ri-notification-2-fill"></i>
+      </button>
+    </div>
+  </footer>
+</aside>
+<button type="button" class="sigerp-backdrop d-md-none" id="sigerp-backdrop" aria-label="Cerrar menú" hidden></button>

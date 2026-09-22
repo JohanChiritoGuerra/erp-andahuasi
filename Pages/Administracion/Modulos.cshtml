@@ -1,0 +1,138 @@
+@page "/administracion/modulos"
+@model ErpAndahuasi.Pages.Administracion.ModulosModel
+@{
+  ViewData["Title"] = "Módulos";
+}
+
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Módulos</h4>
+    <p class="text-muted mb-0">Administración de módulos del sistema.</p>
+  </div>
+  <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#drawerModulo" id="btnNuevo">Nuevo módulo</button>
+</div>
+
+<div class="card">
+  <div class="card-datatable table-responsive">
+    <table class="table" id="tablaModulos">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Orden</th>
+          <th>Categorías</th>
+          <th>Accesos</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="drawerModulo">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title" id="drawerTitle">Nuevo módulo</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="moduloId" />
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input class="form-control" id="modNombre" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      <textarea class="form-control" id="modDescripcion"></textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Icono</label>
+      <input class="form-control" id="modIcono" placeholder="ri-apps-line" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Orden</label>
+      <input type="number" class="form-control" id="modOrden" />
+    </div>
+    <div class="form-check form-switch mb-4">
+      <input class="form-check-input" type="checkbox" id="modActivo" checked />
+      <label class="form-check-label" for="modActivo">Activo</label>
+    </div>
+    <button class="btn btn-primary w-100" id="btnGuardar">Guardar</button>
+  </div>
+</div>
+
+@section PageScripts {
+<script>
+  let table;
+  const drawer = new bootstrap.Offcanvas('#drawerModulo');
+  function load() {
+    erp.get('?handler=Lista').then(res => {
+      const data = res?.data || [];
+      table.clear().rows.add(data).draw();
+    });
+  }
+  $(function () {
+    table = $('#tablaModulos').DataTable({
+      data: [],
+      language: { url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json' },
+      columns: [
+        { data: 'modNombre' },
+        { data: 'modDescripcion' },
+        { data: 'modOrden' },
+        { data: 'cantidadCategorias' },
+        { data: 'cantidadAccesos' },
+        { data: 'modActivo', render: v => v ? '<span class="badge bg-label-success">Activo</span>' : '<span class="badge bg-label-secondary">Inactivo</span>' },
+        { data: null, orderable: false, render: row => `<button class="btn btn-sm btn-icon btn-text-secondary edit" data-id="${row.moduloId}"><i class="ri ri-pencil-line"></i></button>
+          <button class="btn btn-sm btn-icon btn-text-danger del" data-id="${row.moduloId}"><i class="ri ri-delete-bin-line"></i></button>` }
+      ]
+    });
+    load();
+    $('#btnNuevo').on('click', () => {
+      $('#drawerTitle').text('Nuevo módulo');
+      $('#moduloId,#modNombre,#modDescripcion,#modIcono,#modOrden').val('');
+      $('#modActivo').prop('checked', true);
+    });
+    $('#tablaModulos').on('click', '.edit', function () {
+      const row = table.rows().data().toArray().find(x => x.moduloId == $(this).data('id'));
+      if (!row) return;
+      $('#drawerTitle').text('Editar módulo');
+      $('#moduloId').val(row.moduloId);
+      $('#modNombre').val(row.modNombre);
+      $('#modDescripcion').val(row.modDescripcion);
+      $('#modIcono').val(row.modIcono);
+      $('#modOrden').val(row.modOrden);
+      $('#modActivo').prop('checked', row.modActivo);
+      drawer.show();
+    });
+    $('#tablaModulos').on('click', '.del', async function () {
+      if (!await erp.confirm('¿Eliminar módulo?')) return;
+      const res = await erp.post('?handler=Eliminar', { id: $(this).data('id') });
+      erp.toast(res.success ? 'success' : 'error', res.message || (res.success ? 'Eliminado' : 'No se pudo eliminar'));
+      load();
+    });
+    $('#btnGuardar').on('click', async () => {
+      const payload = {
+        moduloId: $('#moduloId').val() ? Number($('#moduloId').val()) : null,
+        modNombre: $('#modNombre').val(),
+        modDescripcion: $('#modDescripcion').val(),
+        modIcono: $('#modIcono').val(),
+        modOrden: $('#modOrden').val() ? Number($('#modOrden').val()) : null,
+        modActivo: $('#modActivo').is(':checked')
+      };
+      const res = await erp.post('?handler=Guardar', payload);
+      erp.toast(res.success ? 'success' : 'error', res.message || (res.success ? 'Guardado' : 'No se pudo guardar'));
+      if (res.success) { drawer.hide(); load(); }
+    });
+  });
+</script>
+}

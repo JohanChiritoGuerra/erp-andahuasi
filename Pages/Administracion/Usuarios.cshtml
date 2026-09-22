@@ -1,0 +1,101 @@
+@page "/administracion/usuarios"
+@model ErpAndahuasi.Pages.Administracion.UsuariosModel
+@{
+  ViewData["Title"] = "Usuarios";
+}
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<div class="d-flex justify-content-between mb-4">
+  <div>
+    <h4 class="mb-1">Usuarios</h4>
+    <p class="text-muted mb-0">Roles y accesos de usuarios web.</p>
+  </div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tabla">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>DNI</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+<div class="offcanvas offcanvas-end" id="drawerRoles" tabindex="-1">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title">Roles de <span id="usuaLabel"></span></h5>
+    <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="usuaId" />
+    <div id="rolesBox"></div>
+    <button class="btn btn-primary w-100 mt-4" id="btnGuardarRoles">Guardar roles</button>
+    <hr />
+    <h6>Copiar accesos desde</h6>
+    <select class="form-select mb-3" id="usuaOrigen"></select>
+    <div class="form-check"><input class="form-check-input" type="checkbox" id="copiarRoles" checked /><label class="form-check-label" for="copiarRoles">Roles</label></div>
+    <div class="form-check"><input class="form-check-input" type="checkbox" id="copiarDirectos" checked /><label class="form-check-label" for="copiarDirectos">Accesos directos</label></div>
+    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="reemplazar" /><label class="form-check-label" for="reemplazar">Reemplazar</label></div>
+    <button class="btn btn-outline-primary w-100" id="btnCopiar">Copiar</button>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  let table, users = [];
+  const drawer = new bootstrap.Offcanvas('#drawerRoles');
+  $(function () {
+    table = $('#tabla').DataTable({
+      data: [],
+      columns: [
+        { data: 'usuaId' },
+        { data: null, render: r => r.nombreCompleto || `${r.usuaApePat||''} ${r.usuaApeMat||''} ${r.usuaNombres||''}`.trim() },
+        { data: 'usuaDNI' },
+        { data: 'usuaEstado', render: v => v === 1 || v === '1' ? '<span class="badge bg-label-success">Activo</span>' : '<span class="badge bg-label-secondary">Inactivo</span>' },
+        { data: null, orderable: false, render: r => `<button class="btn btn-sm btn-outline-primary roles">Roles</button>` }
+      ]
+    });
+    erp.get('?handler=Lista').then(res => {
+      users = res?.data || [];
+      table.clear().rows.add(users).draw();
+      $('#usuaOrigen').html(users.map(u => `<option value="${u.usuaId}">${u.usuaId} - ${u.nombreCompleto || u.usuaNombres}</option>`).join(''));
+    });
+    $('#tabla').on('click', '.roles', async function () {
+      const row = table.row($(this).closest('tr')).data();
+      $('#usuaId').val(row.usuaId);
+      $('#usuaLabel').text(row.usuaId);
+      const res = await erp.get('?handler=Roles&usuaId=' + encodeURIComponent(row.usuaId));
+      $('#rolesBox').html((res?.data || []).map(r => `<div class="form-check">
+        <input class="form-check-input rol" type="checkbox" value="${r.rolId}" ${r.asignado ? 'checked' : ''} />
+        <label class="form-check-label">${r.nombre}</label></div>`).join(''));
+      drawer.show();
+    });
+    $('#btnGuardarRoles').on('click', async () => {
+      const rolIds = $('.rol:checked').map((_, el) => Number(el.value)).get();
+      const res = await erp.post('?handler=Roles', { usuaId: $('#usuaId').val(), rolIds });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+    });
+    $('#btnCopiar').on('click', async () => {
+      const destino = $('#usuaId').val();
+      const res = await erp.post('?handler=Copiar&usuaDestinoId=' + encodeURIComponent(destino), {
+        usuaOrigenId: $('#usuaOrigen').val(),
+        copiarRoles: $('#copiarRoles').is(':checked'),
+        copiarAccesosDirect: $('#copiarDirectos').is(':checked'),
+        reemplazar: $('#reemplazar').is(':checked')
+      });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Copiado');
+    });
+  });
+</script>
+}

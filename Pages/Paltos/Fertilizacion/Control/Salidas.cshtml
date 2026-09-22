@@ -1,0 +1,34 @@
+@page "/paltos/fertilizacion/control/{campoCampaniaId:long}/salidas"
+@model ErpAndahuasi.Pages.Paltos.Fertilizacion.Control.SalidasModel
+@{
+  ViewData["Title"] = "Detalle de salidas";
+  var d = Model.Detalle;
+}
+<a href="/paltos/fertilizacion/control?campoCampaniaId=@Model.CampoCampaniaId" class="btn btn-text-secondary mb-3"><i class="ri ri-arrow-left-line"></i> Volver</a>
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert alert-danger">@Model.ErrorMessage</div> }
+@if (d is null) { <div class="alert alert-warning">Sin detalle.</div> }
+else
+{
+  <h4 class="mb-1">@d.CodigoCampo @d.NombreCampo</h4>
+  <p class="text-muted">@(d.Anio is null ? "Todas las salidas" : $"{d.Mes:00}/{d.Anio}") @(d.EsSnapshot ? "· snapshot" : "")</p>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>Fecha</th><th>Ítem</th><th>Cantidad</th><th>kg</th><th>Estado</th><th>Config</th></tr></thead>
+        <tbody>
+        @foreach (var s in d.Salidas)
+        {
+          <tr>
+            <td>@s.Fecha.ToString("dd/MM/yyyy")</td>
+            <td>@s.CodigoItem @s.NombreItem</td>
+            <td>@s.CantidadSalida.ToString("N2") @s.Unidad</td>
+            <td>@s.KgProducto.ToString("N2")</td>
+            <td>@s.EstadoMovimiento</td>
+            <td><span class="badge bg-label-info">@s.Estado</span></td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

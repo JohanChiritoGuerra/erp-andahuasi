@@ -1,0 +1,135 @@
+@page "/administracion/categorias"
+@model ErpAndahuasi.Pages.Administracion.CategoriasModel
+@{
+  ViewData["Title"] = "Categorías";
+}
+
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">Categorías</h4>
+    <p class="text-muted mb-0">Categorías por módulo.</p>
+  </div>
+  <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#drawer" id="btnNuevo">Nueva categoría</button>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tabla">
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Orden</th>
+          <th>Accesos</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+<div class="offcanvas offcanvas-end" id="drawer" tabindex="-1">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title" id="drawerTitle">Nueva categoría</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="categoriaId" />
+    <div class="mb-3">
+      <label class="form-label">Módulo</label>
+      <select class="form-select" id="moduloId"></select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input class="form-control" id="catNombre" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      <textarea class="form-control" id="catDescripcion"></textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Icono</label>
+      <input class="form-control" id="catIcono" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Orden</label>
+      <input type="number" class="form-control" id="catOrden" />
+    </div>
+    <div class="form-check form-switch mb-4">
+      <input class="form-check-input" type="checkbox" id="catActivo" checked />
+      <label class="form-check-label" for="catActivo">Activo</label>
+    </div>
+    <button class="btn btn-primary w-100" id="btnGuardar">Guardar</button>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  let table, modulos = [];
+  const drawer = new bootstrap.Offcanvas('#drawer');
+  async function load() {
+    const [cats, mods] = await Promise.all([erp.get('?handler=Lista'), erp.get('?handler=Modulos')]);
+    modulos = mods?.data || [];
+    $('#moduloId').html(modulos.map(m => `<option value="${m.moduloId}">${m.modNombre}</option>`).join(''));
+    table.clear().rows.add(cats?.data || []).draw();
+  }
+  $(function () {
+    table = $('#tabla').DataTable({
+      data: [],
+      columns: [
+        { data: 'moduloNombre' },
+        { data: 'catNombre' },
+        { data: 'catDescripcion' },
+        { data: 'catOrden' },
+        { data: 'cantidadAccesos' },
+        { data: 'catActivo', render: v => v ? '<span class="badge bg-label-success">Activo</span>' : '<span class="badge bg-label-secondary">Inactivo</span>' },
+        { data: null, orderable: false, render: r => `<button class="btn btn-sm btn-icon btn-text-secondary edit"><i class="ri ri-pencil-line"></i></button>
+          <button class="btn btn-sm btn-icon btn-text-danger del"><i class="ri ri-delete-bin-line"></i></button>` }
+      ]
+    });
+    load();
+    $('#btnNuevo').on('click', () => { $('#drawerTitle').text('Nueva categoría'); $('#categoriaId,#catNombre,#catDescripcion,#catIcono,#catOrden').val(''); $('#catActivo').prop('checked', true); });
+    $('#tabla').on('click', '.edit', function () {
+      const row = table.row($(this).closest('tr')).data();
+      $('#drawerTitle').text('Editar categoría');
+      $('#categoriaId').val(row.categoriaId);
+      $('#moduloId').val(row.moduloId);
+      $('#catNombre').val(row.catNombre);
+      $('#catDescripcion').val(row.catDescripcion);
+      $('#catIcono').val(row.catIcono);
+      $('#catOrden').val(row.catOrden);
+      $('#catActivo').prop('checked', row.catActivo);
+      drawer.show();
+    });
+    $('#tabla').on('click', '.del', async function () {
+      const row = table.row($(this).closest('tr')).data();
+      if (!await erp.confirm('¿Eliminar categoría?')) return;
+      const res = await erp.post('?handler=Eliminar', { categoriaId: row.categoriaId, moduloId: row.moduloId });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Listo');
+      load();
+    });
+    $('#btnGuardar').on('click', async () => {
+      const res = await erp.post('?handler=Guardar', {
+        categoriaId: $('#categoriaId').val() ? Number($('#categoriaId').val()) : null,
+        moduloId: Number($('#moduloId').val()),
+        catNombre: $('#catNombre').val(),
+        catDescripcion: $('#catDescripcion').val(),
+        catIcono: $('#catIcono').val(),
+        catOrden: $('#catOrden').val() ? Number($('#catOrden').val()) : null,
+        catActivo: $('#catActivo').is(':checked')
+      });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+      if (res.success) { drawer.hide(); load(); }
+    });
+  });
+</script>
+}

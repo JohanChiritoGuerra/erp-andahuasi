@@ -1,0 +1,126 @@
+@page "/administracion/roles"
+@model ErpAndahuasi.Pages.Administracion.RolesModel
+@{
+  ViewData["Title"] = "Roles";
+}
+@section VendorStyles {
+  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
+  <script src="~/js/erp.js"></script>
+}
+<div class="d-flex justify-content-between mb-4">
+  <div>
+    <h4 class="mb-1">Roles</h4>
+    <p class="text-muted mb-0">Roles, clonado y árbol de permisos.</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#drawerRol" id="btnNuevo">Nuevo rol</button>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table" id="tabla">
+      <thead><tr><th>Nombre</th><th>Descripción</th><th>Usuarios</th><th>Accesos</th><th>Estado</th><th></th></tr></thead>
+    </table>
+  </div>
+</div>
+<div class="offcanvas offcanvas-end" id="drawerRol" tabindex="-1">
+  <div class="offcanvas-header border-bottom"><h5 class="offcanvas-title" id="rolTitle">Nuevo rol</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="rolId" />
+    <div class="mb-3"><label class="form-label">Nombre</label><input class="form-control" id="nombre" /></div>
+    <div class="mb-3"><label class="form-label">Descripción</label><textarea class="form-control" id="descripcion"></textarea></div>
+    <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" id="activo" checked /><label class="form-check-label" for="activo">Activo</label></div>
+    <button class="btn btn-primary w-100" id="btnGuardar">Guardar</button>
+  </div>
+</div>
+<div class="offcanvas offcanvas-end" id="drawerPermisos" tabindex="-1" style="width:480px">
+  <div class="offcanvas-header border-bottom"><h5 class="offcanvas-title">Permisos</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <div class="offcanvas-body">
+    <input type="hidden" id="permisoRolId" />
+    <div id="arbol"></div>
+    <button class="btn btn-primary w-100 mt-4" id="btnGuardarPermisos">Guardar permisos</button>
+  </div>
+</div>
+@section PageScripts {
+<script>
+  let table;
+  const drawerRol = new bootstrap.Offcanvas('#drawerRol');
+  const drawerPermisos = new bootstrap.Offcanvas('#drawerPermisos');
+  function load() { erp.get('?handler=Lista').then(r => table.clear().rows.add(r?.data || []).draw()); }
+  $(function () {
+    table = $('#tabla').DataTable({
+      data: [],
+      columns: [
+        { data: 'nombre' }, { data: 'descripcion' }, { data: 'cantidadUsuarios' }, { data: 'cantidadAccesos' },
+        { data: 'activo', render: v => v ? '<span class="badge bg-label-success">Activo</span>' : '<span class="badge bg-label-secondary">Inactivo</span>' },
+        { data: null, orderable: false, render: r => `<button class="btn btn-sm btn-text-secondary edit"><i class="ri ri-pencil-line"></i></button>
+          <button class="btn btn-sm btn-text-primary perm">Permisos</button>
+          <button class="btn btn-sm btn-text-secondary clone">Clonar</button>
+          <button class="btn btn-sm btn-text-danger del"><i class="ri ri-delete-bin-line"></i></button>` }
+      ]
+    });
+    load();
+    $('#btnNuevo').on('click', () => { $('#rolTitle').text('Nuevo rol'); $('#rolId,#nombre,#descripcion').val(''); $('#activo').prop('checked', true); });
+    $('#tabla').on('click', '.edit', function () {
+      const r = table.row($(this).closest('tr')).data();
+      $('#rolTitle').text('Editar rol'); $('#rolId').val(r.rolId); $('#nombre').val(r.nombre); $('#descripcion').val(r.descripcion); $('#activo').prop('checked', r.activo); drawerRol.show();
+    });
+    $('#tabla').on('click', '.del', async function () {
+      const r = table.row($(this).closest('tr')).data();
+      if (!await erp.confirm('¿Eliminar rol?')) return;
+      const res = await erp.post('?handler=Eliminar', { rolId: r.rolId });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Listo'); load();
+    });
+    $('#tabla').on('click', '.clone', async function () {
+      const r = table.row($(this).closest('tr')).data();
+      const nombre = prompt('Nombre del nuevo rol', r.nombre + ' (copia)');
+      if (!nombre) return;
+      const res = await erp.post('?handler=Clonar', { rolOrigenId: r.rolId, nuevoNombre: nombre });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Clonado'); load();
+    });
+    $('#tabla').on('click', '.perm', async function () {
+      const r = table.row($(this).closest('tr')).data();
+      $('#permisoRolId').val(r.rolId);
+      const res = await erp.get('?handler=Permisos&rolId=' + r.rolId);
+      const html = (res?.data?.modulos || []).map(m => `<div class="mb-3"><h6>${m.modNombre}</h6>${(m.categorias||[]).map(c => `
+        <div class="ms-2 mb-2"><strong>${c.catNombre}</strong>${(c.accesos||[]).map(a => `
+          <div class="form-check ms-3">
+            <input class="form-check-input acc" type="checkbox" data-acceso="${a.accesoId}" data-cat="${c.categoriaId}" data-mod="${m.moduloId}" ${a.asignado||a.web?'checked':''} />
+            <label class="form-check-label">${a.accNombre}</label>
+            <span class="ms-2 small">
+              <label class="me-1"><input type="checkbox" class="web" ${a.web?'checked':''}/> Web</label>
+              <label class="me-1"><input type="checkbox" class="desktop" ${a.desktop?'checked':''}/> Desktop</label>
+              <label><input type="checkbox" class="mobile" ${a.mobile?'checked':''}/> Mobile</label>
+            </span>
+          </div>`).join('')}</div>`).join('')}</div>`).join('');
+      $('#arbol').html(html);
+      drawerPermisos.show();
+    });
+    $('#btnGuardar').on('click', async () => {
+      const res = await erp.post('?handler=Guardar', { rolId: Number($('#rolId').val()||0), nombre: $('#nombre').val(), descripcion: $('#descripcion').val(), activo: $('#activo').is(':checked') });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+      if (res.success) { drawerRol.hide(); load(); }
+    });
+    $('#btnGuardarPermisos').on('click', async () => {
+      const permisos = [];
+      $('#arbol .acc').each(function () {
+        const $row = $(this).closest('.form-check');
+        if (!this.checked && !$row.find('.web,.desktop,.mobile').is(':checked')) return;
+        permisos.push({
+          accesoId: Number($(this).data('acceso')),
+          categoriaId: Number($(this).data('cat')),
+          moduloId: Number($(this).data('mod')),
+          web: $row.find('.web').is(':checked') || this.checked,
+          desktop: $row.find('.desktop').is(':checked'),
+          mobile: $row.find('.mobile').is(':checked')
+        });
+      });
+      const res = await erp.post('?handler=Permisos', { rolId: Number($('#permisoRolId').val()), permisos });
+      erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+    });
+  });
+</script>
+}

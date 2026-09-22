@@ -1,0 +1,39 @@
+@page "/paltos"
+@model ErpAndahuasi.Pages.Paltos.IndexModel
+@{
+  ViewData["Title"] = "Paltos";
+}
+
+<div class="mb-6">
+  <h4 class="mb-1">Paltos</h4>
+  <p class="text-muted">Gestión agrícola y seguimiento de la producción de paltos.</p>
+</div>
+<div class="row g-4">
+  <div class="col-md-4">
+    <a class="card h-100" href="/paltos/campos-campanias">
+      <div class="card-body">
+        <i class="ri ri-landscape-line ri-2x text-success"></i>
+        <h5 class="mt-3">Campos y campañas</h5>
+        <p class="text-muted mb-0">Existencia actual, campañas activas e historial de cada campo.</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <i class="ri ri-tools-line ri-2x text-secondary"></i>
+        <h5 class="mt-3">Labores</h5>
+        <p class="text-muted mb-0">Registro y control de actividades realizadas en campo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <a class="card h-100" href="/paltos/fertilizacion">
+      <div class="card-body">
+        <i class="ri ri-seedling-line ri-2x text-success"></i>
+        <h5 class="mt-3">Fertilización</h5>
+        <p class="text-muted mb-0">Presupuesto y seguimiento de las aplicaciones de fertilizantes.</p>
+      </div>
+    </a>
+  </div>
+</div>

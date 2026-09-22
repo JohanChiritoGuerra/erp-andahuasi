@@ -1,0 +1,59 @@
+@page "/paltos/fertilizacion"
+@model ErpAndahuasi.Pages.Paltos.Fertilizacion.IndexModel
+@{
+  ViewData["Title"] = "Fertilización";
+  var activas = Model.Campanias.Where(c => c.Estado == "ACTIVA").ToList();
+  var plan = Model.Campanias.Where(c => c.Estado == "EN_PLANIFICACION").ToList();
+  var cerradas = Model.Campanias.Where(c => c.Estado is "CERRADA" or "RECONSTRUIDA").ToList();
+}
+<h4 class="mb-1">Fertilización</h4>
+<p class="text-muted mb-4">Presupuesto, control y configuración de ítems.</p>
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+  <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+<div class="row g-4 mb-6">
+  <div class="col-md-4"><a class="card" href="/paltos/fertilizacion/configuracion-items"><div class="card-body"><h6 class="mb-1">Configuración de ítems</h6><p class="text-muted mb-0">Composición química y documentos.</p></div></a></div>
+  <div class="col-md-4"><a class="card" href="/paltos/fertilizacion/presupuesto"><div class="card-body"><h6 class="mb-1">Presupuesto</h6><p class="text-muted mb-0">Matriz mensual de nutrientes.</p></div></a></div>
+  <div class="col-md-4"><a class="card" href="/paltos/fertilizacion/control"><div class="card-body"><h6 class="mb-1">Control</h6><p class="text-muted mb-0">Avance vs presupuesto y cierre de mes.</p></div></a></div>
+</div>
+<ul class="nav nav-tabs" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabActivas">Activas (@activas.Count)</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPlan">Planificación (@plan.Count)</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCerradas">Cerradas (@cerradas.Count)</button></li>
+</ul>
+<div class="tab-content card card-body">
+  @foreach (var (id, items) in new[] { ("tabActivas", activas), ("tabPlan", plan), ("tabCerradas", cerradas) })
+  {
+    <div class="tab-pane fade @(id=="tabActivas"?"show active":"")" id="@id">
+      @if (items.Count == 0) { <p class="text-muted mb-0">Sin campañas.</p> }
+      else
+      {
+        <div class="table-responsive">
+          <table class="table">
+            <thead><tr><th>Campo</th><th>Campaña</th><th>Estado</th><th>Área</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var c in items)
+            {
+              <tr>
+                <td>@c.CodigoCampo @c.NombreCampo</td>
+                <td>@c.Codigo @c.Nombre</td>
+                <td><span class="badge bg-label-primary">@c.Estado</span></td>
+                <td>@c.AreaHa.ToString("N2") ha</td>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/presupuesto?campoCampaniaId=@c.CampoCampaniaId">Presupuesto</a>
+                  <a class="btn btn-sm btn-outline-success" href="/paltos/fertilizacion/control?campoCampaniaId=@c.CampoCampaniaId">Control</a>
+                </td>
+              </tr>
+            }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+@if (Model.Incidencias.Count > 0)
+{
+  <div class="alert alert-warning mt-4">Hay @Model.Incidencias.Count movimientos de fertilización sin campaña asociada.</div>
+}
