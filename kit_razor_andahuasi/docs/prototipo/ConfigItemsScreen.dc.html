@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="{{ rootStyle }}">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;flex-shrink:0">
+    <div style="min-width:0">
+      <h1 style="margin:0;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.01em;color:var(--text)">Configuración de ítems de almacén</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Define presentación, conversión y aporte de nutrientes</p>
+    </div>
+  </div>
+
+  <div style="{{ gridStyle }}">
+    <section style="display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0">
+
+      <div style="{{ cardsGridStyle }}">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="4">
+          <button onClick="{{ tab.select }}" style="{{ tab.style }}" style-hover="border-color:var(--hint)">
+            <span style="{{ tab.iconWrap }}">{{ tab.icon }}</span>
+            <span style="display:flex;flex-direction:column;align-items:flex-start;min-width:0">
+              <span style="font-size:12px;line-height:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">{{ tab.label }}</span>
+              <span style="font-size:20px;line-height:24px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">{{ tab.count }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:0;height:32px;padding:0 8px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--faint)">
+          {{ searchIcon }}
+          <input placeholder="Buscar por código o descripción" value="{{ query }}" onChange="{{ onQuery }}" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:13px;color:var(--text)" />
+          <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearQuery }}" title="Borrar búsqueda" style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex-shrink:0;border:0;border-radius:3px;background:transparent;color:var(--text);cursor:pointer" style-hover="background:var(--hover)">{{ xIcon }}</button>
+          </sc-if>
+        </label>
+        <div data-dd="1" style="position:relative;flex:0 0 190px">
+          <button onClick="{{ toggleDd }}" style="{{ ddBtnStyle }}">
+            <span style="flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ddLabel }}</span>
+            <span style="display:flex;color:var(--muted)">{{ ddCaret }}</span>
+          </button>
+          <sc-if value="{{ ddOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:calc(100% + 4px);right:0;z-index:30;width:100%;min-width:190px;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--panel);box-shadow:0 12px 32px rgba(6,10,11,.18)">
+              <sc-for list="{{ ddOptions }}" as="op" hint-placeholder-count="4">
+                <button onClick="{{ op.select }}" style="{{ op.style }}" style-hover="background:var(--hover)">
+                  <span style="flex:1;text-align:left">{{ op.label }}</span>
+                  <sc-if value="{{ op.on }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex">{{ checkIcon }}</span>
+                  </sc-if>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="{{ tableCardStyle }}">
+        <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 72px 128px 124px;gap:12px;align-items:center;height:34px;padding:0 12px;background:var(--field);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--faint);flex-shrink:0">
+            <span>Ítem</span><span>Unidad</span><span>Clasificación</span><span>Aporte por unidad</span>
+          </div>
+        </sc-if>
+        <div style="{{ tableBodyStyle }}">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="8">
+            <button onClick="{{ row.select }}" style="{{ row.style }}" style-hover="background:var(--hover)">
+              <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+                <span style="display:grid;grid-template-columns:minmax(0,1fr) 72px 128px 124px;gap:12px;align-items:center;width:100%">
+                  <span style="min-width:0">
+                    <span style="display:block;font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">{{ row.code }}</span>
+                    <span style="display:block;font-size:12.5px;line-height:17px;color:var(--item);text-wrap:pretty">{{ row.desc }}</span>
+                  </span>
+                  <span style="font-size:12px;font-weight:500;color:var(--muted)">{{ row.unit }}</span>
+                  <span><span style="{{ row.clsStyle }}">{{ row.clsLabel }}</span></span>
+                  <span><span style="{{ row.apStyle }}">{{ row.apLabel }}</span></span>
+                </span>
+              </sc-if>
+              <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;flex-direction:column;gap:4px;width:100%;min-width:0">
+                  <span style="display:flex;justify-content:space-between;gap:8px">
+                    <span style="font-size:12px;font-weight:600;color:var(--text)">{{ row.code }}</span>
+                    <span style="font-size:12px;font-weight:500;color:var(--muted)">{{ row.unit }}</span>
+                  </span>
+                  <span style="font-size:12.5px;line-height:17px;color:var(--item)">{{ row.desc }}</span>
+                  <span style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">
+                    <span style="{{ row.clsStyle }}">{{ row.clsLabel }}</span>
+                    <span style="{{ row.apStyle }}">{{ row.apLabel }}</span>
+                  </span>
+                </span>
+              </sc-if>
+            </button>
+          </sc-for>
+          <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:32px 16px;text-align:center;font-size:13px;color:var(--faint)">Sin ítems que coincidan.</div>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;height:40px;padding:0 12px;border-top:1px solid var(--border);flex-shrink:0">
+          <span style="font-size:12px;color:var(--muted)">Mostrando {{ shown }} de {{ total }} ítems</span>
+          <div style="display:flex;gap:4px">
+            <button disabled="" title="Anterior" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--hint)">{{ prevIcon }}</button>
+            <button style="display:flex;align-items:center;justify-content:center;min-width:26px;height:26px;border:1px solid var(--accent);border-radius:3px;background:var(--accent-soft);color:var(--accent-text);font-size:12px;font-weight:600">1</button>
+            <button disabled="" title="Siguiente" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--hint)">{{ nextIcon }}</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside style="{{ panelStyle }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;height:44px;padding:0 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <span style="font-size:13px;font-weight:600;color:var(--text)">Configurar ítem</span>
+        <span style="{{ selApStyle }}">{{ selApLabel }}</span>
+      </div>
+
+      <div style="{{ panelBodyStyle }}">
+        <div style="display:flex;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:3px;background:var(--field)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">{{ sel.code }}</div>
+            <div style="font-size:12.5px;line-height:17px;color:var(--item);text-wrap:pretty">{{ sel.desc }}</div>
+          </div>
+          <div style="padding-left:12px;border-left:1px solid var(--border);flex-shrink:0">
+            <div style="font-size:11px;color:var(--muted)">Unidad</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">{{ sel.unit }}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;padding:2px;border:1px solid var(--border);border-radius:3px;background:var(--field)">
+          <button onClick="{{ setNutriente }}" style="{{ modeNutStyle }}"><span style="display:flex">{{ leafIcon }}</span><span>Nutriente</span></button>
+          <button onClick="{{ setComun }}" style="{{ modeComStyle }}"><span style="display:flex">{{ cartIcon }}</span><span>Consumo común</span></button>
+        </div>
+
+        <sc-if value="{{ isComun }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:12px;border:1px solid var(--border);border-radius:3px;font-size:12.5px;line-height:18px;color:var(--muted);text-wrap:pretty">El ítem se registra como consumo común. No aporta nutrientes al cálculo de fertilización y no requiere composición ni ficha técnica.</div>
+        </sc-if>
+
+        <sc-if value="{{ isNutriente }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:3px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:600">1</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text)">Presentación</span>
+            </div>
+            <p style="margin:0;font-size:12px;line-height:17px;color:var(--muted);text-wrap:pretty">La unidad de almacén ({{ sel.unit }}) no define si el producto es sólido o líquido: tú lo eliges.</p>
+            <div style="display:flex;padding:2px;border:1px solid var(--border);border-radius:3px;background:var(--field)">
+              <button onClick="{{ setSolido }}" style="{{ solidoStyle }}">Sólido</button>
+              <button onClick="{{ setLiquido }}" style="{{ liquidoStyle }}">Líquido</button>
+            </div>
+            <p style="margin:0;font-size:12px;line-height:17px;color:var(--muted);text-wrap:pretty">{{ presentationNote }}</p>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:3px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:600">2</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text)">Composición nutricional</span>
+            </div>
+            <p style="margin:0;font-size:12px;line-height:17px;color:var(--muted);text-wrap:pretty">Copia el valor del <strong style="color:var(--text);font-weight:600">elemento puro</strong> que aparece en la ficha o en la plantilla Excel (ej. 43 % K, 33 % N). Si la etiqueta dice óxido (K₂O, CaO, P₂O₅), conviértelo antes. Para % usa máximo 100; para g/L máximo 2000.</p>
+            <button onClick="{{ toggleOxides }}" style="{{ helpBtnStyle }}" style-hover="background:var(--hover)"><span style="display:flex;color:{{ helpIconColor }}">{{ helpIcon }}</span><span>Ayuda si la ficha tiene óxidos</span></button>
+
+
+            <sc-if value="{{ noNutrients }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:16px 8px;text-align:center;font-size:12px;line-height:17px;color:var(--faint)">Aún no se configuró composición. Agrega el primer elemento desde la etiqueta o ficha técnica.</div>
+            </sc-if>
+            <sc-for list="{{ nutrients }}" as="nu" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;gap:6px">
+                <select value="{{ nu.el }}" onChange="{{ nu.onEl }}" style="width:78px;height:30px;padding:0 6px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--text);font-size:12.5px;font-family:inherit">
+                  <option value="N">N</option><option value="P">P</option><option value="K">K</option><option value="Ca">Ca</option><option value="Mg">Mg</option><option value="S">S</option><option value="B">B</option><option value="Zn">Zn</option><option value="Fe">Fe</option><option value="Mn">Mn</option><option value="Cu">Cu</option>
+                </select>
+                <input type="number" min="0" step="0.1" value="{{ nu.val }}" onChange="{{ nu.onVal }}" placeholder="0.0" style="flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--text);font-size:12.5px;outline:0;font-variant-numeric:tabular-nums" />
+                <span style="width:44px;font-size:12px;color:var(--muted)">{{ unitLabel }}</span>
+                <button onClick="{{ nu.remove }}" title="Quitar" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;flex-shrink:0;border:0;border-radius:3px;background:transparent;color:var(--muted);cursor:pointer" style-hover="background:var(--hover);color:var(--text)">{{ xIcon }}</button>
+              </div>
+            </sc-for>
+            <button onClick="{{ addNutrient }}" style="display:flex;align-items:center;gap:6px;align-self:flex-start;height:28px;padding:0 10px;border:1px solid var(--accent);border-radius:3px;background:transparent;color:var(--accent-text);font-size:12px;font-weight:600;cursor:pointer" style-hover="background:var(--accent-soft)"><span style="display:flex">{{ plusIcon }}</span><span>Agregar nutriente</span></button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border);border-radius:3px;background:var(--field)">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12.5px;font-weight:600;color:var(--text)">1 {{ unitWord }} → aportes elementales</span>
+              <sc-if value="{{ noYield }}" hint-placeholder-val="{{ true }}">
+                <span style="{{ neutralChip }}">Sin aporte calculable</span>
+              </sc-if>
+            </div>
+            <sc-if value="{{ hasYield }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ yields }}" as="y" hint-placeholder-count="2">
+                  <span style="{{ okChip }}">{{ y.label }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+            <span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">{{ refLine }}</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:3px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:11px;font-weight:600">3</span>
+              <span style="font-size:13px;font-weight:600;color:var(--text)">Fuente y ficha técnica</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <input placeholder="Fuente de la composición" value="{{ source }}" onChange="{{ onSource }}" style="height:32px;padding:0 10px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--text);font-size:13px;outline:0" />
+              <span style="font-size:11.5px;color:var(--muted)">Ejemplo: etiqueta del proveedor, ficha técnica o certificado de análisis.</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--text);font-size:12px;font-weight:500;cursor:pointer" style-hover="background:var(--hover)">
+                <span style="display:flex;color:var(--icon)">{{ clipIcon }}</span><span>Elegir ficha PDF</span>
+                <input type="file" accept="application/pdf" onChange="{{ onFile }}" style="display:none" />
+              </label>
+              <span style="font-size:11.5px;line-height:16px;color:var(--muted)">{{ fileNote }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0">
+        <button onClick="{{ save }}" style="display:flex;align-items:center;justify-content:center;gap:8px;flex:1;height:36px;border:1px solid var(--accent);border-radius:3px;background:var(--accent);color:var(--accent-fg);font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--accent-hover);border-color:var(--accent-hover)"><span style="display:flex">{{ saveIcon }}</span><span>Guardar configuración</span></button>
+        <sc-if value="{{ justSaved }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:12px;font-weight:600;color:var(--accent-text)">Guardado</span>
+        </sc-if>
+      </div>
+    </aside>
+  </div>
+
+  <sc-if value="{{ showOxides }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeHelp }}" style="position:absolute;inset:-20px;z-index:40;background:var(--scrim)"></div>
+    <div role="dialog" aria-label="Ayuda: fichas con óxidos" style="position:absolute;top:72px;left:50%;transform:translateX(-50%);z-index:41;width:min(460px,calc(100% - 16px));border:1px solid var(--border);border-radius:4px;background:var(--panel);box-shadow:0 20px 48px rgba(6,10,11,.3)">
+      <div style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px 0 16px;border-bottom:1px solid var(--border)">
+        <span style="display:flex;color:var(--accent-text)">{{ helpIcon }}</span>
+        <span style="flex:1;font-size:14px;font-weight:600;color:var(--text)">Fichas con óxidos</span>
+        <button onClick="{{ closeHelp }}" title="Cerrar" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:0;border-radius:3px;background:transparent;color:var(--muted);cursor:pointer" style-hover="background:var(--hover);color:var(--text)">{{ xIcon }}</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
+        <p style="margin:0;font-size:13px;line-height:19px;color:var(--item);text-wrap:pretty">Si la etiqueta expresa el contenido como óxido, multiplica el valor por el factor para obtener el elemento puro que se registra en la composición.</p>
+        <div style="border:1px solid var(--border);border-radius:3px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;height:30px;align-items:center;padding:0 12px;background:var(--field);font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--faint)"><span>En la ficha</span><span>Factor</span><span>Registrar como</span></div>
+          <sc-for list="{{ oxides }}" as="ox" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;height:32px;align-items:center;padding:0 12px;border-top:1px solid var(--border);font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>{{ ox.from }}</span><span>× {{ ox.f }}</span><span style="font-weight:600">{{ ox.to }}</span></div>
+          </sc-for>
+        </div>
+        <div style="padding:10px 12px;border-radius:3px;background:var(--accent-soft);font-size:12.5px;line-height:18px;color:var(--accent-text)">Ejemplo: 46 % K₂O × 0.830 = 38.2 % K</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border)">
+        <button onClick="{{ closeHelp }}" style="height:32px;padding:0 14px;border:1px solid var(--border);border-radius:3px;background:var(--panel);color:var(--text);font-size:13px;font-weight:500;cursor:pointer" style-hover="background:var(--hover)">Entendido</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1100,&quot;height&quot;:820},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const svg = (paths, extra) => React.createElement('svg', Object.assign({width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round',strokeLinejoin:'round'}, extra||{}), paths.map((d,i)=>React.createElement('path',{key:i,d:d})));
+
+const ITEMS = [
+  ['19070011','ACCION PLUS EXTRACTO DE ALGAS LIQ. LIGNOKEL','LTS'],
+  ['20010180','ACEITE 15W-40 X 946 ML.','FCO'],
+  ['20010190','ACEITE MOBIL DELVAC MX ESP.SAE 15W-40 API CK-4 X 1LT.','FCO'],
+  ['20010099','ACEITE SHELL RIMULA R4X SAE 15W-40','GLN'],
+  ['19020121','ACIDO BORICO FERTILIZANTE X 25KG.','BOLSA'],
+  ['14010241','ACIDO FOSFORICO 85% GRADO ALIMENTICIO (ELAB.Y DESTILERIA)','KGS'],
+  ['14010289','ACIDO FOSFORICO 85% USP CH GRADO ALIMENTICIO (PALTOS)','KGS'],
+  ['19070020','ACIDO FULVICO-ABONO LIQUIDO P. USO AGRICOLA.','LTS'],
+  ['27030421','ACTARA 25WG SYNGENTA INSECTICIDA','KGS'],
+  ['19020175','AMBRA 48 - ABONO ORGANICO P. PALTOS','KGM'],
+  ['19030100','AMINOKEL-30 AMINO ACIDOS P.APLIC.FOLIAR LIGNOKEL PALTOS','LTS'],
+  ['27050031','APOLO SUSP.CONC. (SPIRODICLOFEN) ACARICIDA AGRICOLA','LTS'],
+  ['27060008','AQUATIX 5-52 DESINFECTANTE','KGS'],
+  ['19010050','NITRATO DE POTASIO X 25 KG','BOLSA'],
+  ['19010012','SULFATO DE MAGNESIO HEPTAHIDRATADO X 25 KG','BOLSA']
+].map(([code, desc, unit]) => ({ code, desc, unit }));
+
+const LIQ = { LTS:1, GLN:1, FCO:1 };
+const PRESET = {
+  '19010050': { mode:'nutriente', pres:'solido', nutrients:[{el:'N',val:'13.5'},{el:'K',val:'38.6'}], source:'Ficha técnica del proveedor', file:'nitrato-potasio.pdf', saved:true },
+  '19010012': { mode:'comun', pres:'solido', nutrients:[], source:'', file:'', saved:true }
+};
+const LIGHT = { warnBg:'#fdf1d8', warnFg:'#8a5a00', dangerBg:'#fbe6e4', dangerFg:'#b3261e', infoBg:'#e9eef5', infoFg:'#3d5a7a', okBg:'#e6f4ea', okFg:'#1e7a34' };
+const DARK  = { warnBg:'rgba(232,170,50,0.14)', warnFg:'#e8b54a', dangerBg:'rgba(235,90,80,0.14)', dangerFg:'#f0908a', infoBg:'rgba(120,150,190,0.16)', infoFg:'#9fb6d3', okBg:'rgba(63,169,75,0.16)', okFg:'#6cc878' };
+
+class Component extends DCLogic {
+  state = { tab:'all', aporte:'all', query:'', sel:'19070011', cfg:{}, oxides:false, savedCode:null, dd:false };
+
+  componentDidMount() {
+    this._away = e => { if (this.state.dd && !(e.target.closest && e.target.closest('[data-dd]'))) this.setState({ dd:false }); };
+    this._key = e => { if (e.key === 'Escape') this.setState({ dd:false, oxides:false }); };
+    document.addEventListener('mousedown', this._away, true);
+    document.addEventListener('keydown', this._key);
+  }
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this._away, true);
+    document.removeEventListener('keydown', this._key);
+  }
+
+  cfgOf(it) {
+    const c = this.state.cfg[it.code] || PRESET[it.code];
+    return c || { mode:'nutriente', pres: LIQ[it.unit] ? 'liquido' : 'solido', nutrients:[], source:'', file:'', saved:false };
+  }
+  status(it) {
+    const c = this.cfgOf(it);
+    if (!c.saved) return { cls:'pendiente', ap:'sin' };
+    if (c.mode === 'comun') return { cls:'comun', ap:'na' };
+    return c.nutrients.some(n => parseFloat(n.val) > 0) ? { cls:'explicito', ap:'ok' } : { cls:'pendiente', ap:'sin' };
+  }
+  patch(fn) {
+    const it = ITEMS.find(i => i.code === this.state.sel);
+    const cur = this.cfgOf(it);
+    const next = Object.assign({}, cur, fn(cur), { saved: cur.saved && false });
+    this.setState(s => ({ cfg: Object.assign({}, s.cfg, { [it.code]: next }), savedCode:null }));
+  }
+  norm(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+  renderVals() {
+    const dark = this.props.theme === 'dark';
+    const P = dark ? DARK : LIGHT;
+    const compact = !!this.props.compact;
+    const chip = (bg, fg) => ({ display:'inline-flex', alignItems:'center', height:'20px', padding:'0 8px', borderRadius:'10px', background:bg, color:fg, fontSize:'11.5px', fontWeight:600, whiteSpace:'nowrap' });
+    const CH = {
+      warn: chip(P.warnBg, P.warnFg), danger: chip(P.dangerBg, P.dangerFg),
+      ok: chip(P.okBg, P.okFg), neutral: chip('var(--chip)', 'var(--chip-text)')
+    };
+    const CLS = { pendiente:['Pendiente','warn'], explicito:['Datos explícitos','ok'], comun:['Consumo común','neutral'] };
+    const AP = { sin:['Sin configurar','danger'], ok:['Configurado','ok'], na:['No aplica','neutral'] };
+
+    const withSt = ITEMS.map(it => Object.assign({}, it, this.status(it)));
+    const counts = { all: withSt.length, pendiente:0, explicito:0, comun:0 };
+    withSt.forEach(i => { counts[i.cls]++; });
+    const q = this.norm(this.state.query.trim());
+    const filtered = withSt.filter(i =>
+      (this.state.tab === 'all' || i.cls === this.state.tab) &&
+      (this.state.aporte === 'all' || i.ap === this.state.aporte) &&
+      (!q || this.norm(i.code + ' ' + i.desc).indexOf(q) !== -1));
+
+    const TAB_ICON = {
+      all: [['M4 7h16v4H4z','M5 11v8h14v-8','M10 15h4'], 'var(--chip)', 'var(--text)'],
+      pendiente: [['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18','M12 7v5l3 2'], P.warnBg, P.warnFg],
+      explicito: [['M5 19c0-8 5-13 14-14 0 9-5 14-13 14','M5 19l8-8'], P.okBg, P.okFg],
+      comun: [['M3 4h2l2 11h11l2-8H6','M9 20h.01','M17 20h.01'], P.infoBg, P.infoFg]
+    };
+    const tabs = [['all','Todos'],['pendiente','Pendientes'],['explicito','Configurados'],['comun','Consumo común']].map(([k, l]) => {
+      const on = this.state.tab === k;
+      const ic = TAB_ICON[k];
+      return {
+        label: l, count: counts[k],
+        select: () => this.setState({ tab: k }),
+        icon: svg(ic[0], {width:17,height:17}),
+        iconWrap: { display:'flex', alignItems:'center', justifyContent:'center', width:'34px', height:'34px', borderRadius:'50%', flexShrink:0, background: ic[1], color: ic[2] },
+        style: { display:'flex', alignItems:'center', gap:'10px', minWidth:0, height:'60px', padding:'0 12px', border:'1px solid ' + (on ? 'var(--accent)' : 'var(--border)'), boxShadow: on ? 'inset 0 0 0 1px var(--accent)' : 'none', borderRadius:'4px', background:'var(--panel)', cursor:'pointer', fontFamily:'inherit', textAlign:'left' }
+      };
+    });
+    const DD = [['all','Todos los estados'],['ok','Configurados'],['sin','Pendientes'],['na','Consumo común']];
+
+    const rows = filtered.map(i => {
+      const on = i.code === this.state.sel;
+      return {
+        code: i.code, desc: i.desc, unit: i.unit,
+        clsLabel: CLS[i.cls][0], clsStyle: CH[CLS[i.cls][1]],
+        apLabel: AP[i.ap][0], apStyle: CH[AP[i.ap][1]],
+        select: () => this.setState({ sel: i.code, oxides:false, savedCode:null }),
+        style: { display:'flex', width:'100%', padding:'9px 12px', border:0, borderBottom:'1px solid var(--border)', background: on ? 'var(--accent-soft)' : 'transparent', boxShadow: on ? 'inset 2px 0 0 var(--accent)' : 'none', cursor:'pointer', textAlign:'left', fontFamily:'inherit' }
+      };
+    });
+
+    const it = ITEMS.find(i => i.code === this.state.sel);
+    const c = this.cfgOf(it);
+    const st = this.status(it);
+    const liquid = c.pres === 'liquido';
+    const unitLabel = liquid ? '% p/v' : '% p/p';
+    const unitWord = liquid ? 'litro' : 'kg';
+    const valid = c.nutrients.filter(n => parseFloat(n.val) > 0);
+    const fmt = g => g >= 1000 ? (g/1000).toFixed(2) + ' kg' : (Math.round(g*10)/10) + ' g';
+    const yields = valid.map(n => ({ label: n.el + ' ' + fmt(parseFloat(n.val) * 10) }));
+    const refLine = valid.length
+      ? '20 ' + (liquid ? 'litros' : 'kg') + ' → ' + valid.map(n => n.el + ' ' + fmt(parseFloat(n.val) * 200)).join(' · ')
+      : '20 ' + (liquid ? 'litros' : 'kg') + ' → aporte pendiente';
+
+    const seg = on => ({ display:'flex', alignItems:'center', justifyContent:'center', gap:'6px', flex:1, height:'28px', border:0, borderRadius:'2px', background: on ? 'var(--accent-soft)' : 'transparent', boxShadow: on ? 'inset 0 0 0 1px var(--accent)' : 'none', color: on ? 'var(--accent-text)' : 'var(--muted)', fontSize:'12.5px', fontWeight: on ? 600 : 500, cursor:'pointer', fontFamily:'inherit' });
+
+    return {
+      compact, wide: !compact,
+      rootStyle: { position:'relative', display:'flex', flexDirection:'column', gap:'16px', height: compact ? 'auto' : '100%', minHeight:0 },
+      gridStyle: { display:'grid', gridTemplateColumns: compact ? 'minmax(0,1fr)' : 'minmax(0,1fr) 384px', gap:'16px', flex: compact ? 'none' : 1, minHeight:0 },
+      tableCardStyle: { display:'flex', flexDirection:'column', flex: compact ? 'none' : 1, minHeight:0, border:'1px solid var(--border)', borderRadius:'4px', background:'var(--panel)', overflow:'hidden' },
+      tableBodyStyle: { flex:1, minHeight:0, overflowY: compact ? 'visible' : 'auto', maxHeight: compact ? '420px' : 'none', overflowX:'hidden' },
+      panelStyle: { display:'flex', flexDirection:'column', minHeight:0, border:'1px solid var(--border)', borderRadius:'4px', background:'var(--panel)', overflow:'hidden' },
+      panelBodyStyle: { display:'flex', flexDirection:'column', gap:'10px', flex:1, minHeight:0, overflowY: compact ? 'visible' : 'auto', padding:'12px 14px' },
+      tabs, rows, noRows: rows.length === 0, shown: rows.length, total: ITEMS.length,
+      query: this.state.query, hasQuery: this.state.query.length > 0,
+      onQuery: e => this.setState({ query: e.target.value }),
+      clearQuery: () => this.setState({ query: '' }),
+      cardsGridStyle: { display:'grid', gridTemplateColumns: compact ? 'repeat(2,minmax(0,1fr))' : 'repeat(4,minmax(0,1fr))', gap:'8px' },
+      ddOpen: this.state.dd, toggleDd: () => this.setState(st => ({ dd: !st.dd })),
+      ddLabel: DD.find(d => d[0] === this.state.aporte)[1],
+      ddCaret: svg(['M6 9l6 6 6-6'], {width:14,height:14,strokeWidth:2,style:{transform: this.state.dd ? 'rotate(180deg)' : 'none', transition:'transform .15s ease'}}),
+      ddBtnStyle: { display:'flex', alignItems:'center', gap:'8px', width:'100%', height:'32px', padding:'0 10px', border:'1px solid ' + (this.state.dd ? 'var(--accent)' : 'var(--border)'), borderRadius:'3px', background:'var(--panel)', color:'var(--text)', fontSize:'13px', cursor:'pointer', fontFamily:'inherit' },
+      ddOptions: DD.map(([k, l]) => {
+        const on = this.state.aporte === k;
+        return { label: l, on, select: () => this.setState({ aporte: k, dd:false }),
+          style: { display:'flex', alignItems:'center', gap:'8px', width:'100%', height:'32px', padding:'0 10px', border:0, borderRadius:'3px', background: on ? 'var(--accent-soft)' : 'transparent', color: on ? 'var(--accent-text)' : 'var(--item)', fontSize:'13px', fontWeight: on ? 600 : 400, cursor:'pointer', fontFamily:'inherit' } };
+      }),
+      checkIcon: svg(['M5 12l5 5 9-10'], {width:14,height:14,strokeWidth:2}),
+      closeHelp: () => this.setState({ oxides:false }),
+      oxides: [['K₂O','0.830','K'],['P₂O₅','0.436','P'],['CaO','0.715','Ca'],['MgO','0.603','Mg'],['SO₃','0.400','S'],['B₂O₃','0.311','B']].map(([a,b,c]) => ({ from:a, f:b, to:c })),
+      sel: it, selApLabel: AP[st.ap][0], selApStyle: CH[AP[st.ap][1]],
+      isComun: c.mode === 'comun', isNutriente: c.mode !== 'comun',
+      modeNutStyle: seg(c.mode !== 'comun'), modeComStyle: seg(c.mode === 'comun'),
+      setNutriente: () => this.patch(() => ({ mode:'nutriente' })),
+      setComun: () => this.patch(() => ({ mode:'comun' })),
+      solidoStyle: seg(!liquid), liquidoStyle: seg(liquid),
+      setSolido: () => this.patch(() => ({ pres:'solido' })),
+      setLiquido: () => this.patch(() => ({ pres:'liquido' })),
+      presentationNote: liquid
+        ? 'Unidad de salida ' + it.unit + ': 1 unidad = 1 L de producto. Con g/L o % p/v el aporte se calcula por litro; la densidad solo se pide si usas % p/p.'
+        : 'Unidad de salida ' + it.unit + ': el aporte se calcula por kg de producto con % p/p.',
+      helpBtnStyle: { display:'flex', alignItems:'center', gap:'6px', alignSelf:'flex-start', height:'28px', padding:'0 8px 0 8px', border:'1px dashed var(--border)', borderRadius:'3px', background:'transparent', color:'var(--text)', fontSize:'12px', fontWeight:500, cursor:'pointer', fontFamily:'inherit' },
+      helpIconColor: 'var(--accent-text)',
+      helpIcon: svg(['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18','M9.5 9.2a2.6 2.6 0 0 1 5 .8c0 1.8-2.5 2.2-2.5 3.8','M12 17h.01'], {width:15,height:15}),
+      helpCaret: svg(['M9 6l6 6-6 6'], {width:12,height:12,strokeWidth:2,style:{transform: this.state.oxides ? 'rotate(90deg)' : 'none', transition:'transform .15s ease'}}),
+      showOxides: this.state.oxides, toggleOxides: () => this.setState({ oxides: true }),
+      unitLabel, unitWord,
+      noNutrients: c.nutrients.length === 0,
+      nutrients: c.nutrients.map((n, idx) => ({
+        el: n.el, val: n.val,
+        onEl: e => { const v = e.target.value; this.patch(cc => ({ nutrients: cc.nutrients.map((x, j) => j === idx ? Object.assign({}, x, { el: v }) : x) })); },
+        onVal: e => { const v = e.target.value; this.patch(cc => ({ nutrients: cc.nutrients.map((x, j) => j === idx ? Object.assign({}, x, { val: v }) : x) })); },
+        remove: () => this.patch(cc => ({ nutrients: cc.nutrients.filter((x, j) => j !== idx) }))
+      })),
+      addNutrient: () => this.patch(cc => ({ nutrients: cc.nutrients.concat([{ el: ['N','P','K','Ca','Mg'][cc.nutrients.length % 5], val:'' }]) })),
+      yields, hasYield: yields.length > 0, noYield: yields.length === 0, refLine,
+      okChip: CH.ok, neutralChip: CH.neutral,
+      source: c.source, onSource: e => { const v = e.target.value; this.patch(() => ({ source: v })); },
+      onFile: e => { const f = e.target.files && e.target.files[0]; if (f) this.patch(() => ({ file: f.name })); },
+      fileNote: c.file ? c.file + ' · se sube al guardar' : 'Solo PDF, máx. 10 MB. Se sube al guardar.',
+      save: () => {
+        const cur = this.cfgOf(it);
+        this.setState(s => ({ cfg: Object.assign({}, s.cfg, { [it.code]: Object.assign({}, cur, { saved:true }) }), savedCode: it.code }));
+        clearTimeout(this._t); this._t = setTimeout(() => this.setState({ savedCode:null }), 2400);
+      },
+      justSaved: this.state.savedCode === it.code,
+      searchIcon: svg(['M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14','M20 20l-4-4']),
+      xIcon: svg(['M6 6l12 12','M18 6L6 18'], {width:14,height:14,strokeWidth:2}),
+      prevIcon: svg(['M15 6l-6 6 6 6'], {width:14,height:14}),
+      nextIcon: svg(['M9 6l6 6-6 6'], {width:14,height:14}),
+      leafIcon: svg(['M5 19c0-8 5-13 14-14 0 9-5 14-13 14','M5 19l8-8'], {width:15,height:15}),
+      cartIcon: svg(['M3 4h2l2 11h11l2-8H6','M9 20h.01','M17 20h.01'], {width:15,height:15}),
+      flaskIcon: svg(['M9 3h6','M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3'], {width:14,height:14}),
+      plusIcon: svg(['M12 5v14','M5 12h14'], {width:14,height:14}),
+      clipIcon: svg(['M20 11l-8.5 8.5a5 5 0 0 1-7-7L13 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L14 7'], {width:14,height:14}),
+      saveIcon: svg(['M5 4h11l3 3v13H5z','M8 4v5h7V4','M8 20v-6h8v6'], {width:15,height:15})
+    };
+  }
+}
+
+</script>
+</body>
+</html>

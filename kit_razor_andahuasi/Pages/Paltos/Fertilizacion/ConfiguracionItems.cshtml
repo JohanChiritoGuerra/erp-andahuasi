@@ -1,0 +1,218 @@
+@page
+@model Andahuasi.Pages.Paltos.Fertilizacion.ConfiguracionItemsModel
+@{
+    ViewData["Title"] = "Configuración de ítems";
+    ViewData["FillHeight"] = true;      // plantilla A: ocupa el alto y cada columna hace su propio scroll
+    var sel = Model.Seleccionado;
+    var tarjetas = new[]
+    {
+        (Key: "todos",     Texto: "Todos",         N: Model.Resumen.Todos,        Icono: "ri-archive-line",         Variante: ""),
+        (Key: "pendiente", Texto: "Pendientes",    N: Model.Resumen.Pendientes,   Icono: "ri-time-line",            Variante: "warning"),
+        (Key: "explicito", Texto: "Configurados",  N: Model.Resumen.Configurados, Icono: "ri-leaf-line",            Variante: "success"),
+        (Key: "comun",     Texto: "Consumo común", N: Model.Resumen.ConsumoComun, Icono: "ri-shopping-cart-2-line", Variante: "info")
+    };
+    var estadoTexto = ConfiguracionItemsModel.Estados.FirstOrDefault(e => e.Key == Model.Estado).Texto ?? "Todos los estados";
+    var liquido = Model.Input.Presentacion == "liquido";
+}
+
+<div class="tpl-list-panel">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Configuración de ítems de almacén</h1>
+            <p class="page-sub">Define presentación, conversión y aporte de nutrientes</p>
+        </div>
+    </div>
+
+    <div class="tpl-grid">
+        <!-- ============ Columna izquierda: lista ============ -->
+        <section class="tpl-col">
+            <div class="stat-grid">
+                @foreach (var t in tarjetas)
+                {
+                    <a class="stat-card @(Model.Tab == t.Key ? "is-selected" : "")" href="@Model.Link(tab: t.Key, sel: "")">
+                        <span class="stat-icon @t.Variante"><i class="@t.Icono"></i></span>
+                        <span style="min-width:0"><span class="stat-label">@t.Texto</span><span class="stat-value">@t.N</span></span>
+                    </a>
+                }
+            </div>
+
+            <form method="get" class="toolbar">
+                <input type="hidden" name="tab" value="@Model.Tab" />
+                <label class="search on-panel">
+                    <i class="ri-search-line"></i>
+                    <input type="search" name="q" value="@Model.Q" placeholder="Buscar por código o descripción" aria-label="Buscar ítems" />
+                    <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri-close-line"></i></button>
+                </label>
+                <div class="dropdown" data-submit>
+                    <input type="hidden" name="estado" value="@Model.Estado" />
+                    <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>@estadoTexto</span><i class="ri-arrow-down-s-line"></i></button>
+                    <div class="dropdown-menu" hidden>
+                        @foreach (var e in ConfiguracionItemsModel.Estados)
+                        {
+                            <button type="button" class="menu-item @(Model.Estado == e.Key ? "is-selected" : "")" data-value="@e.Key">@e.Texto<i class="ri-check-line"></i></button>
+                        }
+                    </div>
+                </div>
+            </form>
+
+            <div class="data-table" style="--dt-cols:minmax(0,1fr) 72px 128px 124px;flex:1">
+                <div class="dt-head"><span>Ítem</span><span>Unidad</span><span>Clasificación</span><span>Aporte por unidad</span></div>
+                <div class="dt-body">
+                    @foreach (var it in Model.Items)
+                    {
+                        <a class="dt-row @(it.Codigo == sel?.Codigo ? "is-selected" : "")" href="@Model.Link(sel: it.Codigo)">
+                            <span style="min-width:0"><span class="dt-code">@it.Codigo</span><span class="dt-desc">@it.Descripcion</span></span>
+                            <span class="dt-muted">@it.Unidad</span>
+                            <span><span class="pill @it.PillClasificacion.Clase">@it.PillClasificacion.Texto</span></span>
+                            <span><span class="pill @it.PillAporte.Clase">@it.PillAporte.Texto</span></span>
+                        </a>
+                    }
+                    @if (!Model.Items.Any()) { <div class="dt-empty">Sin ítems que coincidan.</div> }
+                </div>
+                <div class="dt-foot">
+                    <span>Mostrando @Model.Items.Count de @Model.Resumen.Todos ítems</span>
+                    @* TODO: paginación real si la lista supera ~100 filas *@
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Columna derecha: panel de configuración ============ -->
+        @if (sel == null)
+        {
+            <aside class="panel"><div class="panel-body"><div class="empty">Elige un ítem de la lista para configurarlo.</div></div></aside>
+        }
+        else
+        {
+            <form class="panel" method="post" asp-page-handler="Guardar" asp-route-tab="@Model.Tab" asp-route-estado="@Model.Estado" asp-route-q="@Model.Q" enctype="multipart/form-data" id="form-item">
+                <input type="hidden" asp-for="Input.Codigo" />
+                <div class="panel-head">
+                    <span>Configurar ítem</span>
+                    <span class="pill @sel.PillAporte.Clase">@sel.PillAporte.Texto</span>
+                </div>
+
+                <div class="panel-body">
+                    <div class="card muted" style="flex-direction:row;gap:12px;padding:10px 12px">
+                        <div style="flex:1;min-width:0"><span class="dt-code">@sel.Codigo</span><span class="dt-desc">@sel.Descripcion</span></div>
+                        <div style="padding-left:12px;border-left:1px solid var(--border)"><span class="stat-label" style="font-size:11px">Unidad</span><b style="font-size:13px">@sel.Unidad</b></div>
+                    </div>
+
+                    <div class="segmented">
+                        <input type="radio" id="modo-nut" name="Input.Modo" value="nutriente" @(Model.Input.Modo != "comun" ? "checked" : "") /><label for="modo-nut"><i class="ri-leaf-line"></i>Nutriente</label>
+                        <input type="radio" id="modo-com" name="Input.Modo" value="comun" @(Model.Input.Modo == "comun" ? "checked" : "") /><label for="modo-com"><i class="ri-shopping-cart-2-line"></i>Consumo común</label>
+                    </div>
+
+                    <div class="card hint-text" data-si-modo="comun" hidden>El ítem se registra como consumo común. No aporta nutrientes al cálculo de fertilización y no requiere composición ni ficha técnica.</div>
+
+                    <div data-si-modo="nutriente" style="display:contents">
+                        <div class="card">
+                            <div class="step-head"><span class="step-num">1</span>Presentación</div>
+                            <p class="hint-text">La unidad de almacén (@sel.Unidad) no define si el producto es sólido o líquido: tú lo eliges.</p>
+                            <div class="segmented">
+                                <input type="radio" id="pres-sol" name="Input.Presentacion" value="solido" @(!liquido ? "checked" : "") /><label for="pres-sol">Sólido</label>
+                                <input type="radio" id="pres-liq" name="Input.Presentacion" value="liquido" @(liquido ? "checked" : "") /><label for="pres-liq">Líquido</label>
+                            </div>
+                            <p class="hint-text" data-si-pres="liquido">Unidad de salida @sel.Unidad: 1 unidad = 1 L de producto. Con g/L o % p/v el aporte se calcula por litro; la densidad solo se pide si usas % p/p.</p>
+                            <p class="hint-text" data-si-pres="solido">Unidad de salida @sel.Unidad: el aporte se calcula por kg de producto con % p/p.</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="step-head"><span class="step-num">2</span>Composición nutricional</div>
+                            <p class="hint-text">Copia el valor del <strong>elemento puro</strong> que aparece en la ficha o en la plantilla Excel (ej. 43 % K, 33 % N). Si la etiqueta dice óxido (K₂O, CaO, P₂O₅), conviértelo antes. Para % usa máximo 100; para g/L máximo 2000.</p>
+                            <button type="button" class="btn btn-help btn-sm" style="align-self:flex-start" data-modal-open="dlg-oxidos"><i class="ri-question-line"></i>Ayuda si la ficha tiene óxidos</button>
+
+                            <div class="empty" data-nut-vacio @(Model.Input.Nutrientes.Any() ? "hidden" : "")>Aún no se configuró composición. Agrega el primer elemento desde la etiqueta o ficha técnica.</div>
+                            <div data-nut-lista style="display:flex;flex-direction:column;gap:6px">
+                                @for (var i = 0; i < Model.Input.Nutrientes.Count; i++)
+                                {
+                                    <partial name="_FilaNutriente" model="(i, Model.Input.Nutrientes[i], liquido)" />
+                                }
+                            </div>
+                            <span asp-validation-for="Input.Nutrientes" class="field-error"></span>
+                            <button type="button" class="btn btn-outline btn-sm" style="align-self:flex-start" data-nut-agregar><i class="ri-add-line"></i>Agregar nutriente</button>
+                        </div>
+
+                        <div class="card muted" style="gap:6px">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                                <b style="font-size:12.5px">1 <span data-unidad-palabra>@(liquido ? "litro" : "kg")</span> → aportes elementales</b>
+                                <span class="pill" data-aporte-vacio>Sin aporte calculable</span>
+                            </div>
+                            <div class="chips" data-aporte-chips></div>
+                            <span class="hint-text" data-aporte-ref style="font-variant-numeric:tabular-nums"></span>
+                        </div>
+
+                        <div class="card">
+                            <div class="step-head"><span class="step-num">3</span>Fuente y ficha técnica</div>
+                            <div class="field">
+                                <input class="input" asp-for="Input.Fuente" placeholder="Fuente de la composición" />
+                                <span class="field-help">Ejemplo: etiqueta del proveedor, ficha técnica o certificado de análisis.</span>
+                            </div>
+                            <div class="file-field">
+                                <label class="btn btn-sm"><i class="ri-attachment-line" style="color:var(--icon)"></i>Elegir ficha PDF<input type="file" asp-for="Input.Ficha" accept="application/pdf" data-ficha /></label>
+                                <span class="field-help" data-ficha-nota>@(sel.FichaNombre != null ? sel.FichaNombre + " · guardada" : "Solo PDF, máx. 10 MB. Se sube al guardar.")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-foot">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex:1"><i class="ri-save-3-line"></i>Guardar configuración</button>
+                    @if (TempData["Guardado"] is true) { <span style="font-size:12px;font-weight:600;color:var(--success-fg)">Guardado</span> }
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<template id="tpl-nutriente"><partial name="_FilaNutriente" model="(-1, new Andahuasi.Models.NutrienteItem(), liquido)" /></template>
+
+<dialog class="modal" id="dlg-oxidos" aria-labelledby="dlg-oxidos-t">
+    <div class="modal-head"><i class="ri-question-line"></i><span class="modal-title" id="dlg-oxidos-t">Fichas con óxidos</span><button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri-close-line" style="font-size:17px"></i></button></div>
+    <div class="modal-body">
+        <p>Si la etiqueta expresa el contenido como óxido, multiplica el valor por el factor para obtener el elemento puro que se registra en la composición.</p>
+        <div class="data-table" style="--dt-cols:1fr 1fr 1fr">
+            <div class="dt-head"><span>En la ficha</span><span>Factor</span><span>Registrar como</span></div>
+            @foreach (var (de, f, a) in new[] { ("K₂O", "0.830", "K"), ("P₂O₅", "0.436", "P"), ("CaO", "0.715", "Ca"), ("MgO", "0.603", "Mg"), ("SO₃", "0.400", "S"), ("B₂O₃", "0.311", "B") })
+            {
+                <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>@de</span><span>× @f</span><b>@a</b></div>
+            }
+        </div>
+        <div class="note">Ejemplo: 46 % K₂O × 0.830 = 38.2 % K</div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn" data-modal-close>Entendido</button></div>
+</dialog>
+
+@section Scripts {
+<script>
+(function () {
+    const form = document.getElementById('form-item'); if (!form) return;
+    const q = s => form.querySelector(s), qa = s => Array.from(form.querySelectorAll(s));
+    const lista = q('[data-nut-lista]');
+
+    function sync() {
+        const modo = q('[name="Input.Modo"]:checked').value, pres = q('[name="Input.Presentacion"]:checked').value, liq = pres === 'liquido';
+        qa('[data-si-modo]').forEach(e => e.hidden = e.dataset.siModo !== modo);
+        qa('[data-si-pres]').forEach(e => e.hidden = e.dataset.siPres !== pres);
+        qa('[data-nut-unidad]').forEach(e => e.textContent = liq ? '% p/v' : '% p/p');
+        q('[data-unidad-palabra]').textContent = liq ? 'litro' : 'kg';
+        // Reindexa nombres para el model binding: Input.Nutrientes[i].Campo
+        const filas = qa('[data-nut-fila]');
+        filas.forEach((f, i) => f.querySelectorAll('[data-campo]').forEach(c => c.name = `Input.Nutrientes[${i}].${c.dataset.campo}`));
+        q('[data-nut-vacio]').hidden = filas.length > 0;
+        // Vista previa del aporte: % × 10 = g por kg (o por L)
+        const fmt = g => g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : (Math.round(g * 10) / 10) + ' g';
+        const val = filas.map(f => ({ el: f.querySelector('[data-campo=Elemento]').value, v: parseFloat(f.querySelector('[data-campo=Valor]').value) })).filter(x => x.v > 0);
+        q('[data-aporte-chips]').innerHTML = val.map(x => `<span class="pill pill-success">${x.el} ${fmt(x.v * 10)}</span>`).join('');
+        q('[data-aporte-vacio]').hidden = val.length > 0;
+        q('[data-aporte-ref]').textContent = '20 ' + (liq ? 'litros' : 'kg') + ' → ' + (val.length ? val.map(x => x.el + ' ' + fmt(x.v * 200)).join(' · ') : 'aporte pendiente');
+    }
+    form.addEventListener('change', sync);
+    form.addEventListener('input', sync);
+    form.addEventListener('click', e => {
+        if (e.target.closest('[data-nut-agregar]')) { lista.appendChild(document.getElementById('tpl-nutriente').content.firstElementChild.cloneNode(true)); sync(); }
+        const del = e.target.closest('[data-nut-quitar]'); if (del) { del.closest('[data-nut-fila]').remove(); sync(); }
+    });
+    q('[data-ficha]').addEventListener('change', e => { const f = e.target.files[0]; if (f) q('[data-ficha-nota]').textContent = f.name + ' · se sube al guardar'; });
+    sync();
+})();
+</script>
+}

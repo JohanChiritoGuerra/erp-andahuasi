@@ -1,0 +1,39 @@
+@model Andahuasi.Models.MenuViewModel
+@* Árbol Módulo → Categoría → Acceso. La rama del acceso actual se abre sola. *@
+<div class="nav-tree">
+@foreach (var m in Model.Modulos)
+{
+    var modAbierto = m.Categorias.Any(c => c.Accesos.Any(a => Model.EsActual(a)));
+    <div class="nav-mod">
+        <button type="button" class="nav-row lvl-0" data-toggle aria-expanded="@(modAbierto ? "true" : "false")" title="@m.Nombre">
+            <i class="@m.Icono"></i>
+            <span class="nav-label">@m.Nombre</span>
+            @if (m.Categorias.Any()) { <i class="ri-arrow-right-s-line nav-caret"></i> }
+        </button>
+        <div class="nav-children" @(modAbierto ? "" : "hidden")>
+        @foreach (var c in m.Categorias)
+        {
+            var catAbierta = c.Accesos.Any(a => Model.EsActual(a));
+            <div class="nav-cat">
+                <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="@(catAbierta ? "true" : "false")">
+                    <i class="@c.Icono"></i>
+                    <span class="nav-label">@c.Nombre</span>
+                    <i class="ri-arrow-right-s-line nav-caret"></i>
+                </button>
+                <div class="nav-children" @(catAbierta ? "" : "hidden")>
+                @foreach (var a in c.Accesos)
+                {
+                    var actual = Model.EsActual(a);
+                    <a class="nav-row lvl-2 @(actual ? "is-active" : "")" href="@a.Ruta" @(actual ? "aria-current=page" : "")>
+                        <span class="nav-dot"></span>
+                        <span class="nav-label">@a.Nombre</span>
+                        @if (a.Badge is > 0) { <span class="badge">@a.Badge</span> }
+                    </a>
+                }
+                </div>
+            </div>
+        }
+        </div>
+    </div>
+}
+</div>

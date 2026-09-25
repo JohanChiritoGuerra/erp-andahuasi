@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!-- Vista previa estática del HTML que genera _Layout.cshtml + MenuViewComponent. Solo para probar el CSS/JS sin .NET. -->
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo shell · Andahuasi</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
+<link rel="stylesheet" href="wwwroot/css/tokens.css" />
+<link rel="stylesheet" href="wwwroot/css/andahuasi.css" />
+<style>.logo{-webkit-mask-image:url(wwwroot/img/logo-mask.png);mask-image:url(wwwroot/img/logo-mask.png)}</style>
+<script>(function (h) { if (!h.dataset.sidebar) h.dataset.sidebar = innerWidth >= 1280 ? 'expanded' : 'rail'; })(document.documentElement);</script>
+</head>
+<body>
+<div class="app">
+  <div class="scrim" data-drawer-close></div>
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="sb-brand">
+      <a href="#" class="logo" aria-label="Andahuasi"></a>
+      <button type="button" class="icon-btn" data-sidebar-toggle aria-label="Contraer o expandir menú"><i class="ri-layout-left-line"></i></button>
+    </div>
+    <div class="sb-search">
+      <label class="search"><i class="ri-search-line"></i><input type="search" placeholder="Buscar accesos..." data-nav-search /><button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri-close-line"></i></button></label>
+      <button type="button" class="icon-btn bordered" data-nav-expand-all aria-label="Expandir o contraer todo"><i class="ri-expand-up-down-line"></i></button>
+      <button type="button" class="icon-btn bordered sb-search-rail" data-flyout-all aria-label="Buscar accesos"><i class="ri-search-line"></i></button>
+    </div>
+    <nav class="sb-nav">
+      <div class="nav-tree">
+        <div class="nav-mod">
+          <button type="button" class="nav-row lvl-0" data-toggle aria-expanded="false" title="Logística"><i class="ri-truck-line"></i><span class="nav-label">Logística</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+          <div class="nav-children" hidden>
+            <div class="nav-cat">
+              <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="false"><i class="ri-settings-4-line"></i><span class="nav-label">Gestión Operativa</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+              <div class="nav-children" hidden>
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Consultar - solicitud de compra</span></a>
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Registrar - abastecimiento diesel</span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-mod">
+          <button type="button" class="nav-row lvl-0" data-toggle aria-expanded="true" title="Paltos"><i class="ri-plant-line"></i><span class="nav-label">Paltos</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+          <div class="nav-children">
+            <div class="nav-cat">
+              <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="true"><i class="ri-flask-line"></i><span class="nav-label">Fertilización</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+              <div class="nav-children">
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Presupuesto de fertilización</span></a>
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Control de fertilización</span></a>
+                <a class="nav-row lvl-2 is-active" href="#" aria-current="page"><span class="nav-dot"></span><span class="nav-label">Configuración de ítems</span><span class="badge">3</span></a>
+              </div>
+            </div>
+            <div class="nav-cat">
+              <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="false"><i class="ri-map-2-line"></i><span class="nav-label">Campos y campañas</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+              <div class="nav-children" hidden><a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Campos y campañas</span></a></div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-mod">
+          <button type="button" class="nav-row lvl-0" data-toggle aria-expanded="false" title="Mantenimiento"><i class="ri-tools-line"></i><span class="nav-label">Mantenimiento</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+          <div class="nav-children" hidden>
+            <div class="nav-cat">
+              <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="false"><i class="ri-file-list-3-line"></i><span class="nav-label">Órdenes de Trabajo</span><i class="ri-arrow-right-s-line nav-caret"></i></button>
+              <div class="nav-children" hidden>
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Ver OT Asignadas a Mí</span><span class="badge">12</span></a>
+                <a class="nav-row lvl-2" href="#"><span class="nav-dot"></span><span class="nav-label">Crear OT</span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <button type="button" class="avatar" data-popover="pop-cuenta" data-placement="account" aria-label="Cuenta"><i class="ri-user-line" style="font-size:17px"></i><span class="online"></span></button>
+      <span class="sb-user"><b>Chirito Guerra, Johan</b><small>Jefe Dpto. de Sistemas</small></span>
+      <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="right-end" aria-label="Notificaciones"><i class="ri-notification-3-line"></i><span class="dot"></span></button>
+    </div>
+  </aside>
+
+  <div class="main-col">
+    <header class="mobile-header">
+      <button type="button" class="icon-btn bordered" data-drawer-open aria-label="Abrir menú"><i class="ri-menu-line" style="font-size:18px"></i></button>
+      <a href="#" class="logo" aria-label="Andahuasi"></a>
+      <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="bottom-end" aria-label="Notificaciones"><i class="ri-notification-3-line"></i><span class="dot"></span></button>
+      <button type="button" class="avatar" style="width:32px;height:32px" data-popover="pop-cuenta" data-placement="bottom-end" aria-label="Cuenta"><i class="ri-user-line" style="font-size:17px"></i><span class="online"></span></button>
+    </header>
+    <main class="content">
+      <div class="container fill">
+        <div class="tpl-list-panel">
+          <div class="page-head">
+            <div><h1 class="page-title">Configuración de ítems de almacén</h1><p class="page-sub">Define presentación, conversión y aporte de nutrientes</p></div>
+          </div>
+          <div class="tpl-grid">
+            <section class="tpl-col">
+              <div class="stat-grid">
+                <a class="stat-card is-selected" href="#"><span class="stat-icon"><i class="ri-archive-line"></i></span><span style="min-width:0"><span class="stat-label">Todos</span><span class="stat-value">109</span></span></a>
+                <a class="stat-card" href="#"><span class="stat-icon warning"><i class="ri-time-line"></i></span><span style="min-width:0"><span class="stat-label">Pendientes</span><span class="stat-value">78</span></span></a>
+                <a class="stat-card" href="#"><span class="stat-icon success"><i class="ri-leaf-line"></i></span><span style="min-width:0"><span class="stat-label">Configurados</span><span class="stat-value">20</span></span></a>
+                <a class="stat-card" href="#"><span class="stat-icon info"><i class="ri-shopping-cart-2-line"></i></span><span style="min-width:0"><span class="stat-label">Consumo común</span><span class="stat-value">11</span></span></a>
+              </div>
+              <div class="toolbar">
+                <label class="search on-panel"><i class="ri-search-line"></i><input type="search" placeholder="Buscar por código o descripción" aria-label="Buscar ítems" /><button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri-close-line"></i></button></label>
+                <div class="dropdown">
+                  <input type="hidden" name="estado" value="todos" />
+                  <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Todos los estados</span><i class="ri-arrow-down-s-line"></i></button>
+                  <div class="dropdown-menu" hidden>
+                    <button type="button" class="menu-item is-selected" data-value="todos">Todos los estados<i class="ri-check-line"></i></button>
+                    <button type="button" class="menu-item" data-value="configurado">Configurados<i class="ri-check-line"></i></button>
+                    <button type="button" class="menu-item" data-value="sin">Sin configurar<i class="ri-check-line"></i></button>
+                    <button type="button" class="menu-item" data-value="na">No aplica<i class="ri-check-line"></i></button>
+                  </div>
+                </div>
+              </div>
+              <div class="data-table" style="--dt-cols:minmax(0,1fr) 72px 128px 124px;flex:1">
+                <div class="dt-head"><span>Ítem</span><span>Unidad</span><span>Clasificación</span><span>Aporte por unidad</span></div>
+                <div class="dt-body">
+                  <a class="dt-row is-selected" href="#"><span style="min-width:0"><span class="dt-code">19070011</span><span class="dt-desc">ACCION PLUS EXTRACTO DE ALGAS LIQ. LIGNOKEL</span></span><span class="dt-muted">LTS</span><span><span class="pill pill-warning">Pendiente</span></span><span><span class="pill pill-danger">Sin configurar</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">19020121</span><span class="dt-desc">ACIDO BORICO FERTILIZANTE X 25KG.</span></span><span class="dt-muted">BOLSA</span><span><span class="pill pill-warning">Pendiente</span></span><span><span class="pill pill-danger">Sin configurar</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">14010289</span><span class="dt-desc">ACIDO FOSFORICO 85% USP CH GRADO ALIMENTICIO (PALTOS)</span></span><span class="dt-muted">KGS</span><span><span class="pill pill-warning">Pendiente</span></span><span><span class="pill pill-danger">Sin configurar</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">19070020</span><span class="dt-desc">ACIDO FULVICO-ABONO LIQUIDO P. USO AGRICOLA.</span></span><span class="dt-muted">LTS</span><span><span class="pill pill-warning">Pendiente</span></span><span><span class="pill pill-danger">Sin configurar</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">19030100</span><span class="dt-desc">AMINOKEL-30 AMINO ACIDOS P.APLIC.FOLIAR LIGNOKEL PALTOS</span></span><span class="dt-muted">LTS</span><span><span class="pill pill-warning">Pendiente</span></span><span><span class="pill pill-danger">Sin configurar</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">19010050</span><span class="dt-desc">NITRATO DE POTASIO X 25 KG</span></span><span class="dt-muted">BOLSA</span><span><span class="pill pill-success">Datos explícitos</span></span><span><span class="pill pill-success">Configurado</span></span></a>
+                  <a class="dt-row" href="#"><span style="min-width:0"><span class="dt-code">19010012</span><span class="dt-desc">SULFATO DE MAGNESIO HEPTAHIDRATADO X 25 KG</span></span><span class="dt-muted">BOLSA</span><span><span class="pill pill-info">Consumo común</span></span><span><span class="pill">No aplica</span></span></a>
+                </div>
+                <div class="dt-foot"><span>Mostrando 7 de 109 ítems</span>
+                  <span class="pager"><span class="is-disabled"><i class="ri-arrow-left-s-line"></i></span><span class="is-current">1</span><a href="#">2</a><a href="#"><i class="ri-arrow-right-s-line"></i></a></span>
+                </div>
+              </div>
+            </section>
+
+            <form class="panel" id="form-item" onsubmit="event.preventDefault();document.getElementById('ok').hidden=false;">
+              <div class="panel-head"><span>Configurar ítem</span><span class="pill pill-danger">Sin configurar</span></div>
+              <div class="panel-body">
+                <div class="card muted" style="flex-direction:row;gap:12px;padding:10px 12px">
+                  <div style="flex:1;min-width:0"><span class="dt-code">19070011</span><span class="dt-desc">ACCION PLUS EXTRACTO DE ALGAS LIQ. LIGNOKEL</span></div>
+                  <div style="padding-left:12px;border-left:1px solid var(--border)"><span class="stat-label" style="font-size:11px">Unidad</span><b style="font-size:13px">LTS</b></div>
+                </div>
+                <div class="segmented">
+                  <input type="radio" id="modo-nut" name="Input.Modo" value="nutriente" checked /><label for="modo-nut"><i class="ri-leaf-line"></i>Nutriente</label>
+                  <input type="radio" id="modo-com" name="Input.Modo" value="comun" /><label for="modo-com"><i class="ri-shopping-cart-2-line"></i>Consumo común</label>
+                </div>
+                <div class="card hint-text" data-si-modo="comun" hidden>El ítem se registra como consumo común. No aporta nutrientes al cálculo de fertilización y no requiere composición ni ficha técnica.</div>
+                <div data-si-modo="nutriente" style="display:contents">
+                  <div class="card">
+                    <div class="step-head"><span class="step-num">1</span>Presentación</div>
+                    <p class="hint-text">La unidad de almacén (LTS) no define si el producto es sólido o líquido: tú lo eliges.</p>
+                    <div class="segmented">
+                      <input type="radio" id="pres-sol" name="Input.Presentacion" value="solido" /><label for="pres-sol">Sólido</label>
+                      <input type="radio" id="pres-liq" name="Input.Presentacion" value="liquido" checked /><label for="pres-liq">Líquido</label>
+                    </div>
+                    <p class="hint-text" data-si-pres="liquido">Unidad de salida LTS: 1 unidad = 1 L de producto. Con g/L o % p/v el aporte se calcula por litro; la densidad solo se pide si usas % p/p.</p>
+                    <p class="hint-text" data-si-pres="solido" hidden>Unidad de salida LTS: el aporte se calcula por kg de producto con % p/p.</p>
+                  </div>
+                  <div class="card">
+                    <div class="step-head"><span class="step-num">2</span>Composición nutricional</div>
+                    <p class="hint-text">Copia el valor del <strong>elemento puro</strong> que aparece en la ficha o en la plantilla Excel (ej. 43 % K, 33 % N). Si la etiqueta dice óxido (K₂O, CaO, P₂O₅), conviértelo antes. Para % usa máximo 100; para g/L máximo 2000.</p>
+                    <button type="button" class="btn btn-help btn-sm" style="align-self:flex-start" data-modal-open="dlg-demo"><i class="ri-question-line"></i>Ayuda si la ficha tiene óxidos</button>
+                    <div class="empty" data-nut-vacio>Aún no se configuró composición. Agrega el primer elemento desde la etiqueta o ficha técnica.</div>
+                    <div data-nut-lista style="display:flex;flex-direction:column;gap:6px"></div>
+                    <button type="button" class="btn btn-outline btn-sm" style="align-self:flex-start" data-nut-agregar><i class="ri-add-line"></i>Agregar nutriente</button>
+                  </div>
+                  <div class="card muted" style="gap:6px">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <b style="font-size:12.5px">1 <span data-unidad-palabra>litro</span> → aportes elementales</b>
+                      <span class="pill" data-aporte-vacio>Sin aporte calculable</span>
+                    </div>
+                    <div class="chips" data-aporte-chips></div>
+                    <span class="hint-text" data-aporte-ref style="font-variant-numeric:tabular-nums"></span>
+                  </div>
+                  <div class="card">
+                    <div class="step-head"><span class="step-num">3</span>Fuente y ficha técnica</div>
+                    <div class="field">
+                      <input class="input" placeholder="Fuente de la composición" />
+                      <span class="field-help">Ejemplo: etiqueta del proveedor, ficha técnica o certificado de análisis.</span>
+                    </div>
+                    <div class="file-field">
+                      <label class="btn btn-sm"><i class="ri-attachment-line" style="color:var(--icon)"></i>Elegir ficha PDF<input type="file" accept="application/pdf" data-ficha /></label>
+                      <span class="field-help" data-ficha-nota>Solo PDF, máx. 10 MB. Se sube al guardar.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-foot">
+                <button type="submit" class="btn btn-primary btn-lg" style="flex:1"><i class="ri-save-3-line"></i>Guardar configuración</button>
+                <span id="ok" hidden style="font-size:12px;font-weight:600;color:var(--success-fg)">Guardado</span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="popover" id="pop-cuenta" hidden>
+  <a class="menu-item" href="#"><i class="ri-user-line"></i>Ver mi perfil</a>
+  <button type="button" class="menu-item is-selected" data-theme-set="light"><i class="ri-sun-line"></i>Modo claro</button>
+  <button type="button" class="menu-item" data-theme-set="dark"><i class="ri-moon-line"></i>Modo oscuro</button>
+  <div class="menu-sep"></div>
+  <button type="button" class="btn btn-danger btn-block" style="height:34px">Cerrar sesión <i class="ri-logout-box-r-line"></i></button>
+</div>
+<div class="popover wide" id="pop-notif" hidden>
+  <div class="pop-head"><span class="pop-title">Notificaciones</span><a href="#" style="font-size:12px;font-weight:500">Marcar leídas</a></div>
+  <div class="pop-body">
+    <a class="notif unread" href="#"><span class="mark"></span><span><b>OT-2418 asignada a ti</b><small>Mantenimiento · hace 12 min</small></span></a>
+    <a class="notif" href="#"><span class="mark"></span><span><b>Presupuesto de fertilización actualizado</b><small>Paltos · hace 3 h</small></span></a>
+  </div>
+  <a class="pop-foot" href="#">Ver todas</a>
+</div>
+<div class="flyout" id="nav-flyout" hidden>
+  <div class="flyout-head">
+    <span class="flyout-title"></span>
+    <div class="flyout-tools">
+      <label class="search sm"><i class="ri-search-line"></i><input type="search" data-flyout-search /><button type="button" class="search-clear" data-search-clear hidden><i class="ri-close-line"></i></button></label>
+      <button type="button" class="icon-btn bordered" style="width:30px;height:30px" data-flyout-expand-all aria-label="Expandir o contraer todo"><i class="ri-expand-up-down-line"></i></button>
+    </div>
+  </div>
+  <div class="flyout-body"></div>
+</div>
+<dialog class="modal" id="dlg-demo">
+  <div class="modal-head"><i class="ri-question-line"></i><span class="modal-title">Fichas con óxidos</span><button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri-close-line"></i></button></div>
+  <div class="modal-body">
+    <p>Si la etiqueta expresa el contenido como óxido, multiplica el valor por el factor para obtener el elemento puro que se registra en la composición.</p>
+    <div class="data-table" style="--dt-cols:1fr 1fr 1fr">
+      <div class="dt-head"><span>En la ficha</span><span>Factor</span><span>Registrar como</span></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>K₂O</span><span>× 0.830</span><b>K</b></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>P₂O₅</span><span>× 0.436</span><b>P</b></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>CaO</span><span>× 0.715</span><b>Ca</b></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>MgO</span><span>× 0.603</span><b>Mg</b></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>SO₃</span><span>× 0.400</span><b>S</b></div>
+      <div class="dt-row" style="font-size:13px;color:var(--text)"><span>B₂O₃</span><span>× 0.311</span><b>B</b></div>
+    </div>
+    <div class="note">Ejemplo: 46 % K₂O × 0.830 = 38.2 % K</div>
+  </div>
+  <div class="modal-foot"><button type="button" class="btn" data-modal-close>Entendido</button></div>
+</dialog>
+<template id="tpl-nutriente">
+  <div data-nut-fila style="display:flex;align-items:center;gap:6px">
+    <select class="input sm" style="width:78px" data-campo="Elemento" aria-label="Elemento"><option>N</option><option>P</option><option>K</option><option>Ca</option><option>Mg</option><option>S</option><option>B</option><option>Zn</option><option>Fe</option><option>Mn</option><option>Cu</option></select>
+    <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" aria-label="Valor" />
+    <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">% p/v</span>
+    <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri-close-line"></i></button>
+  </div>
+</template>
+<script src="wwwroot/js/shell.js"></script>
+<script>
+(function () {
+  const form = document.getElementById('form-item'); if (!form) return;
+  const q = s => form.querySelector(s), qa = s => Array.from(form.querySelectorAll(s));
+  const lista = q('[data-nut-lista]');
+  function sync() {
+    const modo = q('[name="Input.Modo"]:checked').value, pres = q('[name="Input.Presentacion"]:checked').value, liq = pres === 'liquido';
+    qa('[data-si-modo]').forEach(e => e.hidden = e.dataset.siModo !== modo);
+    qa('[data-si-pres]').forEach(e => e.hidden = e.dataset.siPres !== pres);
+    qa('[data-nut-unidad]').forEach(e => e.textContent = liq ? '% p/v' : '% p/p');
+    q('[data-unidad-palabra]').textContent = liq ? 'litro' : 'kg';
+    const filas = qa('[data-nut-fila]');
+    filas.forEach((f, i) => f.querySelectorAll('[data-campo]').forEach(c => c.name = 'Input.Nutrientes[' + i + '].' + c.dataset.campo));
+    q('[data-nut-vacio]').hidden = filas.length > 0;
+    const fmt = g => g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : (Math.round(g * 10) / 10) + ' g';
+    const val = filas.map(f => ({ el: f.querySelector('[data-campo=Elemento]').value, v: parseFloat(f.querySelector('[data-campo=Valor]').value) })).filter(x => x.v > 0);
+    q('[data-aporte-chips]').innerHTML = val.map(x => '<span class="pill pill-success">' + x.el + ' ' + fmt(x.v * 10) + '</span>').join('');
+    q('[data-aporte-vacio]').hidden = val.length > 0;
+    q('[data-aporte-ref]').textContent = '20 ' + (liq ? 'litros' : 'kg') + ' → ' + (val.length ? val.map(x => x.el + ' ' + fmt(x.v * 200)).join(' · ') : 'aporte pendiente');
+  }
+  form.addEventListener('change', sync);
+  form.addEventListener('input', sync);
+  form.addEventListener('click', e => {
+    if (e.target.closest('[data-nut-agregar]')) { lista.appendChild(document.getElementById('tpl-nutriente').content.firstElementChild.cloneNode(true)); sync(); }
+    const del = e.target.closest('[data-nut-quitar]'); if (del) { del.closest('[data-nut-fila]').remove(); sync(); }
+  });
+  q('[data-ficha]').addEventListener('change', e => { const f = e.target.files[0]; if (f) q('[data-ficha-nota]').textContent = f.name + ' · se sube al guardar'; });
+  sync();
+})();
+</script>
+</body>
+</html>

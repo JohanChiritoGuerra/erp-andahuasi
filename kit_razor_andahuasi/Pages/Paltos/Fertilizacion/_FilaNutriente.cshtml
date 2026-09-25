@@ -1,0 +1,14 @@
+@model (int Indice, Andahuasi.Models.NutrienteItem Item, bool Liquido)
+@{
+    var elementos = new[] { "N", "P", "K", "Ca", "Mg", "S", "B", "Zn", "Fe", "Mn", "Cu" };
+    var pref = Model.Indice >= 0 ? $"Input.Nutrientes[{Model.Indice}]." : "";
+}
+<div data-nut-fila style="display:flex;align-items:center;gap:6px">
+    @* Select nativo aceptado aquí solo dentro de filas repetibles; si se prefiere, reemplazar por .dropdown *@
+    <select class="input sm" style="width:78px" data-campo="Elemento" name="@(pref)Elemento" aria-label="Elemento">
+        @foreach (var e in elementos) { <option value="@e" selected="@(e == Model.Item.Elemento)">@e</option> }
+    </select>
+    <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" name="@(pref)Valor" value="@Model.Item.Valor" aria-label="Valor" />
+    <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">@(Model.Liquido ? "% p/v" : "% p/p")</span>
+    <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri-close-line"></i></button>
+</div>

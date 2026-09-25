@@ -1,9 +1,37 @@
+@using ErpAndahuasi.Api
+@inject RrhhApi Rrhh
 @await Html.PartialAsync("Layouts/Sections/_Variables")
 @{
   TempData.Keep();
   Layout = "Layouts/_CommonMasterLayout";
   TempData["menuHorizontal"] = false;
   ViewData["skipTemplateMain"] = true;
+
+  var user = ErpSession.Current;
+  var displayName = string.IsNullOrWhiteSpace(user.DisplayName) ? "Mi perfil" : user.DisplayName;
+  var cargo = "";
+  if (ErpSession.IsAuthenticated && !string.IsNullOrWhiteSpace(user.TrabId))
+  {
+    const string cargoKey = "ErpCargo";
+    if (Context.Items[cargoKey] is string cached)
+    {
+      cargo = cached;
+    }
+    else
+    {
+      try
+      {
+        var perfil = await Rrhh.GetPerfilAsync();
+        cargo = perfil.BaseResponse.Success ? perfil.PerfilTrabajador?.Cargo ?? "" : "";
+      }
+      catch
+      {
+        cargo = "";
+      }
+
+      Context.Items[cargoKey] = cargo;
+    }
+  }
 }
 
 @section VendorStyles {
@@ -11,6 +39,18 @@
 }
 
 @section PageStyles {
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="~/css/andahuasi-tokens.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/andahuasi-shell.css" asp-append-version="true" />
+  <script>
+    (function (h) {
+      if (h.dataset.sidebar === 'expanded' || h.dataset.sidebar === 'rail') return;
+      var match = document.cookie.match(/(?:^|; )sidebar=(expanded|rail)/);
+      h.dataset.sidebar = match ? match[1] : (innerWidth >= 1280 ? 'expanded' : 'rail');
+    })(document.documentElement);
+  </script>
   @RenderSection("PageStyles", required: false)
 }
 
@@ -19,16 +59,123 @@
 }
 
 @section PageScripts {
-  <script src="~/js/erp-sigerp.js" asp-append-version="true"></script>
+  <script src="~/js/shell.js" asp-append-version="true"></script>
   @RenderSection("PageScripts", required: false)
 }
 
-<div class="sigerp" id="sigerp-shell">
-  @await Html.PartialAsync("Layouts/Sections/Menu/_SigerpSidebar")
-  <main class="sigerp-main">
-    <div class="sigerp-main__inner">
+<div class="app">
+  <div class="scrim" data-drawer-close></div>
+
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="sb-brand">
+      <a href="/" aria-label="Andahuasi, inicio">
+        <img class="shell-logo shell-logo--light" src="~/img/branding/logo-andahuasi-claro.svg" alt="Andahuasi" />
+        <img class="shell-logo shell-logo--dark" src="~/img/branding/logo-andahuasi-oscuro.svg" alt="" />
+      </a>
+      <button type="button" class="icon-btn" data-sidebar-toggle aria-label="Contraer o expandir menú">
+        <i class="ri ri-layout-left-line"></i>
+      </button>
+    </div>
+
+    <div class="sb-search">
+      <label class="search">
+        <i class="ri ri-search-line"></i>
+        <input type="search" placeholder="Buscar accesos..." data-nav-search aria-label="Buscar accesos" />
+        <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+      </label>
+      <button type="button" class="icon-btn bordered" data-nav-expand-all aria-label="Expandir o contraer todo">
+        <i class="ri ri-expand-up-down-line"></i>
+      </button>
+      <button type="button" class="icon-btn bordered sb-search-rail" data-flyout-all aria-label="Buscar accesos">
+        <i class="ri ri-search-line"></i>
+      </button>
+    </div>
+
+    <nav class="sb-nav">
+      @await Html.PartialAsync("Layouts/Sections/Menu/_ShellNav")
+    </nav>
+
+    <div class="sb-footer">
+      <button type="button" class="avatar" data-popover="pop-cuenta" data-placement="right-end" aria-label="Cuenta" aria-expanded="false">
+        @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
+        {
+          <img src="@user.PhotoUrl" alt="" />
+        }
+        else
+        {
+          <i class="ri ri-user-line" style="font-size:17px"></i>
+        }
+        <span class="online"></span>
+      </button>
+      <span class="sb-user"><b>@displayName</b><small>@cargo</small></span>
+      <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="right-end" aria-label="Notificaciones" aria-expanded="false">
+        <i class="ri ri-notification-3-line"></i>
+      </button>
+    </div>
+  </aside>
+
+  <div class="shell-main-col">
+    <header class="mobile-header">
+      <button type="button" class="icon-btn bordered" data-drawer-open aria-label="Abrir menú">
+        <i class="ri ri-menu-line" style="font-size:18px"></i>
+      </button>
+      <a href="/" aria-label="Andahuasi, inicio">
+        <img class="shell-logo shell-logo--light" src="~/img/branding/logo-andahuasi-claro.svg" alt="Andahuasi" />
+        <img class="shell-logo shell-logo--dark" src="~/img/branding/logo-andahuasi-oscuro.svg" alt="" />
+      </a>
+      <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="bottom-end" aria-label="Notificaciones" aria-expanded="false">
+        <i class="ri ri-notification-3-line"></i>
+      </button>
+      <button type="button" class="avatar" data-popover="pop-cuenta" data-placement="bottom-end" aria-label="Cuenta" aria-expanded="false">
+        @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
+        {
+          <img src="@user.PhotoUrl" alt="" />
+        }
+        else
+        {
+          <i class="ri ri-user-line" style="font-size:17px"></i>
+        }
+        <span class="online"></span>
+      </button>
+    </header>
+
+    <main class="shell-main">
       @RenderBody()
       <form id="erp-antiforgery" class="d-none">@Html.AntiForgeryToken()</form>
+    </main>
+  </div>
+
+  <div class="popover" id="pop-cuenta" role="menu" hidden>
+    <a class="menu-item" href="/rrhh/perfil">Ver mi perfil</a>
+    <button type="button" class="menu-item" data-theme-set="light">Modo claro</button>
+    <button type="button" class="menu-item" data-theme-set="dark">Modo oscuro</button>
+    <div class="menu-sep"></div>
+    <a class="shell-logout" href="/logout">Cerrar sesión <i class="ri ri-logout-box-r-line"></i></a>
+  </div>
+
+  <div class="popover wide" id="pop-notif" hidden>
+    <div class="pop-head">
+      <span class="pop-title">Notificaciones</span>
     </div>
-  </main>
+    <div class="pop-body">
+      <div class="dt-empty">No tienes notificaciones.</div>
+    </div>
+  </div>
+
+  <div class="flyout" id="nav-flyout" hidden>
+    <div class="flyout-head">
+      <span class="flyout-title"></span>
+      <div class="flyout-tools">
+        <label class="search sm">
+          <i class="ri ri-search-line"></i>
+          <input type="search" data-flyout-search aria-label="Buscar" />
+          <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+        </label>
+        <button type="button" class="icon-btn bordered" style="width:30px;height:30px" data-flyout-expand-all aria-label="Expandir o contraer todo">
+          <i class="ri ri-expand-up-down-line"></i>
+        </button>
+      </div>
+    </div>
+    <div class="flyout-body"></div>
+  </div>
 </div>

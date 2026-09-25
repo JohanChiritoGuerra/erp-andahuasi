@@ -36,6 +36,21 @@ customizer-hide" dir="ltr" data-skin="default" data-bs-theme="light" data-tenant
   <meta property="og:description" content="@TempData.Peek("ogDescription")" />
   <meta property="og:site_name" content="@TempData.Peek("creatorName")" />
   <link rel="canonical" href="@TempData.Peek("productPage")" />
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('sigerp-theme');
+        if (theme !== 'dark' && theme !== 'light') {
+          var match = document.cookie.match(/(?:^|; )tema=(dark|light)/);
+          theme = match ? match[1] : null;
+        }
+        if (theme === 'dark' || theme === 'light') {
+          document.documentElement.setAttribute('data-bs-theme', theme);
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="~/img/favicon/favicon.ico" />

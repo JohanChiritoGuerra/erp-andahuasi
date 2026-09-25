@@ -109,13 +109,105 @@ public static class MenuUrl
         ["X"] = "ri-logout-box-r-line"
     };
 
+    private static readonly Dictionary<string, string> UrlIcons = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["/administracion/usuarios"] = "ri-user-settings-line",
+        ["/administracion/roles"] = "ri-shield-user-line",
+        ["/administracion/modulos"] = "ri-apps-2-line",
+        ["/administracion/categorias"] = "ri-folder-open-line",
+        ["/administracion/accesos"] = "ri-key-2-line",
+        ["/rrhh/perfil"] = "ri-user-3-line",
+        ["/paltos"] = "ri-tree-line",
+        ["/paltos/campos-campanias"] = "ri-landscape-line",
+        ["/paltos/fertilizacion"] = "ri-flask-line",
+        ["/paltos/fertilizacion/presupuesto"] = "ri-file-chart-line",
+        ["/paltos/fertilizacion/programas"] = "ri-file-chart-line",
+        ["/paltos/fertilizacion/control"] = "ri-line-chart-line",
+        ["/paltos/fertilizacion/configuracion-items"] = "ri-settings-3-line"
+    };
+
+    private static readonly Dictionary<string, string> TablerToRemix = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["tabler-users"] = "ri-group-line",
+        ["tabler-user"] = "ri-user-3-line",
+        ["tabler-settings"] = "ri-settings-3-line",
+        ["tabler-lock"] = "ri-lock-2-line",
+        ["tabler-key"] = "ri-key-2-line",
+        ["tabler-folder"] = "ri-folder-line",
+        ["tabler-layout"] = "ri-layout-grid-line",
+        ["tabler-apps"] = "ri-apps-2-line",
+        ["tabler-tree"] = "ri-tree-line",
+        ["tabler-plant"] = "ri-plant-line",
+        ["tabler-dashboard"] = "ri-dashboard-line",
+        ["tabler-tool"] = "ri-tools-line",
+        ["tabler-building"] = "ri-building-2-line"
+    };
+
+    /// <summary>Clase CSS completa para Iconify Remix (`ri ri-xxx`).</summary>
+    public static string CssIcon(string? icon, string fallback = "ri-circle-line")
+    {
+        var name = ResolveIconName(icon) ?? fallback;
+        return name.StartsWith("ri ", StringComparison.Ordinal) ? name : $"ri {name}";
+    }
+
     public static string Icon(AccesoMenuData acceso)
     {
         if (!string.IsNullOrWhiteSpace(acceso.AccIcono))
-            return acceso.AccIcono.Trim();
+            return CssIcon(acceso.AccIcono);
+
+        var url = Normalize(acceso.AccURL);
+        if (UrlIcons.TryGetValue(url, out var byUrl))
+            return CssIcon(byUrl);
 
         var tipo = acceso.AccTipo?.Trim().ToUpperInvariant() ?? "F";
-        return TypeIcons.TryGetValue(tipo, out var icon) ? icon : "ri-circle-line";
+        if (tipo.Length > 1)
+            tipo = tipo[..1];
+        return CssIcon(TypeIcons.TryGetValue(tipo, out var icon) ? icon : "ri-circle-line");
+    }
+
+    public static string ModuleIcon(string? icon, string? nombre = null) =>
+        CssIcon(icon, nombre?.Contains("palt", StringComparison.OrdinalIgnoreCase) == true ? "ri-tree-line"
+            : nombre?.Contains("admin", StringComparison.OrdinalIgnoreCase) == true ? "ri-settings-3-line"
+            : nombre?.Contains("manten", StringComparison.OrdinalIgnoreCase) == true ? "ri-tools-line"
+            : "ri-box-3-line");
+
+    public static string CategoryIcon(string? icon, string? nombre = null, string? firstUrl = null)
+    {
+        if (!string.IsNullOrWhiteSpace(icon))
+            return CssIcon(icon);
+
+        var url = Normalize(firstUrl);
+        if (UrlIcons.TryGetValue(url, out var byUrl))
+            return CssIcon(byUrl);
+
+        return CssIcon(
+            nombre?.Contains("fertiliz", StringComparison.OrdinalIgnoreCase) == true ? "ri-flask-line"
+            : nombre?.Contains("campo", StringComparison.OrdinalIgnoreCase) == true ? "ri-landscape-line"
+            : "ri-folder-line");
+    }
+
+    private static string? ResolveIconName(string? icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon))
+            return null;
+
+        icon = icon.Trim();
+        if (icon.StartsWith("ri ", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = icon.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            icon = parts.LastOrDefault(p => p.StartsWith("ri-", StringComparison.OrdinalIgnoreCase)) ?? icon;
+        }
+
+        if (TablerToRemix.TryGetValue(icon, out var mapped))
+            return mapped;
+
+        if (icon.StartsWith("tabler-", StringComparison.OrdinalIgnoreCase))
+            return "ri-circle-line";
+
+        if (icon.StartsWith("ri-", StringComparison.OrdinalIgnoreCase))
+            return icon;
+
+        return icon.Contains('-', StringComparison.Ordinal) ? icon : $"ri-{icon}";
     }
 
     public static string Normalize(string? url)
@@ -130,7 +222,6 @@ public static class MenuUrl
         if (Legacy.TryGetValue(url, out var mapped))
             return mapped;
 
-        // Conversión genérica de rutas legacy ASP.NET WebForms/Razor antiguo.
         if (url.StartsWith("__"))
         {
             url = "/" + url.TrimStart('_');

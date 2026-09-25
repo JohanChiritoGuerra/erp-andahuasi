@@ -9,4 +9,12 @@
     <UserSecretsId>erp-andahuasi-bff</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="kit_razor_andahuasi\**" />
+    <Content Remove="kit_razor_andahuasi\**" />
+    <None Remove="kit_razor_andahuasi\**" />
+    <RazorGenerate Remove="kit_razor_andahuasi\**" />
+    <EmbeddedResource Remove="kit_razor_andahuasi\**" />
+  </ItemGroup>
+
 </Project>

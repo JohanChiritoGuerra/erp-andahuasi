@@ -8,6 +8,8 @@
     ? user.DisplayName?.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(2).FirstOrDefault()
     : user.FirstName;
   var inicial = string.IsNullOrWhiteSpace(user.FirstName) ? "U" : user.FirstName[0].ToString().ToUpperInvariant();
+  var displayName = string.IsNullOrWhiteSpace(user.DisplayName) ? "Mi perfil" : user.DisplayName;
+  var displayEmail = string.IsNullOrWhiteSpace(user.Email) ? user.UsuaId : user.Email;
 
   bool IsActive(string? href)
   {
@@ -41,47 +43,63 @@
     : [];
 }
 
-<aside class="sigerp-sidebar" id="sigerp-sidebar" style="background-color: @tenant.PrimaryColor;">
+<aside class="sigerp-sidebar" id="sigerp-sidebar">
   <header class="sigerp-sidebar__header">
     <button type="button" class="sigerp-icon-btn d-md-none" id="sigerp-mobile-toggle" aria-label="Abrir menú">
-      <i class="ri-menu-line"></i>
+      <i class="ri ri-menu-line"></i>
     </button>
     <div class="sigerp-sidebar__hello d-md-none">
       Hola@(string.IsNullOrWhiteSpace(nombreSaludo) ? "" : $", {nombreSaludo}")
     </div>
-    <img src="@tenant.LogoBlanco" alt="@tenant.Nombre" class="sigerp-sidebar__logo d-none d-md-block" />
+    <span class="sigerp-sidebar__brand d-none d-md-flex">
+      <img class="sigerp-sidebar__logo sigerp-sidebar__logo--light" src="@tenant.LogoSidebarClaro" alt="@tenant.Nombre" />
+      <img class="sigerp-sidebar__logo sigerp-sidebar__logo--dark" src="@tenant.LogoSidebarOscuro" alt="@tenant.Nombre" />
+    </span>
     <button type="button" class="sigerp-icon-btn d-none d-md-inline-flex ms-auto" id="sigerp-pin" aria-label="Contraer barra lateral">
-      <i class="ri-pushpin-fill" id="sigerp-pin-icon"></i>
+      <i class="ri ri-pushpin-fill" id="sigerp-pin-icon"></i>
     </button>
     <div class="sigerp-sidebar__mobile-actions d-md-none ms-auto">
-      <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" aria-label="Notificaciones">
-        <i class="ri-notification-2-fill"></i>
-      </button>
+      <div class="dropdown">
+        <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" aria-label="Notificaciones" title="Notificaciones">
+          <span class="sigerp-notify">
+            <i class="ri ri-notification-2-fill"></i>
+            <span class="sigerp-notify__badge" hidden>0</span>
+          </span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow sigerp-notify-menu">
+          <div class="px-3 py-2">
+            <div class="fw-semibold">Notificaciones</div>
+            <div class="text-muted small">No hay notificaciones nuevas.</div>
+          </div>
+        </div>
+      </div>
       <a class="sigerp-avatar" href="/rrhh/perfil" aria-label="Mi perfil">
         @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
         {
-          <img src="@user.PhotoUrl" alt="@user.DisplayName" />
+          <img src="@user.PhotoUrl" alt="@displayName" />
         }
         else
         {
           <span>@inicial</span>
         }
+        <span class="sigerp-avatar__status" aria-hidden="true"></span>
       </a>
     </div>
   </header>
 
   <nav class="sigerp-sidebar__nav" id="sigerp-nav" aria-label="Navegación principal">
-    <div class="sigerp-sidebar__mobile-brand d-md-none" style="background-color: @tenant.PrimaryColor;">
-      <img src="@tenant.LogoBlanco" alt="@tenant.Nombre" />
+    <div class="sigerp-sidebar__mobile-brand d-md-none">
+      <img class="sigerp-sidebar__logo sigerp-sidebar__logo--light" src="@tenant.LogoSidebarClaro" alt="@tenant.Nombre" />
+      <img class="sigerp-sidebar__logo sigerp-sidebar__logo--dark" src="@tenant.LogoSidebarOscuro" alt="@tenant.Nombre" />
     </div>
     @foreach (var modulo in modulos)
     {
       var moduleActive = modulo.Categorias.Any(c => c.Accesos.Any(a => IsActive(a.AccURL)));
       <section class="sigerp-module@(moduleActive ? " is-active" : "")" data-module="@modulo.ModuloId">
         <button type="button" class="sigerp-item sigerp-item--module@(moduleActive ? " is-current" : "")" data-sigerp-toggle="module">
-          <i class="@(modulo.ModIcono ?? "ri-box-3-line")"></i>
+          <i class="@MenuUrl.ModuleIcon(modulo.ModIcono, modulo.ModNombre)"></i>
           <span class="sigerp-item__text sigerp-item__text--overline">@modulo.ModNombre</span>
-          <i class="ri-arrow-up-s-line sigerp-item__chevron d-none d-md-inline"></i>
+          <i class="ri ri-arrow-up-s-line sigerp-item__chevron d-none d-md-inline"></i>
         </button>
         <div class="sigerp-module__body">
           @foreach (var categoria in modulo.Categorias)
@@ -93,7 +111,7 @@
             {
               var href = MenuUrl.Normalize(first.AccURL);
               <a href="@href" class="sigerp-item@(categoryActive ? " is-current" : "")">
-                <i class="@(categoria.CatIcono ?? "ri-folder-line")"></i>
+                <i class="@MenuUrl.CategoryIcon(categoria.CatIcono, categoria.CatNombre, first.AccURL)"></i>
                 <span class="sigerp-item__text">@categoria.CatNombre</span>
               </a>
             }
@@ -101,9 +119,9 @@
             {
               <div class="sigerp-category is-open@(categoryActive ? " is-current" : "")">
                 <button type="button" class="sigerp-item@(categoryActive ? " is-current" : "")" data-sigerp-toggle="category">
-                  <i class="@(categoria.CatIcono ?? "ri-folder-line")"></i>
+                  <i class="@MenuUrl.CategoryIcon(categoria.CatIcono, categoria.CatNombre, first.AccURL)"></i>
                   <span class="sigerp-item__text">@categoria.CatNombre</span>
-                  <i class="ri-arrow-up-s-line sigerp-item__chevron"></i>
+                  <i class="ri ri-arrow-up-s-line sigerp-item__chevron"></i>
                 </button>
                 <div class="sigerp-category__body">
                   @foreach (var acceso in categoria.Accesos)
@@ -126,34 +144,80 @@
 
   <footer class="sigerp-sidebar__footer d-none d-md-block">
     <div class="sigerp-user">
-      <div class="dropdown">
-        <button type="button" class="sigerp-avatar" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">
+      <div class="dropdown sigerp-notify-wrap sigerp-notify-wrap--collapsed">
+        <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" id="sigerp-notify-collapsed" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones" title="Notificaciones">
+          <span class="sigerp-notify">
+            <i class="ri ri-notification-2-fill"></i>
+            <span class="sigerp-notify__badge" hidden>0</span>
+          </span>
+        </button>
+        <div class="dropdown-menu shadow sigerp-notify-menu">
+          <div class="px-3 py-2">
+            <div class="fw-semibold">Notificaciones</div>
+            <div class="text-muted small">No hay notificaciones nuevas.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dropdown sigerp-user-dropdown">
+        <button type="button" class="sigerp-avatar" id="sigerp-user-menu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">
           @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
           {
-            <img src="@user.PhotoUrl" alt="@user.DisplayName" />
+            <img src="@user.PhotoUrl" alt="@displayName" />
           }
           else
           {
             <span>@inicial</span>
           }
+          <span class="sigerp-avatar__status" aria-hidden="true"></span>
         </button>
-        <ul class="dropdown-menu shadow">
-          <li><a class="dropdown-item" href="/rrhh/perfil"><i class="ri-user-3-line me-2"></i>Ver mi perfil</a></li>
+        <ul class="dropdown-menu shadow sigerp-user-menu">
+          <li>
+            <a class="dropdown-item d-flex align-items-center gap-2" href="/rrhh/perfil">
+              <i class="ri ri-user-3-line"></i>
+              <span>Ver mi perfil</span>
+            </a>
+          </li>
+          <li>
+            <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-erp-theme="light">
+              <i class="ri ri-sun-line"></i>
+              <span>Modo claro</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-erp-theme="dark">
+              <i class="ri ri-moon-clear-line"></i>
+              <span>Modo oscuro</span>
+            </button>
+          </li>
           <li><hr class="dropdown-divider" /></li>
           <li class="px-3 py-2">
             <a class="btn btn-danger btn-sm w-100 d-flex justify-content-center align-items-center" href="/logout">
-              Cerrar sesión <i class="ri-logout-box-r-line ms-2"></i>
+              Cerrar sesión <i class="ri ri-logout-box-r-line ms-2"></i>
             </a>
           </li>
         </ul>
       </div>
+
       <div class="sigerp-user__meta">
-        <div class="sigerp-user__name">@(string.IsNullOrWhiteSpace(user.DisplayName) ? "Mi perfil" : user.DisplayName)</div>
-        <div class="sigerp-user__email">@(string.IsNullOrWhiteSpace(user.Email) ? user.UsuaId : user.Email)</div>
+        <div class="sigerp-user__name">@displayName</div>
+        <div class="sigerp-user__email">@displayEmail</div>
       </div>
-      <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" aria-label="Notificaciones">
-        <i class="ri-notification-2-fill"></i>
-      </button>
+
+      <div class="dropdown sigerp-notify-wrap sigerp-notify-wrap--expanded">
+        <button type="button" class="sigerp-icon-btn sigerp-icon-btn--notify" id="sigerp-notify-expanded" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones" title="Notificaciones">
+          <span class="sigerp-notify">
+            <i class="ri ri-notification-2-fill"></i>
+            <span class="sigerp-notify__badge" hidden>0</span>
+          </span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow sigerp-notify-menu">
+          <div class="px-3 py-2">
+            <div class="fw-semibold">Notificaciones</div>
+            <div class="text-muted small">No hay notificaciones nuevas.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </footer>
 </aside>

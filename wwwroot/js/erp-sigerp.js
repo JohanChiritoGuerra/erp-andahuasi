@@ -7,6 +7,7 @@
   const mobileToggle = document.getElementById('sigerp-mobile-toggle');
   const backdrop = document.getElementById('sigerp-backdrop');
   const key = 'sigerp-sidebar-collapsed';
+  const themeKey = 'sigerp-theme';
 
   if (!shell) return;
 
@@ -16,6 +17,7 @@
     if (pinIcon) {
       pinIcon.classList.toggle('ri-pushpin-fill', !collapsed);
       pinIcon.classList.toggle('ri-menu-unfold-line', collapsed);
+      if (!pinIcon.classList.contains('ri')) pinIcon.classList.add('ri');
     }
     try { localStorage.setItem(key, collapsed ? '1' : '0'); } catch { /* ignore */ }
   };
@@ -54,4 +56,55 @@
       button.closest('.sigerp-category')?.classList.toggle('is-open');
     });
   });
+
+  const applyTheme = mode => {
+    const theme = mode === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    try { localStorage.setItem(themeKey, theme); } catch { /* ignore */ }
+    document.querySelectorAll('[data-erp-theme]').forEach(button => {
+      button.classList.toggle('active', button.getAttribute('data-erp-theme') === theme);
+    });
+  };
+
+  try {
+    const saved = localStorage.getItem(themeKey);
+    if (saved === 'dark' || saved === 'light') applyTheme(saved);
+  } catch { /* ignore */ }
+
+  document.querySelectorAll('[data-erp-theme]').forEach(button => {
+    button.addEventListener('click', () => applyTheme(button.getAttribute('data-erp-theme')));
+  });
+
+  // Menús del pie: Popper fixed para que salgan fuera de la barra (sobre todo contraída).
+  if (window.bootstrap?.Dropdown) {
+    const initFooterDropdown = (trigger, getPlacement) => {
+      bootstrap.Dropdown.getOrCreateInstance(trigger, {
+        popperConfig: defaultPopperConfig => ({
+          ...defaultPopperConfig,
+          strategy: 'fixed',
+          placement: getPlacement(),
+          modifiers: [
+            ...(defaultPopperConfig.modifiers || []),
+            { name: 'offset', options: { offset: [0, 8] } },
+            { name: 'preventOverflow', options: { boundary: 'viewport', padding: 8 } },
+            { name: 'flip', options: { fallbackPlacements: ['right-start', 'top-start', 'bottom-end'] } }
+          ]
+        })
+      });
+    };
+
+    document.querySelectorAll('.sigerp-user-dropdown > [data-bs-toggle="dropdown"]').forEach(trigger => {
+      initFooterDropdown(trigger, () =>
+        shell.classList.contains('is-collapsed') && window.matchMedia('(min-width: 768px)').matches
+          ? 'right-start'
+          : 'top-start');
+    });
+
+    document.querySelectorAll('.sigerp-notify-wrap > [data-bs-toggle="dropdown"]').forEach(trigger => {
+      initFooterDropdown(trigger, () =>
+        shell.classList.contains('is-collapsed') && window.matchMedia('(min-width: 768px)').matches
+          ? 'right-start'
+          : 'top-end');
+    });
+  }
 })();

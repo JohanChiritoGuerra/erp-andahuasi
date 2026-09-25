@@ -1,0 +1,59 @@
+/* Tokens del shell. No redefinen html/body ni ocultan el scroll de las pantallas. */
+
+.app {
+  --font-sans: 'IBM Plex Sans', Helvetica, Arial, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --control-md: 32px;
+  --sidebar-w: 300px;
+  --rail-w: 55px;
+  --drawer-w: 300px;
+  --header-h: 56px;
+  --shadow-popover: 0 12px 32px rgba(6, 10, 11, .18);
+  --shadow-flyout: 0 14px 36px rgba(6, 10, 11, .26);
+  --bg: #f3f5f6;
+  --panel: #ffffff;
+  --border: #e4e8ea;
+  --field: #f7f9fa;
+  --text: #141b20;
+  --item: #3c464c;
+  --muted: #6d787f;
+  --faint: #67727a;
+  --hint: #a5aeb3;
+  --icon: #7d878d;
+  --hover: #f1f4f5;
+  --chip: #e7ecee;
+  --chip-text: #5c676d;
+  --scrim: rgba(15, 23, 26, 0.45);
+  --accent: #0067c0;
+  --accent-hover: #0056a1;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7f0f9;
+  --accent-text: #0067c0;
+  --danger: #d9382f;
+  --danger-hover: #bf2f27;
+  --online: #3fa94b;
+}
+
+[data-theme="dark"] .app,
+[data-bs-theme="dark"] .app {
+  --bg: #101517;
+  --panel: #171d20;
+  --border: #262e32;
+  --field: #1b2225;
+  --text: #e7ecee;
+  --item: #c3ccd0;
+  --muted: #96a1a7;
+  --faint: #9aa4a9;
+  --hint: #6c767b;
+  --icon: #8b959a;
+  --hover: #1f272a;
+  --chip: #242c30;
+  --chip-text: #a3adb2;
+  --scrim: rgba(6, 10, 11, 0.6);
+  --accent-soft: rgba(0, 103, 192, 0.20);
+}

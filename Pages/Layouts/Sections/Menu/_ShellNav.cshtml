@@ -1,0 +1,77 @@
+@using ErpAndahuasi.Menu
+@{
+  var currentPage = Context.Request.Path.Value ?? "/";
+
+  bool IsActive(string? href)
+  {
+    var url = MenuUrl.Normalize(href);
+    return url != "#" && (string.Equals(currentPage, url, StringComparison.OrdinalIgnoreCase)
+      || (currentPage?.StartsWith(url + "/", StringComparison.OrdinalIgnoreCase) ?? false));
+  }
+
+  var modulos = ErpSession.IsAuthenticated
+    ? (await MenuProvider.GetModulosAsync())
+      .Select(modulo => new ModuloMenuData
+      {
+        ModuloId = modulo.ModuloId,
+        ModNombre = modulo.ModNombre,
+        ModIcono = modulo.ModIcono,
+        ModOrden = modulo.ModOrden,
+        Categorias = modulo.Categorias
+          .Select(categoria => new CategoriaMenuData
+          {
+            CategoriaId = categoria.CategoriaId,
+            CatNombre = categoria.CatNombre,
+            CatIcono = categoria.CatIcono,
+            CatOrden = categoria.CatOrden,
+            Accesos = categoria.Accesos.Where(acceso => MenuUrl.Normalize(acceso.AccURL) != "/rrhh/perfil").ToList()
+          })
+          .Where(categoria => categoria.Accesos.Count > 0)
+          .ToList()
+      })
+      .Where(modulo => modulo.Categorias.Count > 0)
+      .ToList()
+    : [];
+}
+
+<div class="nav-tree">
+@foreach (var modulo in modulos)
+{
+  var modAbierto = modulo.Categorias.Any(c => c.Accesos.Any(a => IsActive(a.AccURL)));
+  <div class="nav-mod">
+    <button type="button" class="nav-row lvl-0" data-toggle aria-expanded="@(modAbierto ? "true" : "false")" title="@modulo.ModNombre">
+      <i class="@MenuUrl.ModuleIcon(modulo.ModIcono, modulo.ModNombre)"></i>
+      <span class="nav-label">@modulo.ModNombre</span>
+      @if (modulo.Categorias.Count > 0)
+      {
+        <i class="ri ri-arrow-right-s-line nav-caret"></i>
+      }
+    </button>
+    <div class="nav-children" @(modAbierto ? "" : "hidden")>
+    @foreach (var categoria in modulo.Categorias)
+    {
+      var catAbierta = categoria.Accesos.Any(a => IsActive(a.AccURL));
+      var first = categoria.Accesos[0];
+      <div class="nav-cat">
+        <button type="button" class="nav-row lvl-1" data-toggle aria-expanded="@(catAbierta ? "true" : "false")">
+          <i class="@MenuUrl.CategoryIcon(categoria.CatIcono, categoria.CatNombre, first.AccURL)"></i>
+          <span class="nav-label">@categoria.CatNombre</span>
+          <i class="ri ri-arrow-right-s-line nav-caret"></i>
+        </button>
+        <div class="nav-children" @(catAbierta ? "" : "hidden")>
+        @foreach (var acceso in categoria.Accesos)
+        {
+          var href = MenuUrl.Normalize(acceso.AccURL);
+          var actual = IsActive(href);
+          <a class="nav-row lvl-2@(actual ? " is-active" : "")" href="@href" @(actual ? Html.Raw("aria-current=\"page\"") : null)>
+            <span class="nav-dot"></span>
+            <span class="nav-label">@acceso.AccNombre</span>
+          </a>
+        }
+        </div>
+      </div>
+    }
+    </div>
+  </div>
+}
+</div>

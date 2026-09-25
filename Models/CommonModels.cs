@@ -20,7 +20,9 @@ public class TenantInfo
     public string EmpresaId { get; set; } = "02";
     public string Nombre { get; set; } = "Andahuasi";
     public string PrimaryColor { get; set; } = "#0067C0";
-    public string LogoBlanco { get; set; } = "/img/branding/logo_andahuasi.png";
+    public string LogoSidebarClaro { get; set; } = "/img/branding/logo_andahuasi_sidebar_claro.png";
+    public string LogoSidebarOscuro { get; set; } = "/img/branding/logo_andahuasi_sidebar_oscuro.png";
+    public string LogoLogin { get; set; } = "/img/branding/logo_andahuasi_login_card.png";
 
     public string PrimaryRgb
     {
