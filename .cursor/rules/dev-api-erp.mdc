@@ -1,0 +1,15 @@
+---
+description: Al levantar el ERP en local, siempre arrancar también la API Sigerp.
+alwaysApply: true
+---
+
+# Desarrollo local ERP + API
+
+Cuando levantes o reinicies la app `erp-andahuasi`, **siempre** levanta también la API:
+
+- API: `c:\Users\johanchg\Repositories\api-andahuasi-pe\src\SigerpApi\SigerpApi.csproj` en `https://localhost:7255` (perfil `https`).
+- ERP: `c:\Users\johanchg\Repositories\erp-andahuasi\ErpAndahuasi.csproj` en `https://localhost:7091`.
+
+Orden: API primero, luego ERP. Preferir el script `scripts/start-dev.ps1` en la raíz de `erp-andahuasi`.
+
+Sin la API, perfil, menú y pantallas que llaman a `ErpApi:BaseUrl` fallan con conexión denegada a `localhost:7255`.

@@ -3,59 +3,90 @@
 @{
   ViewData["Title"] = "Mi perfil";
   var foto = ErpSession.Current.PhotoUrl;
+  var nombre = Model.Perfil?.Nombres ?? ErpSession.Current.DisplayName;
+  var cargo = Model.Perfil?.Cargo ?? "";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
 
-<div class="erp-page">
-  <h4 class="mb-1">Mi perfil</h4>
-  <p class="text-muted mb-4">Datos del trabajador autenticado.</p>
+<div class="erp-ds">
+  <div class="page-head" style="margin-bottom:16px">
+    <div>
+      <h1 class="page-title">Mi perfil</h1>
+      <p class="page-sub">Datos del trabajador autenticado</p>
+    </div>
+  </div>
 
   @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
   {
-    <div class="alert alert-danger">@Model.ErrorMessage</div>
+    <div class="note note-danger" style="margin-bottom:16px">@Model.ErrorMessage</div>
   }
 
-  <div class="card">
-    <div class="card-body p-4 p-md-5">
-      <div class="text-center mb-4 pb-4 border-bottom">
-        @if (!string.IsNullOrWhiteSpace(foto))
-        {
-          <img src="@foto" alt="@ErpSession.Current.DisplayName" class="rounded mb-3 shadow-sm" style="width:96px;height:128px;object-fit:cover;object-position:center top;" />
-        }
-        <h5 class="mb-1">@(Model.Perfil?.Nombres ?? ErpSession.Current.DisplayName)</h5>
-        @if (!string.IsNullOrWhiteSpace(Model.Perfil?.Cargo))
-        {
-          <p class="text-muted mb-2">@Model.Perfil.Cargo</p>
-        }
+  <div class="perfil-layout">
+    <aside class="panel perfil-card">
+      <div class="panel-body perfil-card__body">
+        <div class="perfil-card__hero">
+          @if (!string.IsNullOrWhiteSpace(foto))
+          {
+            <img class="perfil-photo" src="@foto" alt="@nombre" />
+          }
+          else
+          {
+            <div class="perfil-photo perfil-photo--empty" aria-hidden="true"><i class="ri ri-user-line"></i></div>
+          }
+          <h2 class="perfil-name">@nombre</h2>
+          @if (!string.IsNullOrWhiteSpace(cargo))
+          {
+            <p class="perfil-role">@cargo</p>
+          }
+        </div>
         @if (!string.IsNullOrWhiteSpace(Model.Perfil?.TrabDNI))
         {
-          <span class="badge bg-label-primary">DNI: @Model.Perfil.TrabDNI</span>
+          <div class="perfil-card__meta">
+            <span class="stat-label">Documento</span>
+            <span class="pill pill-info">DNI @Model.Perfil.TrabDNI</span>
+          </div>
         }
       </div>
-      <div class="row g-3 g-md-4">
-        <div class="col-sm-6">
-          <label class="form-label">Inicio de contrato</label>
-          <input class="form-control" readonly value="@(Model.Perfil?.ContLabFecInicio?.ToString("dd/MM/yyyy") ?? "-")" />
+    </aside>
+
+    <div class="perfil-main">
+      <section class="panel">
+        <div class="panel-head"><span>Contrato</span></div>
+        <div class="panel-body">
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label">Inicio de contrato</label>
+              <input class="input" readonly value="@(Model.Perfil?.ContLabFecInicio?.ToString("dd/MM/yyyy") ?? "—")" />
+            </div>
+            <div class="field">
+              <label class="field-label">Fin de contrato</label>
+              <input class="input" readonly value="@(Model.Perfil?.ContLabFecFin?.ToString("dd/MM/yyyy") ?? "—")" />
+            </div>
+          </div>
         </div>
-        <div class="col-sm-6">
-          <label class="form-label">Fin de contrato</label>
-          <input class="form-control" readonly value="@(Model.Perfil?.ContLabFecFin?.ToString("dd/MM/yyyy") ?? "-")" />
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span>Información personal</span></div>
+        <div class="panel-body">
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label">Correo electrónico</label>
+              <input class="input" readonly value="@(Model.Perfil?.TrabCorreoElec ?? "—")" />
+            </div>
+            <div class="field">
+              <label class="field-label">Teléfono / celular</label>
+              <input class="input" readonly value="@(Model.Perfil?.TrabTelef ?? "—")" />
+            </div>
+            <div class="field field--full">
+              <label class="field-label">Dirección</label>
+              <textarea class="input input--area" rows="2" readonly>@(Model.Perfil?.TrabDireccion ?? "—")</textarea>
+            </div>
+          </div>
         </div>
-        <div class="col-12">
-          <h6 class="mb-3 mt-2">Información personal</h6>
-        </div>
-        <div class="col-sm-6">
-          <label class="form-label">Correo electrónico</label>
-          <input class="form-control" readonly value="@Model.Perfil?.TrabCorreoElec" />
-        </div>
-        <div class="col-sm-6">
-          <label class="form-label">Teléfono / celular</label>
-          <input class="form-control" readonly value="@Model.Perfil?.TrabTelef" />
-        </div>
-        <div class="col-12">
-          <label class="form-label">Dirección</label>
-          <textarea class="form-control" rows="2" readonly>@Model.Perfil?.TrabDireccion</textarea>
-        </div>
-      </div>
+      </section>
     </div>
   </div>
 </div>

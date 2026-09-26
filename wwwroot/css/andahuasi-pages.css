@@ -1,0 +1,412 @@
+/* Componentes Andahuasi (kit), acotados a .erp-ds para coexistir con Bootstrap. */
+/* Fuente: kit_razor_andahuasi/wwwroot/css/andahuasi.css — no editar a mano salvo excepciones ERP. */
+
+.shell-main:has(.erp-ds--fill),
+.shell-main.shell-main--fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px 32px;
+}
+@media (max-width: 767px) {
+  .shell-main:has(.erp-ds--fill),
+  .shell-main.shell-main--fill { padding: 20px 16px; }
+}
+
+.erp-ds {
+  font-family: var(--font-sans);
+  color: var(--text);
+  font-size: var(--text-base);
+  /* Anula variables/colores Materio-Bootstrap dentro del DS */
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-secondary-bg: var(--field);
+  --bs-tertiary-bg: var(--field);
+  --bs-card-bg: var(--panel);
+  --bs-card-color: var(--text);
+  --bs-card-border-color: var(--border);
+  --bs-card-cap-bg: var(--field);
+  --bs-primary: var(--accent);
+  --bs-primary-rgb: 0, 103, 192;
+  --bs-link-color: var(--accent-text);
+  --bs-emphasis-color: var(--text);
+  --bs-heading-color: var(--text);
+  --bs-form-control-bg: var(--panel);
+  --bs-form-control-disabled-bg: var(--field);
+  background: transparent;
+}
+.erp-ds--fill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.erp-ds a { color: inherit; text-decoration: none; }
+.erp-ds [hidden] { display: none !important; }
+.erp-ds h1, .erp-ds h2, .erp-ds h3, .erp-ds p { margin: 0; }
+
+/* =====================  BOTONES  ===================== */
+.erp-ds .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--control-md); padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: var(--text-md); font-weight: 500; white-space: nowrap; cursor: pointer; }
+.erp-ds .btn:hover { background: var(--hover); color: var(--text); }
+.erp-ds .btn > i { font-size: 15px; }
+.erp-ds .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.erp-ds .btn-primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); color: var(--accent-fg); }
+.erp-ds .btn-outline { border-color: var(--accent); background: transparent; color: var(--accent-text); font-weight: 600; }
+.erp-ds .btn-outline:hover { background: var(--accent-soft); color: var(--accent-text); }
+.erp-ds .btn-ghost { border-color: transparent; background: transparent; color: var(--item); }
+.erp-ds .btn-help { border-style: dashed; background: transparent; font-size: 12px; }
+.erp-ds .btn-help > i { color: var(--accent-text); }
+.erp-ds .btn-danger { border-color: var(--danger); background: var(--danger); color: #fff; font-weight: 600; }
+.erp-ds .btn-danger:hover { border-color: var(--danger-hover); background: var(--danger-hover); color: #fff; }
+.erp-ds .btn:disabled, .erp-ds .btn[aria-disabled="true"] { border-color: var(--border); background: var(--field); color: var(--hint); cursor: not-allowed; }
+.erp-ds .btn-sm { height: var(--control-sm); padding: 0 10px; font-size: 12px; }
+.erp-ds .btn-lg { height: var(--control-lg); padding: 0 16px; }
+.erp-ds .btn-block { width: 100%; }
+.erp-ds .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); cursor: pointer; }
+.erp-ds .icon-btn:hover { background: var(--hover); color: var(--text); }
+.erp-ds .icon-btn.bordered { width: 32px; height: 32px; border: 1px solid var(--border); background: var(--field); }
+
+/* =====================  CAMPOS  ===================== */
+.erp-ds .field { display: flex; flex-direction: column; gap: 4px; }
+.erp-ds .field > label, .erp-ds .field-label { font-size: 12px; font-weight: 500; color: var(--item); }
+.erp-ds .field-help { font-size: 11.5px; color: var(--muted); }
+.erp-ds .field-error { font-size: 11.5px; color: var(--danger-fg); }
+.erp-ds .input { height: var(--control-md); padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: var(--text-md); outline: 0; min-width: 0; }
+.erp-ds .input.sm { height: 30px; padding: 0 8px; font-size: 12.5px; }
+.erp-ds .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.erp-ds .input.is-invalid { border-color: var(--danger-fg); }
+.erp-ds .input::placeholder, .erp-ds .search input::placeholder { color: var(--faint); }
+.erp-ds input[type="number"].input { font-variant-numeric: tabular-nums; }
+
+.erp-ds .search { display: flex; align-items: center; gap: 8px; height: var(--control-md); min-width: 0; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--field); color: var(--faint); }
+.erp-ds .search.on-panel { background: var(--panel); }
+.erp-ds .search.sm { height: 30px; }
+.erp-ds .search:focus-within { border-color: var(--accent); }
+.erp-ds .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: var(--text-md); }
+.erp-ds .search input::-webkit-search-cancel-button { display: none; }
+.erp-ds .search-clear { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); cursor: pointer; }
+.erp-ds .search-clear:hover { background: var(--hover); color: var(--accent-text); }
+.erp-ds .search-clear i { font-size: 17px; }
+
+.erp-ds .dropdown { position: relative; z-index: 1; }
+.erp-ds .dropdown.is-open { z-index: 5; }
+.erp-ds .dropdown-btn { display: flex; align-items: center; gap: 8px; width: 100%; height: var(--control-md); padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--text); font-size: var(--text-md); cursor: pointer; }
+.erp-ds .dropdown-btn span { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erp-ds .dropdown-btn i { color: var(--muted); transition: transform .15s ease; }
+.erp-ds .dropdown.is-open .dropdown-btn { border-color: var(--accent); }
+.erp-ds .dropdown.is-open .dropdown-btn i { transform: rotate(180deg); }
+/* Anula .dropdown-menu { display:none } de Bootstrap/Materio — z-index bajo el drawer (40) */
+.erp-ds .dropdown-menu {
+  display: none;
+  position: absolute; top: calc(100% + 4px); right: 0; left: 0; z-index: 5;
+  min-width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--panel); box-shadow: var(--shadow-popover);
+}
+.erp-ds .dropdown.is-open > .dropdown-menu,
+.erp-ds .dropdown-menu:not([hidden]) { display: block; }
+.erp-ds .dropdown-menu[hidden] { display: none !important; }
+.erp-ds .dropdown-menu .menu-item { height: 32px; padding: 0 10px; font-weight: 400; }
+.erp-ds .dropdown-menu .menu-item .ri-check-line { display: none; margin-left: auto; }
+.erp-ds .dropdown-menu .menu-item.is-selected .ri-check-line { display: inline-flex; }
+
+.erp-ds .file-field { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.erp-ds .file-field input[type="file"] { display: none; }
+
+/* Control segmentado: <div class="segmented"><input type="radio" id=a><label for=a>â€¦</label>â€¦</div> */
+.erp-ds .segmented { display: flex; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--field); }
+.erp-ds .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.erp-ds .segmented label { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; height: 28px; border-radius: 2px; color: var(--muted); font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.erp-ds .segmented input:checked + label { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent-text); font-weight: 600; }
+.erp-ds .segmented input:focus-visible + label { outline: 2px solid var(--accent); }
+
+/* =====================  DATOS Y ESTADOS  ===================== */
+.erp-ds .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.erp-ds .stat-card { display: flex; align-items: center; gap: 10px; min-width: 0; height: 60px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); color: inherit; }
+.erp-ds .stat-card:hover { border-color: var(--hint); color: inherit; }
+.erp-ds .stat-card.is-selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.erp-ds .stat-icon { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; background: var(--chip); color: var(--text); }
+.erp-ds .stat-icon i { font-size: 17px; }
+.erp-ds .stat-icon.success { background: var(--success-bg); color: var(--success-fg); }
+.erp-ds .stat-icon.warning { background: var(--warning-bg); color: var(--warning-fg); }
+.erp-ds .stat-icon.danger { background: var(--danger-bg); color: var(--danger-fg); }
+.erp-ds .stat-icon.info { background: var(--info-bg); color: var(--info-fg); }
+.erp-ds .stat-label { display: block; font-size: 12px; line-height: 15px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erp-ds .stat-value { display: block; font-size: 20px; line-height: 24px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.erp-ds .pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--radius-pill); background: var(--chip); color: var(--chip-text); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.erp-ds .pill-success { background: var(--success-bg); color: var(--success-fg); }
+.erp-ds .pill-warning { background: var(--warning-bg); color: var(--warning-fg); }
+.erp-ds .pill-danger { background: var(--danger-bg); color: var(--danger-fg); }
+.erp-ds .pill-info { background: var(--info-bg); color: var(--info-fg); }
+.erp-ds .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--chip); color: var(--chip-text); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Tabla: filas como enlaces (<a class="dt-row">) para seleccionar */
+.erp-ds .data-table { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); overflow: hidden; }
+.erp-ds .dt-head, .erp-ds .dt-row { display: grid; grid-template-columns: var(--dt-cols, minmax(0,1fr)); gap: 12px; align-items: center; padding: 0 12px; }
+.erp-ds .dt-head { height: 34px; background: var(--field); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); flex-shrink: 0; }
+.erp-ds .dt-body { flex: 1; min-height: 0; overflow-y: auto; }
+.erp-ds .dt-row { padding-top: 9px; padding-bottom: 9px; border-bottom: 1px solid var(--border); color: inherit; }
+.erp-ds .dt-row:hover { background: var(--hover); color: inherit; }
+.erp-ds .dt-row.is-selected { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.erp-ds .dt-code { display: block; font-size: 12px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.erp-ds .dt-desc { display: block; font-size: 12.5px; line-height: 17px; color: var(--item); text-wrap: pretty; }
+.erp-ds .dt-muted { font-size: 12px; font-weight: 500; color: var(--muted); }
+.erp-ds .dt-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 40px; padding: 0 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.erp-ds .pager { display: flex; gap: 4px; }
+.erp-ds .pager a, .erp-ds .pager span { display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--item); font-size: 12px; }
+.erp-ds .pager .is-current { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.erp-ds .pager .is-disabled { color: var(--hint); }
+.erp-ds .dt-empty { padding: 32px 16px; text-align: center; font-size: 13px; color: var(--faint); }
+
+/* =====================  CONTENEDORES  ===================== */
+.erp-ds .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.erp-ds .page-title { font-size: var(--text-lg); line-height: var(--lh-lg); font-weight: 600; letter-spacing: -.01em; }
+.erp-ds .page-sub { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.erp-ds .page-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.erp-ds .panel { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); color: var(--text); overflow: hidden; box-shadow: none; }
+.erp-ds .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; padding: 0 14px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; flex-shrink: 0; color: var(--text); background: var(--panel); }
+.erp-ds .panel-body { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; background: var(--panel); color: var(--text); }
+.erp-ds .panel-foot { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--panel); }
+
+.erp-ds .card,
+.erp-ds .card.muted {
+  display: flex; flex-direction: column; gap: 10px; padding: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text);
+  box-shadow: none; --bs-card-bg: transparent;
+}
+.erp-ds .card.muted { background: var(--field); --bs-card-bg: var(--field); }
+.erp-ds .step-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.erp-ds .step-num { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: 11px; font-weight: 600; }
+.erp-ds .hint-text { font-size: 12px; line-height: 17px; color: var(--muted); text-wrap: pretty; }
+.erp-ds .hint-text strong { color: var(--text); font-weight: 600; }
+.erp-ds .note { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-text); font-size: 12.5px; line-height: 18px; }
+.erp-ds .empty { padding: 16px 8px; border: 1px dashed var(--dash); border-radius: var(--radius-sm); text-align: center; font-size: 12px; line-height: 17px; color: var(--faint); }
+.erp-ds .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.erp-ds .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 8px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--item); font-size: var(--text-md); font-weight: 500; text-align: left; cursor: pointer; }
+.erp-ds .menu-item:hover { background: var(--hover); color: var(--item); }
+.erp-ds .menu-item.is-selected { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.erp-ds .modal { width: min(460px, calc(100% - 16px)); padding: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); color: var(--text); box-shadow: var(--shadow-modal); }
+.erp-ds .modal::backdrop { background: var(--scrim); }
+.erp-ds .modal-head { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--border); }
+.erp-ds .modal-head > i { color: var(--accent-text); }
+.erp-ds .modal-title { flex: 1; font-size: 14px; font-weight: 600; }
+.erp-ds .modal-body { display: flex; flex-direction: column; gap: 12px; padding: 16px; font-size: 13px; line-height: 19px; color: var(--item); }
+.erp-ds .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+
+/* —— Extras ERP (perfil, formularios) —— */
+.erp-ds .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.erp-ds .field--full { grid-column: 1 / -1; }
+.erp-ds .input { width: 100%; }
+.erp-ds .input--area { height: auto; min-height: 64px; padding: 8px 10px; resize: vertical; font: inherit; width: 100%; }
+.erp-ds .input[readonly] { background: var(--field); color: var(--item); }
+.erp-ds .note-danger { background: var(--danger-bg); color: var(--danger-fg); }
+.erp-ds .perfil-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: stretch; max-width: var(--content-max, 1200px); }
+.erp-ds .perfil-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
+.erp-ds .perfil-card { height: 100%; min-height: 100%; }
+.erp-ds .perfil-card__body { flex: 1; align-items: center; justify-content: space-between; text-align: center; gap: 20px; padding: 20px 16px; }
+.erp-ds .perfil-card__hero { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; justify-content: center; width: 100%; }
+.erp-ds .perfil-card__meta { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding-top: 16px; border-top: 1px solid var(--border); }
+.erp-ds .perfil-photo { width: 120px; height: 160px; object-fit: cover; object-position: center top; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--chip); box-shadow: var(--shadow-popover); }
+.erp-ds .perfil-photo--empty { display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.erp-ds .perfil-photo--empty i { font-size: 42px; }
+.erp-ds .perfil-name { margin: 4px 0 0; font-size: 15px; font-weight: 600; line-height: 20px; color: var(--text); text-wrap: balance; }
+.erp-ds .perfil-role { margin: 0; font-size: 12.5px; line-height: 17px; color: var(--muted); }
+.erp-ds .cfg-item-page {
+  max-width: 640px;
+  width: 100%;
+  gap: 12px;
+}
+.erp-ds .cfg-item-page__head { flex-shrink: 0; }
+.erp-ds .cfg-item-page__alert { flex-shrink: 0; }
+.erp-ds .cfg-item-page__form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.erp-ds .cfg-item-page__form > .panel-head,
+.erp-ds .cfg-item-page__form > .panel-foot { flex-shrink: 0; }
+.erp-ds .cfg-item-page__form > .panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.erp-ds .dt-body { scrollbar-width: none; }
+.erp-ds .dt-body::-webkit-scrollbar { display: none; }
+.erp-ds .stat-card { cursor: pointer; }
+.erp-ds .dt-row {
+  cursor: pointer; width: 100%; text-align: left;
+  border: 0; border-bottom: 1px solid var(--border);
+  background: transparent; color: inherit;
+  border-radius: 0;
+}
+.erp-ds .dt-body .dt-row:last-child { border-bottom: 0; }
+
+/* =====================  PLANTILLAS  ===================== */
+/* A · Lista + panel de detalle — chrome fijo; solo dt-body / panel-body hacen scroll */
+.erp-ds .tpl-list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.erp-ds .tpl-list-panel > .page-head { flex-shrink: 0; }
+.erp-ds .tpl-list-panel > .tpl-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 384px;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.erp-ds .tpl-list-panel > .tpl-grid > .panel {
+  width: 384px;
+  max-width: 100%;
+  justify-self: end;
+  min-height: 0;
+  overflow: hidden;
+}
+.erp-ds .tpl-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.erp-ds .tpl-col > .stat-grid,
+.erp-ds .tpl-col > .toolbar { flex-shrink: 0; }
+.erp-ds .tpl-col > .data-table {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.erp-ds .dt-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.erp-ds .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.erp-ds .toolbar .search { flex: 1 1 240px; }
+.erp-ds .toolbar .dropdown { flex: 0 0 190px; }
+
+/* En panel estrecho: inputs de un valor no deben estirarse a todo el ancho */
+.erp-ds .panel .field-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+.erp-ds .panel .field:not(.field--full) .input,
+.erp-ds .panel .field:not(.field--full) .select {
+  max-width: 100%;
+}
+
+/* Inputs/selects: forzar tokens (Materio pinta morado en oscuro) */
+.erp-ds .input,
+.erp-ds .select,
+.erp-ds select.input,
+.erp-ds textarea.input {
+  background-color: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.erp-ds .input:focus,
+.erp-ds .select:focus,
+.erp-ds select.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: 0;
+}
+.erp-ds .segmented { background: var(--field); border-color: var(--border); }
+.erp-ds .data-table { background: var(--panel); border-color: var(--border); }
+.erp-ds .dt-head { background: var(--field); color: var(--faint); border-color: var(--border); }
+.erp-ds .stat-card { background: var(--panel); border-color: var(--border); color: inherit; }
+.erp-ds .search { background: var(--field); border-color: var(--border); color: var(--faint); }
+.erp-ds .search.on-panel { background: var(--panel); }
+.erp-ds .dropdown-btn { background: var(--panel); border-color: var(--border); color: var(--text); }
+.erp-ds .dropdown-menu { background: var(--panel); border-color: var(--border); }
+
+@media (max-width: 1023px) {
+  .erp-ds .tpl-list-panel { gap: 12px; }
+  .erp-ds .tpl-list-panel > .tpl-grid {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .erp-ds .tpl-list-panel > .tpl-grid > .panel { display: none; width: auto; }
+  .erp-ds .tpl-col { flex: 1; }
+  .erp-ds .perfil-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  /* Una sola fila de 4 métricas compactas */
+  .erp-ds .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .erp-ds .stat-card {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: auto;
+    min-height: 72px;
+    padding: 8px 2px;
+    text-align: center;
+  }
+  .erp-ds .stat-card > span:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+  }
+  .erp-ds .stat-icon {
+    width: 26px;
+    height: 26px;
+  }
+  .erp-ds .stat-icon i { font-size: 14px; }
+  .erp-ds .stat-label {
+    font-size: 10px;
+    line-height: 12px;
+    white-space: normal;
+    text-align: center;
+  }
+  .erp-ds .stat-value {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  .erp-ds .dt-head { display: none; }
+  .erp-ds .dt-row {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 2px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    align-items: start;
+  }
+  .erp-ds .dt-row > span:nth-child(3),
+  .erp-ds .dt-row > span:nth-child(4) {
+    display: inline-flex;
+    margin-top: 4px;
+  }
+  .erp-ds .dt-row > span:nth-child(3) { grid-column: 1; grid-row: 2; }
+  .erp-ds .dt-row > span:nth-child(4) { grid-column: 2; grid-row: 2; justify-self: end; }
+  .erp-ds .toolbar .dropdown { flex: 1 1 100%; }
+  .erp-ds .field-grid { grid-template-columns: 1fr; }
+  .erp-ds .toolbar { position: relative; z-index: 1; overflow: visible; }
+  /* Con drawer abierto, la búsqueda/filtros no deben tapar el menú (drawer z-index 40) */
+  .drawer-open .erp-ds .toolbar,
+  .drawer-open .erp-ds .dropdown,
+  .drawer-open .erp-ds .dropdown.is-open { z-index: 0; }
+}

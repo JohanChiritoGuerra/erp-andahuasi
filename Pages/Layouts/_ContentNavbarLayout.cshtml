@@ -139,7 +139,7 @@
       </button>
     </header>
 
-    <main class="shell-main">
+    <main class="shell-main@(ViewData["shellFill"] is true ? " shell-main--fill" : "")">
       @RenderBody()
       <form id="erp-antiforgery" class="d-none">@Html.AntiForgeryToken()</form>
     </main>

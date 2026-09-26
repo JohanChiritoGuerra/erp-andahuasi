@@ -1,0 +1,31 @@
+---
+description: Sistema de diseño Andahuasi — tokens, plantillas y componentes obligatorios
+alwaysApply: true
+---
+
+# Diseño Andahuasi (ERP)
+
+Fuente de verdad: `kit_razor_andahuasi/` + `CLAUDE.md` + `docs/diseno/`.
+
+## Antes de cualquier pantalla UI
+1. Lee `CLAUDE.md` (reglas) y, si es plantilla A, `kit_razor_andahuasi/Pages/Paltos/Fertilizacion/ConfiguracionItems.cshtml`.
+2. Usa solo clases del kit en `.erp-ds` + tokens `var(--*)`. Prohibido hex en componentes y clases Bootstrap (`.btn-primary` de BS, `.card-body`, `.form-control`, `.table`).
+3. CSS de pantalla: `wwwroot/css/andahuasi-pages.css` (componentes del kit scoped). Shell: `andahuasi-shell.css` + `andahuasi-tokens.css`.
+4. Referencia visual: `docs/diseno/prototipo/ConfigItemsScreen.dc.html` y `Sistema de Diseño Andahuasi.dc.html`.
+
+## Plantillas
+- **A** `.tpl-list-panel` — lista izq + panel 384px der. `ViewData["shellFill"] = true`. Scroll solo en `.dt-body` y `.panel-body`; título, métricas y filtros fijos. En <1024 px ocultar panel y abrir la ruta de detalle (también fill).
+- **B** bandeja — stats + toolbar + tabla full width.
+- **C** formulario por pasos + resumen fijo.
+- Móvil <768: 4 métricas en una fila compacta.
+
+## Obligatorio
+- Acento fijo `#0067C0` vía tokens. Un solo botón primario por vista.
+- Pills: success / warning / danger / info / neutral según `CLAUDE.md`. Ítem: Pendiente = `pill-warning`, Nutriente = `pill-success`, Consumo común = `pill-info`, Sin configurar = `pill-danger`.
+- Iconos Remix `ri-*-line`. Tipografía IBM Plex Sans.
+- Al levantar el ERP, levantar también la API (`scripts/start-dev.ps1` / regla `dev-api-erp`).
+- Si la pantalla fija un comportamiento nuevo, actualizar juntos el CSS del kit, `CLAUDE.md`, `GUIA-DISENO.md` y esta regla. En el ERP, la regla va en `andahuasi-pages.css` bajo `.erp-ds`.
+
+## No hacer
+- Inventar variantes de componentes o reinventar el panel de Configuración de ítems: copiar el markup del kit.
+- Mezclar Materio/Bootstrap en páginas `.erp-ds`.

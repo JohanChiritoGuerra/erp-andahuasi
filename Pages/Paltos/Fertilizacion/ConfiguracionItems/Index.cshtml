@@ -2,35 +2,483 @@
 @model ErpAndahuasi.Pages.Paltos.Fertilizacion.ConfiguracionItems.IndexModel
 @{
   ViewData["Title"] = "Configuración de ítems";
+  ViewData["shellFill"] = true;
 }
-@section VendorStyles {
-  <link rel="stylesheet" href="~/vendor/libs/datatables-bs5/datatables.bootstrap5.dist.css" />
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
 @section VendorScripts {
-  <script src="~/vendor/libs/datatables-bs5/datatables-bootstrap5.dist.js"></script>
+  <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
   <script src="~/js/erp.js"></script>
 }
-<h4 class="mb-1">Configuración de ítems</h4>
-<p class="text-muted mb-4">Catálogo de fertilizantes y su composición.</p>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table" id="tabla">
-      <thead><tr><th>Código</th><th>Nombre</th><th>Unidad</th><th>Clasificación</th><th>Estado</th><th>Reporte</th><th></th></tr></thead>
-    </table>
+
+<div class="erp-ds erp-ds--fill" id="cfg-items">
+  <div class="tpl-list-panel">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Configuración de ítems de almacén</h1>
+        <p class="page-sub">Define presentación, conversión y aporte de nutrientes</p>
+      </div>
+    </div>
+
+    <div class="tpl-grid">
+      <section class="tpl-col">
+        <div class="stat-grid" id="cfg-stats">
+          <button type="button" class="stat-card is-selected" data-tab="todos">
+            <span class="stat-icon"><i class="ri ri-archive-line"></i></span>
+            <span style="min-width:0"><span class="stat-label">Todos</span><span class="stat-value" data-stat="todos">0</span></span>
+          </button>
+          <button type="button" class="stat-card" data-tab="pendiente">
+            <span class="stat-icon warning"><i class="ri ri-time-line"></i></span>
+            <span style="min-width:0"><span class="stat-label">Pendientes</span><span class="stat-value" data-stat="pendiente">0</span></span>
+          </button>
+          <button type="button" class="stat-card" data-tab="nutriente">
+            <span class="stat-icon success"><i class="ri ri-leaf-line"></i></span>
+            <span style="min-width:0"><span class="stat-label">Nutrientes</span><span class="stat-value" data-stat="nutriente">0</span></span>
+          </button>
+          <button type="button" class="stat-card" data-tab="comun">
+            <span class="stat-icon info"><i class="ri ri-shopping-cart-2-line"></i></span>
+            <span style="min-width:0"><span class="stat-label">Consumo común</span><span class="stat-value" data-stat="comun">0</span></span>
+          </button>
+        </div>
+
+        <div class="toolbar">
+          <label class="search on-panel">
+            <i class="ri ri-search-line"></i>
+            <input type="search" id="cfg-q" placeholder="Buscar por código o descripción" aria-label="Buscar ítems" />
+            <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+          </label>
+          <div class="dropdown" id="cfg-clasif-dd">
+            <input type="hidden" id="cfg-clasif" value="todos" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Todas las clasificaciones</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" hidden>
+              <button type="button" class="menu-item is-selected" data-value="todos">Todas las clasificaciones<i class="ri ri-check-line"></i></button>
+              <button type="button" class="menu-item" data-value="pendiente">Pendiente<i class="ri ri-check-line"></i></button>
+              <button type="button" class="menu-item" data-value="nutriente">Nutriente<i class="ri ri-check-line"></i></button>
+              <button type="button" class="menu-item" data-value="comun">Consumo común<i class="ri ri-check-line"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-table" style="--dt-cols:minmax(0,1fr) 72px 128px 124px;flex:1">
+          <div class="dt-head"><span>Ítem</span><span>Unidad</span><span>Clasificación</span><span>Aporte por unidad</span></div>
+          <div class="dt-body" id="cfg-rows"></div>
+          <div class="dt-foot"><span id="cfg-count">Cargando…</span></div>
+        </div>
+      </section>
+
+      <aside class="panel" id="cfg-panel">
+        <div class="panel-body"><div class="empty">Elige un ítem de la lista para configurarlo.</div></div>
+      </aside>
+    </div>
   </div>
+
+  <template id="tpl-nutriente">
+    <div data-nut-fila style="display:flex;align-items:center;gap:6px">
+      <select class="input sm" style="width:78px" data-campo="Elemento" aria-label="Elemento">
+        <option>N</option><option>P</option><option>K</option><option>Ca</option><option>Mg</option><option>S</option>
+        <option>B</option><option>Zn</option><option>Fe</option><option>Mn</option><option>Cu</option>
+      </select>
+      <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" aria-label="Valor" />
+      <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">% p/p</span>
+      <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri ri-close-line"></i></button>
+    </div>
+  </template>
+
+  <dialog class="modal" id="dlg-oxidos" aria-labelledby="dlg-oxidos-t">
+    <div class="modal-head">
+      <i class="ri ri-question-line"></i>
+      <span class="modal-title" id="dlg-oxidos-t">Fichas con óxidos</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Si la etiqueta expresa el contenido como óxido, multiplica el valor por el factor para obtener el elemento puro que se registra en la composición.</p>
+      <div class="data-table" style="--dt-cols:1fr 1fr 1fr">
+        <div class="dt-head"><span>En la ficha</span><span>Factor</span><span>Registrar como</span></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>K₂O</span><span>× 0.830</span><b>K</b></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>P₂O₅</span><span>× 0.436</span><b>P</b></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>CaO</span><span>× 0.715</span><b>Ca</b></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>MgO</span><span>× 0.603</span><b>Mg</b></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>SO₃</span><span>× 0.400</span><b>S</b></div>
+        <div class="dt-row" style="font-size:13px;color:var(--text);font-variant-numeric:tabular-nums"><span>B₂O₃</span><span>× 0.311</span><b>B</b></div>
+      </div>
+      <div class="note">Ejemplo: 46 % K₂O × 0.830 = 38.2 % K</div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn" data-modal-close>Entendido</button></div>
+  </dialog>
 </div>
+
 @section PageScripts {
 <script>
-  $(function () {
-    const table = $('#tabla').DataTable({
-      data: [],
-      columns: [
-        { data: 'codigoItem' }, { data: 'nombreItem' }, { data: 'unidadSalida' }, { data: 'clasificacion' },
-        { data: 'estadoValidacion' }, { data: 'estadoReporte' },
-        { data: null, orderable: false, render: r => `<a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/configuracion-items/${r.grpAlmId}-${r.clsAlmId}-${r.iteAlmId}">Editar</a>` }
-      ]
+(function () {
+  const root = document.getElementById('cfg-items');
+  if (!root) return;
+
+  const MOBILE_MQ = window.matchMedia('(max-width: 1023px)');
+  const isMobile = () => MOBILE_MQ.matches;
+  const ELEMENTOS = ['N','P','K','Ca','Mg','S','B','Zn','Fe','Mn','Cu'];
+
+  let items = [];
+  let tab = 'todos';
+  let q = '';
+  let selectedKey = '';
+  let detail = null;
+  let detailLoading = false;
+
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const keyOf = it => `${it.grpAlmId ?? it.GrpAlmId}-${it.clsAlmId ?? it.ClsAlmId}-${it.iteAlmId ?? it.IteAlmId}`;
+  const prop = (it, camel, pascal) => it?.[camel] ?? it?.[pascal];
+  /* Estado de negocio (sin borrador):
+     - Pendiente: no guardado / sin configuración
+     - Nutriente: guardado eligiendo Nutriente
+     - Consumo común: guardado eligiendo Consumo común */
+  const isComun = it => !!prop(it, 'tieneConfiguracion', 'TieneConfiguracion')
+    && String(prop(it, 'destinoReporte', 'DestinoReporte') || '').toUpperCase() === 'CONSUMO';
+  const isNutriente = it => !!prop(it, 'tieneConfiguracion', 'TieneConfiguracion') && !isComun(it);
+  const isPendiente = it => !prop(it, 'tieneConfiguracion', 'TieneConfiguracion');
+  const itemHref = key => `/paltos/fertilizacion/configuracion-items/${encodeURIComponent(key)}`;
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const CLASIF_LABEL = { todos: 'Todas las clasificaciones', pendiente: 'Pendiente', nutriente: 'Nutriente', comun: 'Consumo común' };
+
+  function pillClasificacion(it) {
+    if (isComun(it)) return { clase: 'pill-info', texto: 'Consumo común' };
+    if (isNutriente(it)) return { clase: 'pill-success', texto: 'Nutriente' };
+    return { clase: 'pill-warning', texto: 'Pendiente' };
+  }
+  function pillAporte(it) {
+    if (isComun(it)) return { clase: '', texto: 'No aplica' };
+    if (isNutriente(it) && prop(it, 'aportesPorUnidad', 'AportesPorUnidad')) return { clase: 'pill-success', texto: prop(it, 'aportesPorUnidad', 'AportesPorUnidad') };
+    if (isNutriente(it)) return { clase: 'pill-success', texto: 'Nutriente' };
+    return { clase: 'pill-danger', texto: 'Sin configurar' };
+  }
+
+  function resumen() {
+    return {
+      todos: items.length,
+      pendiente: items.filter(isPendiente).length,
+      nutriente: items.filter(isNutriente).length,
+      comun: items.filter(isComun).length
+    };
+  }
+
+  function filtered() {
+    return items.filter(it => {
+      if (tab === 'pendiente' && !isPendiente(it)) return false;
+      if (tab === 'nutriente' && !isNutriente(it)) return false;
+      if (tab === 'comun' && !isComun(it)) return false;
+      if (q) {
+        const hay = norm(prop(it, 'codigoItem', 'CodigoItem')).includes(q) || norm(prop(it, 'nombreItem', 'NombreItem')).includes(q);
+        if (!hay) return false;
+      }
+      return true;
     });
-    erp.get('?handler=Lista').then(r => table.clear().rows.add(r?.data || []).draw());
+  }
+
+  function syncClasifUi() {
+    const dd = document.getElementById('cfg-clasif-dd');
+    if (!dd) return;
+    document.getElementById('cfg-clasif').value = tab;
+    const label = dd.querySelector('[data-dropdown-label]');
+    if (label) label.textContent = CLASIF_LABEL[tab] || CLASIF_LABEL.todos;
+    dd.querySelectorAll('[data-value]').forEach(o => o.classList.toggle('is-selected', o.dataset.value === tab));
+    root.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('is-selected', el.dataset.tab === tab));
+  }
+
+  function renderStats() {
+    const r = resumen();
+    root.querySelectorAll('[data-stat]').forEach(el => { el.textContent = r[el.dataset.stat] ?? 0; });
+    syncClasifUi();
+  }
+
+  function renderRows() {
+    const list = filtered();
+    const body = document.getElementById('cfg-rows');
+    if (!list.length) {
+      body.innerHTML = '<div class="dt-empty">Sin ítems que coincidan.</div>';
+    } else {
+      body.innerHTML = list.map(it => {
+        const k = keyOf(it);
+        const pc = pillClasificacion(it);
+        const pa = pillAporte(it);
+        return `<button type="button" class="dt-row${k === selectedKey ? ' is-selected' : ''}" data-key="${k}">
+          <span style="min-width:0"><span class="dt-code">${esc(prop(it, 'codigoItem', 'CodigoItem'))}</span><span class="dt-desc">${esc(prop(it, 'nombreItem', 'NombreItem'))}</span></span>
+          <span class="dt-muted">${esc(prop(it, 'unidadSalida', 'UnidadSalida') || '—')}</span>
+          <span><span class="pill ${pc.clase}">${esc(pc.texto)}</span></span>
+          <span><span class="pill ${pa.clase}">${esc(pa.texto)}</span></span>
+        </button>`;
+      }).join('');
+    }
+    document.getElementById('cfg-count').textContent = `Mostrando ${list.length} de ${items.length} ítems`;
+    if (!isMobile()) renderPanel();
+  }
+
+  function nutFilaHtml(el, liquido) {
+    const code = String(prop(el, 'elementoCodigo', 'ElementoCodigo') || 'N');
+    const valor = prop(el, 'valorDeclarado', 'ValorDeclarado');
+    const opts = ELEMENTOS.map(e => `<option value="${e}"${e === code ? ' selected' : ''}>${e}</option>`).join('');
+    return `<div data-nut-fila style="display:flex;align-items:center;gap:6px">
+      <select class="input sm" style="width:78px" data-campo="Elemento" aria-label="Elemento">${opts}</select>
+      <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" value="${esc(valor ?? '')}" aria-label="Valor" />
+      <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">${liquido ? '% p/v' : '% p/p'}</span>
+      <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri ri-close-line"></i></button>
+    </div>`;
+  }
+
+  function syncPanel(panel) {
+    const modo = panel.querySelector('[name="cfg-modo"]:checked')?.value || 'nutriente';
+    const pres = panel.querySelector('[name="cfg-pres"]:checked')?.value || 'solido';
+    const liq = pres === 'liquido';
+    panel.querySelectorAll('[data-si-modo]').forEach(e => { e.hidden = e.dataset.siModo !== modo; });
+    panel.querySelectorAll('[data-si-pres]').forEach(e => { e.hidden = e.dataset.siPres !== pres; });
+    panel.querySelectorAll('[data-nut-unidad]').forEach(e => { e.textContent = liq ? '% p/v' : '% p/p'; });
+    const palabra = panel.querySelector('[data-unidad-palabra]');
+    if (palabra) palabra.textContent = liq ? 'litro' : 'kg';
+    const filas = [...panel.querySelectorAll('[data-nut-fila]')];
+    const vacio = panel.querySelector('[data-nut-vacio]');
+    if (vacio) vacio.hidden = filas.length > 0;
+    const fmt = g => g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : (Math.round(g * 10) / 10) + ' g';
+    const val = filas.map(f => ({
+      el: f.querySelector('[data-campo=Elemento]')?.value,
+      v: parseFloat(f.querySelector('[data-campo=Valor]')?.value)
+    })).filter(x => x.v > 0);
+    const chips = panel.querySelector('[data-aporte-chips]');
+    const vacioAporte = panel.querySelector('[data-aporte-vacio]');
+    const ref = panel.querySelector('[data-aporte-ref]');
+    if (chips) chips.innerHTML = val.map(x => `<span class="pill pill-success">${esc(x.el)} ${fmt(x.v * 10)}</span>`).join('');
+    if (vacioAporte) vacioAporte.hidden = val.length > 0;
+    if (ref) {
+      ref.textContent = '20 ' + (liq ? 'litros' : 'kg') + ' → ' +
+        (val.length ? val.map(x => x.el + ' ' + fmt(x.v * 200)).join(' · ') : 'aporte pendiente');
+    }
+  }
+
+  function renderPanel() {
+    const panel = document.getElementById('cfg-panel');
+    const listItem = items.find(x => keyOf(x) === selectedKey);
+
+    if (!selectedKey || !listItem) {
+      panel.innerHTML = '<div class="panel-body"><div class="empty">Elige un ítem de la lista para configurarlo.</div></div>';
+      return;
+    }
+    if (detailLoading) {
+      panel.innerHTML = '<div class="panel-body"><div class="empty">Cargando configuración…</div></div>';
+      return;
+    }
+
+    const it = detail || listItem;
+    const pa = pillAporte(listItem);
+    const unidad = esc(prop(listItem, 'unidadSalida', 'UnidadSalida') || '—');
+    const codigo = esc(prop(listItem, 'codigoItem', 'CodigoItem'));
+    const nombre = esc(prop(listItem, 'nombreItem', 'NombreItem'));
+    const comun = isComun(it) || isComun(listItem);
+    const liquido = String(prop(it, 'formaFisica', 'FormaFisica') || '').toUpperCase() === 'LIQUIDO';
+    const fuente = esc(prop(it, 'fuenteComposicion', 'FuenteComposicion') || '');
+    const elems = prop(it, 'elementos', 'Elementos') || [];
+    const docs = prop(it, 'documentos', 'Documentos') || [];
+    const ficha = docs.find(d => String(prop(d, 'tipoDocumento', 'TipoDocumento') || '').toUpperCase() === 'FT');
+    const fichaNota = ficha
+      ? `${esc(prop(ficha, 'nombreOriginal', 'NombreOriginal'))} · guardada`
+      : 'Solo PDF, máx. 10 MB. Se sube al guardar.';
+
+    panel.innerHTML = `
+      <div class="panel-head"><span>Configurar ítem</span><span class="pill ${pa.clase}">${esc(pa.texto)}</span></div>
+      <div class="panel-body">
+        <div class="card muted" style="flex-direction:row;gap:12px;padding:10px 12px">
+          <div style="flex:1;min-width:0"><span class="dt-code">${codigo}</span><span class="dt-desc">${nombre}</span></div>
+          <div style="padding-left:12px;border-left:1px solid var(--border)"><span class="stat-label" style="font-size:11px">Unidad</span><b style="font-size:13px;color:var(--text)">${unidad}</b></div>
+        </div>
+
+        <div class="segmented">
+          <input type="radio" id="cfg-modo-nut" name="cfg-modo" value="nutriente"${comun ? '' : ' checked'} />
+          <label for="cfg-modo-nut"><i class="ri ri-leaf-line"></i>Nutriente</label>
+          <input type="radio" id="cfg-modo-com" name="cfg-modo" value="comun"${comun ? ' checked' : ''} />
+          <label for="cfg-modo-com"><i class="ri ri-shopping-cart-2-line"></i>Consumo común</label>
+        </div>
+
+        <div class="card hint-text" data-si-modo="comun"${comun ? '' : ' hidden'}>El ítem se registra como consumo común. No aporta nutrientes al cálculo de fertilización y no requiere composición ni ficha técnica.</div>
+
+        <div data-si-modo="nutriente" style="display:contents">
+          <div class="card">
+            <div class="step-head"><span class="step-num">1</span>Presentación</div>
+            <p class="hint-text">La unidad de almacén (${unidad}) no define si el producto es sólido o líquido: tú lo eliges.</p>
+            <div class="segmented">
+              <input type="radio" id="cfg-pres-sol" name="cfg-pres" value="solido"${liquido ? '' : ' checked'} />
+              <label for="cfg-pres-sol">Sólido</label>
+              <input type="radio" id="cfg-pres-liq" name="cfg-pres" value="liquido"${liquido ? ' checked' : ''} />
+              <label for="cfg-pres-liq">Líquido</label>
+            </div>
+            <p class="hint-text" data-si-pres="liquido"${liquido ? '' : ' hidden'}>Unidad de salida ${unidad}: 1 unidad = 1 L de producto. Con g/L o % p/v el aporte se calcula por litro; la densidad solo se pide si usas % p/p.</p>
+            <p class="hint-text" data-si-pres="solido"${liquido ? ' hidden' : ''}>Unidad de salida ${unidad}: el aporte se calcula por kg de producto con % p/p.</p>
+          </div>
+
+          <div class="card">
+            <div class="step-head"><span class="step-num">2</span>Composición nutricional</div>
+            <p class="hint-text">Copia el valor del <strong>elemento puro</strong> que aparece en la ficha o en la plantilla Excel (ej. 43 % K, 33 % N). Si la etiqueta dice óxido (K₂O, CaO, P₂O₅), conviértelo antes. Para % usa máximo 100; para g/L máximo 2000.</p>
+            <button type="button" class="btn btn-help btn-sm" style="align-self:flex-start" data-modal-open="dlg-oxidos"><i class="ri ri-question-line"></i>Ayuda si la ficha tiene óxidos</button>
+            <div class="empty" data-nut-vacio${elems.length ? ' hidden' : ''}>Aún no se configuró composición. Agrega el primer elemento desde la etiqueta o ficha técnica.</div>
+            <div data-nut-lista style="display:flex;flex-direction:column;gap:6px">${elems.map(e => nutFilaHtml(e, liquido)).join('')}</div>
+            <button type="button" class="btn btn-outline btn-sm" style="align-self:flex-start" data-nut-agregar><i class="ri ri-add-line"></i>Agregar nutriente</button>
+          </div>
+
+          <div class="card muted" style="gap:6px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <b style="font-size:12.5px">1 <span data-unidad-palabra>${liquido ? 'litro' : 'kg'}</span> → aportes elementales</b>
+              <span class="pill" data-aporte-vacio${elems.length ? ' hidden' : ''}>Sin aporte calculable</span>
+            </div>
+            <div class="chips" data-aporte-chips></div>
+            <span class="hint-text" data-aporte-ref style="font-variant-numeric:tabular-nums"></span>
+          </div>
+
+          <div class="card">
+            <div class="step-head"><span class="step-num">3</span>Fuente y ficha técnica</div>
+            <div class="field">
+              <input class="input" id="cfg-fuente" placeholder="Fuente de la composición" value="${fuente}" />
+              <span class="field-help">Ejemplo: etiqueta del proveedor, ficha técnica o certificado de análisis.</span>
+            </div>
+            <div class="file-field">
+              <label class="btn btn-sm"><i class="ri ri-attachment-line" style="color:var(--icon)"></i>Elegir ficha PDF<input type="file" id="cfg-ficha" accept="application/pdf" data-ficha /></label>
+              <span class="field-help" data-ficha-nota>${fichaNota}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot">
+        <button type="button" class="btn btn-primary btn-lg" style="flex:1" id="cfg-guardar"><i class="ri ri-save-3-line"></i>Guardar configuración</button>
+      </div>`;
+
+    syncPanel(panel);
+  }
+
+  async function selectItem(key) {
+    if (isMobile()) { window.location.href = itemHref(key); return; }
+    selectedKey = key;
+    detail = null;
+    detailLoading = true;
+    renderRows();
+    try {
+      const r = await fetch(`?handler=Detalle&codigo=${encodeURIComponent(key)}`, { headers: { Accept: 'application/json' } });
+      const json = await r.json();
+      if (selectedKey !== key) return;
+      detail = json.data || json.Data || items.find(x => keyOf(x) === key) || null;
+      if (detail && !prop(detail, 'codigoItem', 'CodigoItem')) {
+        const listItem = items.find(x => keyOf(x) === key);
+        if (listItem) detail = { ...listItem, ...detail };
+      }
+    } catch {
+      detail = items.find(x => keyOf(x) === key) || null;
+    } finally {
+      detailLoading = false;
+      if (selectedKey === key) renderPanel();
+    }
+  }
+
+  async function guardar() {
+    const panel = document.getElementById('cfg-panel');
+    if (!selectedKey || !panel) return;
+    const modo = panel.querySelector('[name="cfg-modo"]:checked')?.value || 'nutriente';
+    const liquido = panel.querySelector('[name="cfg-pres"]:checked')?.value === 'liquido';
+    const elementos = [...panel.querySelectorAll('[data-nut-fila]')].map(f => ({
+      elementoCodigo: f.querySelector('[data-campo=Elemento]')?.value || '',
+      formaDeclarada: '',
+      valorDeclarado: Number(f.querySelector('[data-campo=Valor]')?.value || 0),
+      tipoConcentracion: liquido ? 'PV' : 'PP'
+    })).filter(x => x.elementoCodigo && x.valorDeclarado > 0);
+
+    const body = {
+      activo: true,
+      clasificacion: modo === 'comun' ? 'AUXILIAR' : 'NUTRICIONAL',
+      destinoReporte: modo === 'comun' ? 'CONSUMO' : 'NUTRIENTES',
+      estadoValidacion: 'VALIDADO',
+      formaFisica: liquido ? 'LIQUIDO' : 'SOLIDO',
+      factorKgPorUnidad: liquido ? null : 1,
+      factorLitrosPorUnidad: liquido ? 1 : null,
+      densidadKgPorLitro: null,
+      vigenciaDesde: new Date().toISOString().slice(0, 10),
+      fuenteComposicion: document.getElementById('cfg-fuente')?.value || '',
+      elementos: modo === 'comun' ? [] : elementos
+    };
+
+    const btn = document.getElementById('cfg-guardar');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await erp.post(`?handler=Guardar&codigo=${encodeURIComponent(selectedKey)}`, body);
+      erp.toast(res?.success ? 'success' : 'error', res?.message || (res?.success ? 'Guardado' : 'No se pudo guardar'));
+      if (res?.success) {
+        const lista = await fetch('?handler=Lista', { headers: { Accept: 'application/json' } }).then(r => r.json());
+        items = lista?.data || lista?.Data || items;
+        detail = res.data || res.Data || detail;
+        renderStats();
+        renderRows();
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  root.addEventListener('click', e => {
+    const stat = e.target.closest('[data-tab]');
+    if (stat && root.contains(stat)) {
+      tab = stat.dataset.tab; selectedKey = ''; detail = null;
+      renderStats(); renderRows(); return;
+    }
+    const row = e.target.closest('[data-key]');
+    if (row && root.contains(row) && !e.target.closest('#cfg-panel')) {
+      selectItem(row.dataset.key); return;
+    }
+    const opt = e.target.closest('#cfg-clasif-dd [data-value]');
+    if (opt) {
+      tab = opt.dataset.value || 'todos';
+      selectedKey = ''; detail = null;
+      renderStats(); renderRows(); return;
+    }
+    if (e.target.closest('[data-nut-agregar]')) {
+      const lista = document.querySelector('#cfg-panel [data-nut-lista]');
+      const tpl = document.getElementById('tpl-nutriente');
+      if (lista && tpl) {
+        lista.appendChild(tpl.content.firstElementChild.cloneNode(true));
+        syncPanel(document.getElementById('cfg-panel'));
+      }
+      return;
+    }
+    const del = e.target.closest('[data-nut-quitar]');
+    if (del) {
+      del.closest('[data-nut-fila]')?.remove();
+      syncPanel(document.getElementById('cfg-panel'));
+      return;
+    }
+    if (e.target.closest('#cfg-guardar')) guardar();
   });
+
+  root.addEventListener('change', e => {
+    if (e.target.matches('[data-ficha]')) {
+      const f = e.target.files?.[0];
+      const nota = document.querySelector('[data-ficha-nota]');
+      if (f && nota) nota.textContent = f.name + ' · se sube al guardar';
+    }
+    if (e.target.closest('#cfg-panel')) syncPanel(document.getElementById('cfg-panel'));
+  });
+  root.addEventListener('input', e => {
+    if (e.target.closest('#cfg-panel')) syncPanel(document.getElementById('cfg-panel'));
+  });
+
+  document.getElementById('cfg-q').addEventListener('input', e => {
+    q = norm(e.target.value); selectedKey = ''; detail = null; renderRows();
+  });
+
+  MOBILE_MQ.addEventListener('change', () => {
+    if (isMobile()) renderPanel();
+    else if (selectedKey) selectItem(selectedKey);
+    else renderPanel();
+  });
+
+  fetch('?handler=Lista', { headers: { Accept: 'application/json' } })
+    .then(r => r.json())
+    .then(r => { items = r?.data || r?.Data || []; renderStats(); renderRows(); })
+    .catch(() => {
+      document.getElementById('cfg-count').textContent = 'No se pudo cargar la lista.';
+      document.getElementById('cfg-rows').innerHTML = '<div class="dt-empty">Error al cargar ítems.</div>';
+    });
+})();
 </script>
 }

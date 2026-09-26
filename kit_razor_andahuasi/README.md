@@ -55,7 +55,8 @@ Busca `TODO` en el kit. Son estos puntos:
 
 - Cada página solo escribe su contenido; el shell lo pone `_Layout`.
 - Empieza con `.page-head` (título + subtítulo + `.page-actions`).
-- Elige plantilla: **A** `.tpl-list-panel` (lista + panel, pon `ViewData["FillHeight"] = true`), **B** bandeja (stat-grid + toolbar + data-table a ancho completo), **C** formulario por secciones (`.card` con `.step-head` + panel de resumen).
+- Elige plantilla: **A** `.tpl-list-panel` (lista + panel; en el kit `ViewData["FillHeight"] = true`, en el ERP `ViewData["shellFill"] = true`), **B** bandeja (stat-grid + toolbar + data-table a ancho completo), **C** formulario por secciones (`.card` con `.step-head` + panel de resumen).
+- En A el scroll es solo de `.dt-body` y `.panel-body`. Título, métricas y filtros quedan fijos. No pongas `overflow: visible` en esos cuerpos.
 - Componentes disponibles en `andahuasi.css`: `.btn` (`-primary`, `-outline`, `-ghost`, `-help`, `-danger`, `-sm`, `-lg`), `.icon-btn`, `.field`, `.input`, `.search` (+ `data-search-clear`), `.dropdown` (+ `data-dropdown-btn`, `data-value`, `data-submit`), `.segmented` (radios), `.stat-card`, `.pill-*`, `.badge`, `.data-table`, `.panel`, `.card`, `.step-num`, `.note`, `.empty`, `.modal` (`<dialog>` + `data-modal-open` / `data-modal-close`).
 - `shell.js` activa todo por atributos `data-*`; no hay que inicializar nada.
 

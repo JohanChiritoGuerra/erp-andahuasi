@@ -1,139 +1,209 @@
 @page "/paltos/fertilizacion/configuracion-items/{codigo}"
 @model ErpAndahuasi.Pages.Paltos.Fertilizacion.ConfiguracionItems.ItemModel
 @{
-  ViewData["Title"] = Model.Item?.NombreItem ?? "Ítem";
+  ViewData["Title"] = Model.Item?.NombreItem ?? "Configurar ítem";
+  ViewData["shellFill"] = true;
   var item = Model.Item;
+  var comun = string.Equals(item?.DestinoReporte, "CONSUMO", StringComparison.OrdinalIgnoreCase);
+  var liquido = string.Equals(item?.FormaFisica, "LIQUIDO", StringComparison.OrdinalIgnoreCase);
+  var elementosFijos = new[] { "N", "P", "K", "Ca", "Mg", "S", "B", "Zn", "Fe", "Mn", "Cu" };
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
 @section VendorScripts {
   <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
   <script src="~/js/erp.js"></script>
 }
-<a href="/paltos/fertilizacion/configuracion-items" class="btn btn-text-secondary mb-3"><i class="ri ri-arrow-left-line"></i> Volver</a>
-@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert alert-danger">@Model.ErrorMessage</div> }
-@if (item is null) { <div class="alert alert-warning">No hay configuración para este ítem. Complete el formulario para crearla.</div> }
-<div class="card">
-  <div class="card-body">
-    <h5 class="mb-4">@(item?.NombreItem ?? Model.Ite) <small class="text-muted">@Model.Grp-@Model.Cls-@Model.Ite</small></h5>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label class="form-label">Clasificación</label>
-        <select class="form-select" id="clasificacion">
-          @foreach (var v in new[] { "NUTRICIONAL", "FITOSANITARIO", "BIOLOGICO", "AUXILIAR" })
-          {
-            <option selected="@(item?.Clasificacion == v)">@v</option>
-          }
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Destino reporte</label>
-        <select class="form-select" id="destinoReporte">
-          @foreach (var v in new[] { "NUTRIENTES", "CONSUMO" }) { <option selected="@(item?.DestinoReporte == v)">@v</option> }
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Estado</label>
-        <select class="form-select" id="estadoValidacion">
-          @foreach (var v in new[] { "BORRADOR", "VALIDADO" }) { <option selected="@(item?.EstadoValidacion == v)">@v</option> }
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Forma física</label>
-        <select class="form-select" id="formaFisica">
-          @foreach (var v in new[] { "SOLIDO", "LIQUIDO" }) { <option selected="@(item?.FormaFisica == v)">@v</option> }
-        </select>
-      </div>
-      <div class="col-md-3"><label class="form-label">kg / unidad</label><input type="number" step="0.0001" class="form-control" id="factorKg" value="@item?.FactorKgPorUnidad" /></div>
-      <div class="col-md-3"><label class="form-label">L / unidad</label><input type="number" step="0.0001" class="form-control" id="factorLt" value="@item?.FactorLitrosPorUnidad" /></div>
-      <div class="col-md-3"><label class="form-label">Densidad kg/L</label><input type="number" step="0.0001" class="form-control" id="densidad" value="@item?.DensidadKgPorLitro" /></div>
-      <div class="col-md-3"><label class="form-label">Vigencia desde</label><input type="date" class="form-control" id="vigenciaDesde" value="@item?.VigenciaDesde?.ToString("yyyy-MM-dd")" /></div>
-      <div class="col-md-12"><label class="form-label">Fuente de composición</label><input class="form-control" id="fuente" value="@item?.FuenteComposicion" /></div>
-      <div class="col-12 form-check form-switch"><input class="form-check-input" type="checkbox" id="activo" checked="@(item?.Activo != false)" /><label class="form-check-label" for="activo">Activo</label></div>
-    </div>
-    <hr />
-    <h6>Elementos</h6>
-    <table class="table" id="tablaElem">
-      <thead><tr><th>Elemento</th><th>Forma</th><th>Valor</th><th>Tipo</th><th></th></tr></thead>
-      <tbody>
-      @foreach (var el in item?.Elementos ?? [])
-      {
-        <tr>
-          <td><input class="form-control form-control-sm codigo" value="@el.ElementoCodigo" list="elementosLista" /></td>
-          <td><input class="form-control form-control-sm forma" value="@el.FormaDeclarada" /></td>
-          <td><input type="number" step="0.0001" class="form-control form-control-sm valor" value="@el.ValorDeclarado" /></td>
-          <td>
-            <select class="form-select form-select-sm tipo">
-              @foreach (var t in new[] { "PP", "PV", "GL" }) { <option selected="@(el.TipoConcentracion == t)">@t</option> }
-            </select>
-          </td>
-          <td><button type="button" class="btn btn-sm btn-text-danger quitar">&times;</button></td>
-        </tr>
-      }
-      </tbody>
-    </table>
-    <datalist id="elementosLista">
-      @foreach (var el in Model.Elementos) { <option value="@el.Codigo">@el.Nombre</option> }
-    </datalist>
-    <button class="btn btn-sm btn-outline-secondary mb-4" id="btnAddElem" type="button">Agregar elemento</button>
-    <div class="d-flex gap-2">
-      <button class="btn btn-primary" id="btnGuardar" type="button">Guardar configuración</button>
-    </div>
-    <hr />
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Imagen</label>
-        <input type="file" class="form-control" id="imagen" accept="image/*" />
-        <button class="btn btn-outline-primary mt-2" id="btnImagen" type="button">Subir imagen</button>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Documento (PDF)</label>
-        <input type="file" class="form-control" id="documento" accept="application/pdf" />
-        <input type="date" class="form-control mt-2" id="docVigencia" />
-        <button class="btn btn-outline-primary mt-2" id="btnDocumento" type="button">Subir documento</button>
-      </div>
+
+<div class="erp-ds erp-ds--fill cfg-item-page" id="cfg-item-page">
+  <div class="page-head cfg-item-page__head">
+    <div>
+      <a href="/paltos/fertilizacion/configuracion-items" class="btn btn-sm" style="margin-bottom:10px"><i class="ri ri-arrow-left-line"></i>Volver a la lista</a>
+      <h1 class="page-title">Configurar ítem</h1>
+      <p class="page-sub">@(item?.CodigoItem ?? Model.Ite) · @(item?.NombreItem ?? "Sin nombre")</p>
     </div>
   </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+  {
+    <div class="note note-danger cfg-item-page__alert">@Model.ErrorMessage</div>
+  }
+
+  <form class="panel cfg-item-page__form" id="form-item">
+    <div class="panel-head">
+      <span>Configurar ítem</span>
+      <span class="pill @(comun ? "" : (item?.TieneConfiguracion == true ? "pill-success" : "pill-danger"))">
+        @(comun ? "Consumo común" : (item?.TieneConfiguracion == true ? "Nutriente" : "Pendiente"))
+      </span>
+    </div>
+    <div class="panel-body">
+      <div class="card muted" style="flex-direction:row;gap:12px;padding:10px 12px">
+        <div style="flex:1;min-width:0">
+          <span class="dt-code">@(item?.CodigoItem ?? Model.Ite)</span>
+          <span class="dt-desc">@(item?.NombreItem ?? "—")</span>
+        </div>
+        <div style="padding-left:12px;border-left:1px solid var(--border)">
+          <span class="stat-label" style="font-size:11px">Unidad</span>
+          <b style="font-size:13px;color:var(--text)">@(item?.UnidadSalida ?? "—")</b>
+        </div>
+      </div>
+
+      <div class="segmented">
+        <input type="radio" id="modo-nut" name="modo" value="nutriente" @(comun ? null : "checked") />
+        <label for="modo-nut"><i class="ri ri-leaf-line"></i>Nutriente</label>
+        <input type="radio" id="modo-com" name="modo" value="comun" @(comun ? "checked" : null) />
+        <label for="modo-com"><i class="ri ri-shopping-cart-2-line"></i>Consumo común</label>
+      </div>
+
+      <div class="card hint-text" data-si-modo="comun" hidden>El ítem se registra como consumo común. No aporta nutrientes al cálculo de fertilización y no requiere composición ni ficha técnica.</div>
+
+      <div data-si-modo="nutriente" style="display:contents">
+        <div class="card">
+          <div class="step-head"><span class="step-num">1</span>Presentación</div>
+          <p class="hint-text">La unidad de almacén (@(item?.UnidadSalida ?? "—")) no define si el producto es sólido o líquido: tú lo eliges.</p>
+          <div class="segmented">
+            <input type="radio" id="pres-sol" name="pres" value="solido" @(liquido ? null : "checked") />
+            <label for="pres-sol">Sólido</label>
+            <input type="radio" id="pres-liq" name="pres" value="liquido" @(liquido ? "checked" : null) />
+            <label for="pres-liq">Líquido</label>
+          </div>
+          <p class="hint-text" data-si-pres="liquido" hidden>Unidad de salida @(item?.UnidadSalida): 1 unidad = 1 L de producto.</p>
+          <p class="hint-text" data-si-pres="solido">Unidad de salida @(item?.UnidadSalida): el aporte se calcula por kg con % p/p.</p>
+        </div>
+
+        <div class="card">
+          <div class="step-head"><span class="step-num">2</span>Composición nutricional</div>
+          <p class="hint-text">Copia el valor del <strong>elemento puro</strong> de la ficha. Si la etiqueta dice óxido, conviértelo antes.</p>
+          <button type="button" class="btn btn-help btn-sm" style="align-self:flex-start" data-modal-open="dlg-oxidos"><i class="ri ri-question-line"></i>Ayuda si la ficha tiene óxidos</button>
+          <div class="empty" data-nut-vacio @(item?.Elementos?.Count > 0 ? "hidden" : null)>Aún no se configuró composición. Agrega el primer elemento desde la etiqueta o ficha técnica.</div>
+          <div data-nut-lista style="display:flex;flex-direction:column;gap:6px">
+            @foreach (var el in item?.Elementos ?? [])
+            {
+              <div data-nut-fila style="display:flex;align-items:center;gap:6px">
+                <select class="input sm" style="width:78px" data-campo="Elemento" aria-label="Elemento">
+                  @foreach (var e in elementosFijos)
+                  {
+                    <option value="@e" selected="@(e == el.ElementoCodigo)">@e</option>
+                  }
+                </select>
+                <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" value="@el.ValorDeclarado" aria-label="Valor" />
+                <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">@(liquido ? "% p/v" : "% p/p")</span>
+                <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri ri-close-line"></i></button>
+              </div>
+            }
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" style="align-self:flex-start" data-nut-agregar><i class="ri ri-add-line"></i>Agregar nutriente</button>
+        </div>
+
+        <div class="card muted" style="gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <b style="font-size:12.5px">1 <span data-unidad-palabra>@(liquido ? "litro" : "kg")</span> → aportes elementales</b>
+            <span class="pill" data-aporte-vacio>Sin aporte calculable</span>
+          </div>
+          <div class="chips" data-aporte-chips></div>
+          <span class="hint-text" data-aporte-ref style="font-variant-numeric:tabular-nums"></span>
+        </div>
+
+        <div class="card">
+          <div class="step-head"><span class="step-num">3</span>Fuente y ficha técnica</div>
+          <div class="field">
+            <input class="input" id="fuente" placeholder="Fuente de la composición" value="@item?.FuenteComposicion" />
+            <span class="field-help">Ejemplo: etiqueta del proveedor, ficha técnica o certificado de análisis.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-foot">
+      <button type="button" class="btn btn-primary btn-lg" style="flex:1" id="btnGuardar"><i class="ri ri-save-3-line"></i>Guardar configuración</button>
+    </div>
+  </form>
+
+  <template id="tpl-nutriente">
+    <div data-nut-fila style="display:flex;align-items:center;gap:6px">
+      <select class="input sm" style="width:78px" data-campo="Elemento" aria-label="Elemento">
+        @foreach (var e in elementosFijos) { <option value="@e">@e</option> }
+      </select>
+      <input class="input sm" style="flex:1" type="number" min="0" max="2000" step="0.1" placeholder="0.0" data-campo="Valor" aria-label="Valor" />
+      <span data-nut-unidad style="width:44px;font-size:12px;color:var(--muted)">% p/p</span>
+      <button type="button" class="icon-btn" data-nut-quitar aria-label="Quitar nutriente"><i class="ri ri-close-line"></i></button>
+    </div>
+  </template>
+
+  <dialog class="modal" id="dlg-oxidos" aria-labelledby="dlg-oxidos-t">
+    <div class="modal-head"><i class="ri ri-question-line"></i><span class="modal-title" id="dlg-oxidos-t">Fichas con óxidos</span><button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button></div>
+    <div class="modal-body">
+      <p>Si la etiqueta expresa el contenido como óxido, multiplica el valor por el factor para obtener el elemento puro.</p>
+      <div class="note">Ejemplo: 46 % K₂O × 0.830 = 38.2 % K</div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn" data-modal-close>Entendido</button></div>
+  </dialog>
 </div>
+
 @section PageScripts {
 <script>
-  $('#btnAddElem').on('click', () => {
-    $('#tablaElem tbody').append(`<tr>
-      <td><input class="form-control form-control-sm codigo" list="elementosLista" /></td>
-      <td><input class="form-control form-control-sm forma" /></td>
-      <td><input type="number" step="0.0001" class="form-control form-control-sm valor" /></td>
-      <td><select class="form-select form-select-sm tipo"><option>PP</option><option>PV</option><option>GL</option></select></td>
-      <td><button type="button" class="btn btn-sm btn-text-danger quitar">&times;</button></td></tr>`);
+(function () {
+  const form = document.getElementById('form-item');
+  if (!form) return;
+  const q = s => form.querySelector(s);
+  const qa = s => [...form.querySelectorAll(s)];
+
+  function sync() {
+    const modo = q('[name="modo"]:checked')?.value || 'nutriente';
+    const pres = q('[name="pres"]:checked')?.value || 'solido';
+    const liq = pres === 'liquido';
+    qa('[data-si-modo]').forEach(e => { e.hidden = e.dataset.siModo !== modo; });
+    qa('[data-si-pres]').forEach(e => { e.hidden = e.dataset.siPres !== pres; });
+    qa('[data-nut-unidad]').forEach(e => { e.textContent = liq ? '% p/v' : '% p/p'; });
+    const palabra = q('[data-unidad-palabra]');
+    if (palabra) palabra.textContent = liq ? 'litro' : 'kg';
+    const filas = qa('[data-nut-fila]');
+    const vacio = q('[data-nut-vacio]');
+    if (vacio) vacio.hidden = filas.length > 0;
+    const fmt = g => g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : (Math.round(g * 10) / 10) + ' g';
+    const val = filas.map(f => ({ el: f.querySelector('[data-campo=Elemento]')?.value, v: parseFloat(f.querySelector('[data-campo=Valor]')?.value) })).filter(x => x.v > 0);
+    q('[data-aporte-chips]').innerHTML = val.map(x => `<span class="pill pill-success">${x.el} ${fmt(x.v * 10)}</span>`).join('');
+    q('[data-aporte-vacio]').hidden = val.length > 0;
+    q('[data-aporte-ref]').textContent = '20 ' + (liq ? 'litros' : 'kg') + ' → ' + (val.length ? val.map(x => x.el + ' ' + fmt(x.v * 200)).join(' · ') : 'aporte pendiente');
+  }
+
+  form.addEventListener('change', sync);
+  form.addEventListener('input', sync);
+  form.addEventListener('click', e => {
+    if (e.target.closest('[data-nut-agregar]')) {
+      q('[data-nut-lista]').appendChild(document.getElementById('tpl-nutriente').content.firstElementChild.cloneNode(true));
+      sync();
+    }
+    const del = e.target.closest('[data-nut-quitar]');
+    if (del) { del.closest('[data-nut-fila]').remove(); sync(); }
   });
-  $('#tablaElem').on('click', '.quitar', function () { $(this).closest('tr').remove(); });
-  $('#btnGuardar').on('click', async () => {
-    const elementos = [];
-    $('#tablaElem tbody tr').each(function () {
-      const codigo = $(this).find('.codigo').val();
-      if (!codigo) return;
-      elementos.push({ elementoCodigo: codigo, formaDeclarada: $(this).find('.forma').val(), valorDeclarado: Number($(this).find('.valor').val()||0), tipoConcentracion: $(this).find('.tipo').val() });
-    });
+
+  document.getElementById('btnGuardar').addEventListener('click', async () => {
+    const modo = q('[name="modo"]:checked')?.value || 'nutriente';
+    const liquido = q('[name="pres"]:checked')?.value === 'liquido';
+    const elementos = qa('[data-nut-fila]').map(f => ({
+      elementoCodigo: f.querySelector('[data-campo=Elemento]')?.value || '',
+      formaDeclarada: '',
+      valorDeclarado: Number(f.querySelector('[data-campo=Valor]')?.value || 0),
+      tipoConcentracion: liquido ? 'PV' : 'PP'
+    })).filter(x => x.elementoCodigo && x.valorDeclarado > 0);
+
     const res = await erp.post('?handler=Guardar', {
-      clasificacion: $('#clasificacion').val(), destinoReporte: $('#destinoReporte').val(), estadoValidacion: $('#estadoValidacion').val(),
-      formaFisica: $('#formaFisica').val(), factorKgPorUnidad: $('#factorKg').val() ? Number($('#factorKg').val()) : null,
-      factorLitrosPorUnidad: $('#factorLt').val() ? Number($('#factorLt').val()) : null,
-      densidadKgPorLitro: $('#densidad').val() ? Number($('#densidad').val()) : null,
-      vigenciaDesde: $('#vigenciaDesde').val() || new Date().toISOString().slice(0,10),
-      fuenteComposicion: $('#fuente').val(), activo: $('#activo').is(':checked'), elementos
+      clasificacion: modo === 'comun' ? 'AUXILIAR' : 'NUTRICIONAL',
+      destinoReporte: modo === 'comun' ? 'CONSUMO' : 'NUTRIENTES',
+      estadoValidacion: 'VALIDADO',
+      formaFisica: liquido ? 'LIQUIDO' : 'SOLIDO',
+      factorKgPorUnidad: liquido ? null : 1,
+      factorLitrosPorUnidad: liquido ? 1 : null,
+      vigenciaDesde: new Date().toISOString().slice(0, 10),
+      fuenteComposicion: document.getElementById('fuente')?.value || '',
+      activo: true,
+      elementos: modo === 'comun' ? [] : elementos
     });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Guardado');
+    erp.toast(res?.success ? 'success' : 'error', res?.message || (res?.success ? 'Guardado' : 'Error'));
   });
-  $('#btnImagen').on('click', async () => {
-    const file = $('#imagen')[0].files[0];
-    if (!file) return;
-    const fd = new FormData(); fd.append('archivo', file);
-    const res = await erp.post('?handler=Imagen', fd);
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Imagen cargada');
-  });
-  $('#btnDocumento').on('click', async () => {
-    const file = $('#documento')[0].files[0];
-    if (!file) return;
-    const fd = new FormData(); fd.append('archivo', file); fd.append('vigenciaDesde', $('#docVigencia').val() || new Date().toISOString().slice(0,10)); fd.append('tipoDocumento', 'FT');
-    const res = await erp.post('?handler=Documento', fd);
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Documento cargado');
-  });
+
+  sync();
+})();
 </script>
 }
