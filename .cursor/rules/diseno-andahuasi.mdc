@@ -22,6 +22,7 @@ Fuente de verdad: `kit_razor_andahuasi/` + `CLAUDE.md` + `docs/diseno/`.
 ## Obligatorio
 - Acento fijo `#0067C0` vía tokens. Un solo botón primario por vista.
 - Pills: success / warning / danger / info / neutral según `CLAUDE.md`. Ítem: Pendiente = `pill-warning`, Nutriente = `pill-success`, Consumo común = `pill-info`, Sin configurar = `pill-danger`.
+- Interruptor `.switch`: píldora con círculo; marcado = Activos, desmarcado = Inactivos. El segmentado sigue para 2–3 opciones.
 - Iconos Remix `ri-*-line`. Tipografía IBM Plex Sans.
 - Al levantar el ERP, levantar también la API (`scripts/start-dev.ps1` / regla `dev-api-erp`).
 - Si la pantalla fija un comportamiento nuevo, actualizar juntos el CSS del kit, `CLAUDE.md`, `GUIA-DISENO.md` y esta regla. En el ERP, la regla va en `andahuasi-pages.css` bajo `.erp-ds`.
@@ -29,3 +30,5 @@ Fuente de verdad: `kit_razor_andahuasi/` + `CLAUDE.md` + `docs/diseno/`.
 ## No hacer
 - Inventar variantes de componentes o reinventar el panel de Configuración de ítems: copiar el markup del kit.
 - Mezclar Materio/Bootstrap en páginas `.erp-ds`.
+- Confirmaciones con SweetAlert, `alert`, `confirm` o modal de Bootstrap. Usar `<dialog class="modal">` del kit: cabecera, texto y pie con Cancelar + un solo primario.
+- Dejar una operación larga sin capa de espera (`--scrim` + tarjeta `--panel` + texto de lo que está haciendo).

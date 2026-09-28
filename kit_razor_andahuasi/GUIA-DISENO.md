@@ -33,6 +33,7 @@ Copia este archivo a la raíz del repositorio del frontend como `CLAUDE.md` (o `
 - **Búsqueda**: lupa a la izquierda; aparece `ri-close-line` al escribir para limpiar.
 - **Desplegable**: botón 32 px con chevron; menú con opción activa en `--accent-soft` + ✓.
 - **Control segmentado**: 2–3 opciones excluyentes; la activa con `--accent-soft`, borde interno de acento y texto de acento.
+- **Interruptor**: píldora de 36×20 con un círculo. Marcado = activo (pista de acento, círculo a la derecha); desmarcado = inactivo (pista `--chip`, círculo a la izquierda). El texto al lado dice Activos o Inactivos. No sustituye al control segmentado cuando hay más de dos opciones.
 - **Tarjeta de métrica/filtro**: icono en círculo de 34 px (color de su estado), etiqueta 12 px, número 20 px; la seleccionada lleva borde de acento de 2 px. Máximo 4 por fila. En <768 px las 4 siguen en una sola fila, compactas (icono arriba, etiqueta y número abajo).
 - **Pill de estado**: alto 20, radio 10, 11.5 px 600.
 - **Badge numérico**: alto 18, min-width 20; inactivo `--chip`, sobre ítem activo `--accent`.
@@ -40,7 +41,7 @@ Copia este archivo a la raíz del repositorio del frontend como `CLAUDE.md` (o `
 - **Tarjeta de paso**: círculo numerado de 18 px en acento + título 13 px 600 + instrucción 12 px.
 - **Nota informativa**: fondo `--accent-soft`, texto `--accent-text`. **Estado vacío**: borde punteado `--dash`, texto `--faint`, dice qué falta y cómo empezar.
 - **Popover** (anclado a botón): radio 4, `shadow-popover`, ancho 224–320 px.
-- **Modal**: cabecera 48 px con icono + título + cerrar; cuerpo 16 px; pie con acciones a la derecha. 460 px para ayuda, 560 px para formularios cortos. Fondo `--scrim`.
+- **Modal**: cabecera 48 px con icono + título + cerrar; cuerpo 16 px; pie con acciones a la derecha. 460 px para ayuda y confirmaciones, 560 px para formularios cortos. Fondo `--scrim`. Las confirmaciones y la espera de un proceso usan este modal, no SweetAlert ni el `confirm` del navegador.
 
 ## Plantillas de pantalla
 Toda pantalla empieza con: **título (20 px) + subtítulo** a la izquierda y **acciones** a la derecha (secundarias antes del primario).

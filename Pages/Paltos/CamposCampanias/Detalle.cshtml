@@ -2,103 +2,74 @@
 @model ErpAndahuasi.Pages.Paltos.CamposCampanias.DetalleModel
 @{
   ViewData["Title"] = Model.Campo?.NombreActual ?? "Campo";
-  var campo = Model.Campo;
+  ViewData["shellFill"] = true;
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
 @section VendorScripts {
   <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
   <script src="~/js/erp.js"></script>
 }
-<a href="/paltos/campos-campanias" class="btn btn-text-secondary mb-3"><i class="ri ri-arrow-left-line"></i> Volver</a>
-@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert alert-danger">@Model.ErrorMessage</div> }
-@if (campo is null) { <div class="alert alert-warning">Campo no encontrado.</div> }
-else
-{
-  <div class="card mb-4">
-    <div class="card-body">
-      <h4 class="mb-1">@campo.CodigoCampo — @campo.NombreActual</h4>
-      <p class="text-muted mb-0">@campo.AreaActualHa.ToString("N2") ha · @campo.Variedad · @campo.Patron</p>
+
+<div class="erp-ds erp-ds--fill cc-detail" id="campos-campanias" data-mode="detalle" data-id="@Model.CampoPaltoId">
+  <div class="page-head">
+    <div>
+      <a href="/paltos/campos-campanias" class="btn btn-sm" id="cc-back" style="margin-bottom:10px"><i class="ri ri-arrow-left-line"></i>Volver a la lista</a>
+      <h1 class="page-title" id="cc-title">@(Model.Campo?.NombreActual ?? "Campo")</h1>
+      <p class="page-sub" id="cc-sub">@(Model.Campo is null ? "" : $"{Model.Campo.CodigoCampo} · {Model.Campo.AreaActualHa:N2} ha")</p>
     </div>
   </div>
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between">
-      <h5 class="mb-0">Nueva campaña</h5>
-    </div>
-    <div class="card-body row g-3">
-      <input type="hidden" id="campoPaltoId" value="@campo.CampoPaltoId" />
-      <div class="col-md-3"><label class="form-label">Código</label><input class="form-control" id="codigo" /></div>
-      <div class="col-md-3"><label class="form-label">Nombre</label><input class="form-control" id="nombre" /></div>
-      <div class="col-md-2"><label class="form-label">Inicio</label><input type="date" class="form-control" id="fechaInicio" /></div>
-      <div class="col-md-2"><label class="form-label">Fin</label><input type="date" class="form-control" id="fechaFin" /></div>
-      <div class="col-md-2"><label class="form-label">Área</label><input type="number" step="0.01" class="form-control" id="areaHa" value="@campo.AreaActualHa" /></div>
-      <div class="col-12"><button class="btn btn-primary" id="btnCrear">Crear campaña</button></div>
-    </div>
+  @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+  {
+    <div class="note note-danger">@Model.ErrorMessage</div>
+  }
+  <div class="panel" id="campo-panel">
+    <div class="panel-body"><div class="empty">Cargando ficha…</div></div>
   </div>
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table">
-        <thead><tr><th>Campaña</th><th>Estado</th><th>Periodo</th><th></th></tr></thead>
-        <tbody>
-        @foreach (var c in new[] { campo.CampaniaActiva, campo.CampaniaPlanificacion }.Where(x => x != null).Concat(campo.Historial))
-        {
-          <tr>
-            <td>@c!.Codigo @c.Nombre</td>
-            <td><span class="badge bg-label-primary">@c.Estado</span></td>
-            <td>@c.FechaInicio.ToString("dd/MM/yyyy") - @c.FechaFin.ToString("dd/MM/yyyy")</td>
-            <td>
-              @if (c.Estado == "EN_PLANIFICACION")
-              {
-                <button class="btn btn-sm btn-success accionar" data-id="@c.CampoCampaniaId" data-accion="Activar">Activar</button>
-              }
-              @if (c.Estado == "ACTIVA")
-              {
-                <button class="btn btn-sm btn-warning accionar" data-id="@c.CampoCampaniaId" data-accion="Cerrar">Cerrar</button>
-              }
-              @if (c.Estado is "EN_PLANIFICACION" or "ACTIVA")
-              {
-                <button class="btn btn-sm btn-outline-danger accionar" data-id="@c.CampoCampaniaId" data-accion="Cancelar">Cancelar</button>
-              }
-              <a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/presupuesto?campoCampaniaId=@c.CampoCampaniaId">Presupuesto</a>
-              <a class="btn btn-sm btn-outline-success" href="/paltos/fertilizacion/control?campoCampaniaId=@c.CampoCampaniaId">Control</a>
-              @if (c.Estado is "EN_PLANIFICACION" or "ACTIVA")
-              {
-                <button class="btn btn-sm btn-outline-secondary reimportar" data-id="@c.CampoCampaniaId" type="button">Reimportar presupuesto</button>
-              }
-            </td>
-          </tr>
-        }
-        </tbody>
-      </table>
+
+  <dialog class="modal modal-form" id="dlg-plan" aria-labelledby="dlg-plan-t">
+    <div class="modal-head">
+      <i class="ri ri-calendar-line"></i>
+      <span class="modal-title" id="dlg-plan-t">Nueva campaña en planificación</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
     </div>
-  </div>
-}
+    <div class="modal-body">
+      <div class="note">La herencia crea una copia independiente. No se copian consumos ni cierres.</div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="cc-plan-ini">Inicio</label>
+          <input class="input" id="cc-plan-ini" type="date" />
+        </div>
+        <div class="field">
+          <label for="cc-plan-fin">Fin</label>
+          <input class="input" id="cc-plan-fin" type="date" />
+        </div>
+        <div class="field">
+          <label for="cc-plan-cod">Código sugerido</label>
+          <input class="input" id="cc-plan-cod" type="text" />
+        </div>
+        <div class="field">
+          <label for="cc-plan-nom">Nombre</label>
+          <input class="input" id="cc-plan-nom" type="text" />
+        </div>
+        <div class="field field--full">
+          <span class="field-label">Heredar presupuesto</span>
+          <div class="dropdown" id="cc-origen-dd">
+            <input type="hidden" id="cc-plan-origen" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Crear sin heredar presupuesto</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" id="cc-origen-menu" hidden></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="cc-plan-save">Crear planificación</button>
+    </div>
+  </dialog>
+</div>
+
 @section PageScripts {
-<script>
-  $('#btnCrear').on('click', async () => {
-    const res = await erp.post('?handler=Campania', {
-      campoPaltoId: Number($('#campoPaltoId').val()),
-      codigo: $('#codigo').val(),
-      nombre: $('#nombre').val(),
-      fechaInicio: $('#fechaInicio').val(),
-      fechaFin: $('#fechaFin').val(),
-      areaHa: Number($('#areaHa').val())
-    });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Creada');
-    if (res.success) location.reload();
-  });
-  $('.accionar').on('click', async function () {
-    const accion = $(this).data('accion');
-    let motivo = '';
-    if (accion === 'Cancelar') motivo = prompt('Motivo') || '';
-    const res = await erp.post(`?handler=Accion&campoCampaniaId=${$(this).data('id')}&accion=${accion}`, { motivo });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Listo');
-    if (res.success) location.reload();
-  });
-  $('.reimportar').on('click', async function () {
-    const fuente = prompt('ID de campaña fuente (campoCampaniaId) para heredar presupuesto');
-    if (!fuente) return;
-    const res = await erp.post(`?handler=Reimportar&campoCampaniaId=${$(this).data('id')}`, { campoCampaniaFuenteId: Number(fuente) });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Reimportado');
-    if (res.success) location.reload();
-  });
-</script>
+  <script src="~/js/campos-campanias.js" asp-append-version="true"></script>
 }

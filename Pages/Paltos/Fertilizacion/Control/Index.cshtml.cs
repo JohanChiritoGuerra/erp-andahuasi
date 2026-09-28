@@ -31,6 +31,18 @@ public class IndexModel : PageModel
         return new JsonResult(new { success = response.BaseResponse.Success, data = response.Control, message = response.BaseResponse.Message });
     }
 
+    public async Task<IActionResult> OnGetCamposAsync()
+    {
+        var response = await _paltos.GetCamposAsync();
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campos, message = response.BaseResponse.Message });
+    }
+
+    public async Task<IActionResult> OnGetSalidasAsync(long campoCampaniaId, int? anio, int? mes)
+    {
+        var response = await _paltos.GetDetalleSalidasAsync(campoCampaniaId, anio, mes);
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Detalle, message = response.BaseResponse.Message });
+    }
+
     public async Task<IActionResult> OnPostReabrirAsync(long campoCampaniaId, [FromBody] CerrarMesFertilizacionRequest request)
     {
         var response = await _paltos.ReabrirMesAsync(campoCampaniaId, request.Anio, request.Mes, request.Motivo ?? string.Empty);

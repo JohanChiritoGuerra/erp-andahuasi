@@ -2,33 +2,88 @@
 @model ErpAndahuasi.Pages.Paltos.Fertilizacion.Control.SalidasModel
 @{
   ViewData["Title"] = "Detalle de salidas";
+  ViewData["shellFill"] = true;
   var d = Model.Detalle;
 }
-<a href="/paltos/fertilizacion/control?campoCampaniaId=@Model.CampoCampaniaId" class="btn btn-text-secondary mb-3"><i class="ri ri-arrow-left-line"></i> Volver</a>
-@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert alert-danger">@Model.ErrorMessage</div> }
-@if (d is null) { <div class="alert alert-warning">Sin detalle.</div> }
-else
-{
-  <h4 class="mb-1">@d.CodigoCampo @d.NombreCampo</h4>
-  <p class="text-muted">@(d.Anio is null ? "Todas las salidas" : $"{d.Mes:00}/{d.Anio}") @(d.EsSnapshot ? "· snapshot" : "")</p>
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table">
-        <thead><tr><th>Fecha</th><th>Ítem</th><th>Cantidad</th><th>kg</th><th>Estado</th><th>Config</th></tr></thead>
-        <tbody>
-        @foreach (var s in d.Salidas)
-        {
-          <tr>
-            <td>@s.Fecha.ToString("dd/MM/yyyy")</td>
-            <td>@s.CodigoItem @s.NombreItem</td>
-            <td>@s.CantidadSalida.ToString("N2") @s.Unidad</td>
-            <td>@s.KgProducto.ToString("N2")</td>
-            <td>@s.EstadoMovimiento</td>
-            <td><span class="badge bg-label-info">@s.Estado</span></td>
-          </tr>
-        }
-        </tbody>
-      </table>
-    </div>
-  </div>
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
+
+<div class="erp-ds erp-ds--fill">
+  <div class="fp cc-detail">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Detalle de salidas</h1>
+        <p class="page-sub">@(d is null ? "Sin información" : $"{d.CodigoCampo} · {d.NombreCampo} · campaña {d.CampaniaCodigo}")</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" href="/paltos/fertilizacion/control?campoCampaniaId=@Model.CampoCampaniaId"><i class="ri ri-arrow-left-line"></i>Volver</a>
+      </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+      <div class="note note-danger">@Model.ErrorMessage</div>
+    }
+    else if (d is null)
+    {
+      <div class="empty">No existe información para la selección.</div>
+    }
+    else
+    {
+      @if (d.EsSnapshot)
+      {
+        <div class="note @(d.TieneDiscrepancia ? "note-danger" : "")">@(d.TieneDiscrepancia ? "El cierre conserva su snapshot, pero almacén presenta cambios posteriores." : "Información recuperada del snapshot del cierre mensual.")</div>
+      }
+      <p class="hint-text">@(d.Anio is null ? "Campaña completa" : $"{d.Mes:00}/{d.Anio}") · cantidades, costos y aportes desde la vista de salidas de fertilizante.</p>
+      @if (d.Salidas.Count == 0)
+      {
+        <div class="empty">No se encontraron salidas para el periodo.</div>
+      }
+      else
+      {
+        <div class="fp-matrix fc-sal">
+          <table>
+            <thead>
+              <tr>
+                <th class="fc-sal-id">Salida</th>
+                <th class="fc-sal-date">Fecha</th>
+                <th class="fc-sal-item">Producto</th>
+                <th class="fp-num fc-sal-qty">Cantidad</th>
+                <th class="fp-num fc-sal-cost">Costo</th>
+                <th class="fp-num fc-sal-kg">kg</th>
+                <th class="fc-sal-mov">Movimiento</th>
+                <th class="fc-sal-cfg">Configuración</th>
+                <th class="fc-sal-apt">Aportes</th>
+              </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in d.Salidas)
+            {
+              <tr>
+                <td class="fc-sal-id">@(string.IsNullOrWhiteSpace(s.NumeroSalida) ? s.SalMatCabId.ToString() : s.NumeroSalida)</td>
+                <td class="fc-sal-date">@s.Fecha.ToString("dd/MM/yyyy")</td>
+                <td class="fc-sal-item"><span class="fp-code">@s.CodigoItem</span><span class="fp-name">@s.NombreItem</span></td>
+                <td class="fp-num fc-sal-qty">@s.CantidadSalida.ToString("N2") @s.Unidad</td>
+                <td class="fp-num fc-sal-cost">@s.CostoTotal.ToString("N2")</td>
+                <td class="fp-num fc-sal-kg">@s.KgProducto.ToString("N2")</td>
+                <td class="fc-sal-mov"><span class="pill @(s.EstadoMovimiento == "ANULADA" ? "pill-danger" : s.EstadoMovimiento == "VIGENTE" ? "pill-success" : "")">@s.EstadoMovimiento</span></td>
+                <td class="fc-sal-cfg"><span class="pill @(s.Estado == "PENDIENTE" ? "pill-warning" : s.Estado == "REFERENCIAL" ? "pill-info" : "pill-success")">@s.Estado</span></td>
+                <td class="fc-sal-apt">
+                  @if (s.Aportes.Count == 0)
+                  {
+                    <span class="fp-name">Sin aportes</span>
+                  }
+                  else
+                  {
+                    <span class="chips">@foreach (var a in s.Aportes) { <span class="pill">@a.ElementoCodigo @a.EjecutadoKgHa.ToString("N3")</span> }</span>
+                  }
+                </td>
+              </tr>
+            }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+</div>

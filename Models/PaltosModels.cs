@@ -388,10 +388,13 @@ public class AporteSalidaFertilizacionDto
 public class SalidaFertilizacionDetalleDto
 {
     public long SalMatCabId { get; set; }
+    public string NumeroSalida { get; set; } = string.Empty;
     public DateTime Fecha { get; set; }
     public string CodigoItem { get; set; } = string.Empty;
     public string NombreItem { get; set; } = string.Empty;
     public decimal CantidadSalida { get; set; }
+    public decimal CostoUnitario { get; set; }
+    public decimal CostoTotal { get; set; }
     public string Unidad { get; set; } = string.Empty;
     public decimal KgProducto { get; set; }
     public string EstadoMovimiento { get; set; } = string.Empty;

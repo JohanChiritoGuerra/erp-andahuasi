@@ -14,10 +14,12 @@ public class DetalleModel : PageModel
     public DetalleModel(PaltosApi paltos) => _paltos = paltos;
 
     public CampoPaltoDto? Campo { get; private set; }
+    public long CampoPaltoId { get; private set; }
     public string? ErrorMessage { get; private set; }
 
     public async Task OnGetAsync(long campoPaltoId)
     {
+        CampoPaltoId = campoPaltoId;
         try
         {
             var response = await _paltos.GetCampoAsync(campoPaltoId);

@@ -48,16 +48,6 @@
             <input type="search" id="cfg-q" placeholder="Buscar por código o descripción" aria-label="Buscar ítems" />
             <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
           </label>
-          <div class="dropdown" id="cfg-clasif-dd">
-            <input type="hidden" id="cfg-clasif" value="todos" />
-            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Todas las clasificaciones</span><i class="ri ri-arrow-down-s-line"></i></button>
-            <div class="dropdown-menu" hidden>
-              <button type="button" class="menu-item is-selected" data-value="todos">Todas las clasificaciones<i class="ri ri-check-line"></i></button>
-              <button type="button" class="menu-item" data-value="pendiente">Pendiente<i class="ri ri-check-line"></i></button>
-              <button type="button" class="menu-item" data-value="nutriente">Nutriente<i class="ri ri-check-line"></i></button>
-              <button type="button" class="menu-item" data-value="comun">Consumo común<i class="ri ri-check-line"></i></button>
-            </div>
-          </div>
         </div>
 
         <div class="data-table" style="--dt-cols:minmax(0,1fr) 72px 128px 124px;flex:1">
@@ -119,7 +109,9 @@
   const ELEMENTOS = ['N','P','K','Ca','Mg','S','B','Zn','Fe','Mn','Cu'];
 
   let items = [];
-  let tab = 'todos';
+  let tab = ['pendiente', 'nutriente', 'comun'].includes(new URLSearchParams(location.search).get('clasificacion'))
+    ? new URLSearchParams(location.search).get('clasificacion')
+    : 'todos';
   let q = '';
   let selectedKey = '';
   let detail = null;
@@ -139,8 +131,9 @@
   const itemHref = key => `/paltos/fertilizacion/configuracion-items/${encodeURIComponent(key)}`;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  const CLASIF_LABEL = { todos: 'Todas las clasificaciones', pendiente: 'Pendiente', nutriente: 'Nutriente', comun: 'Consumo común' };
-
+  function syncClasifUi() {
+    root.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('is-selected', el.dataset.tab === tab));
+  }
   function pillClasificacion(it) {
     if (isComun(it)) return { clase: 'pill-info', texto: 'Consumo común' };
     if (isNutriente(it)) return { clase: 'pill-success', texto: 'Nutriente' };
@@ -173,16 +166,6 @@
       }
       return true;
     });
-  }
-
-  function syncClasifUi() {
-    const dd = document.getElementById('cfg-clasif-dd');
-    if (!dd) return;
-    document.getElementById('cfg-clasif').value = tab;
-    const label = dd.querySelector('[data-dropdown-label]');
-    if (label) label.textContent = CLASIF_LABEL[tab] || CLASIF_LABEL.todos;
-    dd.querySelectorAll('[data-value]').forEach(o => o.classList.toggle('is-selected', o.dataset.value === tab));
-    root.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('is-selected', el.dataset.tab === tab));
   }
 
   function renderStats() {
@@ -425,12 +408,6 @@
     const row = e.target.closest('[data-key]');
     if (row && root.contains(row) && !e.target.closest('#cfg-panel')) {
       selectItem(row.dataset.key); return;
-    }
-    const opt = e.target.closest('#cfg-clasif-dd [data-value]');
-    if (opt) {
-      tab = opt.dataset.value || 'todos';
-      selectedKey = ''; detail = null;
-      renderStats(); renderRows(); return;
     }
     if (e.target.closest('[data-nut-agregar]')) {
       const lista = document.querySelector('#cfg-panel [data-nut-lista]');

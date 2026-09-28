@@ -3,78 +3,87 @@
 @{
   ViewData["Title"] = "Control de fertilización";
 }
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
 @section VendorScripts {
   <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
   <script src="~/js/erp.js"></script>
+  <script src="~/js/fert-control.js" asp-append-version="true"></script>
 }
-<h4 class="mb-1">Control</h4>
-<p class="text-muted mb-4">Avance mensual frente al presupuesto.</p>
-<div class="card mb-4">
-  <div class="card-body">
-    <label class="form-label">Campaña</label>
-    <select class="form-select" id="campoCampaniaId"></select>
+
+<div class="erp-ds" id="fert-control">
+  <div class="fp">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Control de fertilización</h1>
+        <p class="page-sub">Presupuesto frente a las salidas de almacén, por campo, campaña y mes</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" id="fc-presupuesto" href="/paltos/fertilizacion/presupuesto"><i class="ri ri-file-chart-line"></i>Ver presupuesto</a>
+      </div>
+    </div>
+
+    <div class="card fp-pick">
+      <div class="step-head"><span class="step-num">1</span>Seleccionar control</div>
+      <p class="hint-text">Primero el campo y luego una campaña que ya tenga presupuesto.</p>
+      <div class="fp-tools">
+        <label class="switch">
+          <input type="checkbox" id="fc-activos" checked role="switch" />
+          <span class="switch-ui" aria-hidden="true"></span>
+          <span class="switch-text">Activos</span>
+        </label>
+        <div class="field">
+          <span class="field-label">Campo</span>
+          <div class="dropdown" id="fc-campo-dd">
+            <input type="hidden" id="fc-campo" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Seleccionar campo</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" id="fc-campo-menu" hidden></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Campaña</span>
+          <div class="dropdown" id="fc-camp-dd">
+            <input type="hidden" id="fc-camp" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Seleccionar campaña</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" id="fc-camp-menu" hidden></div>
+          </div>
+        </div>
+        <div class="fc-facts" id="fc-facts" hidden></div>
+      </div>
+    </div>
+
+    <div id="fc-body"><div class="empty">Cargando campañas…</div></div>
   </div>
+
+  <dialog class="modal modal-form" id="dlg-salidas" aria-labelledby="dlg-salidas-t">
+    <div class="modal-head">
+      <i class="ri ri-file-list-3-line"></i>
+      <span class="modal-title" id="dlg-salidas-t">Detalle de salidas</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body" id="fc-salidas-body"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cerrar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal-form" id="dlg-reabrir" aria-labelledby="dlg-reabrir-t">
+    <div class="modal-head">
+      <i class="ri ri-lock-unlock-line"></i>
+      <span class="modal-title" id="dlg-reabrir-t">Reabrir mes</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="hint-text">El cierre anterior queda auditado como reabierto. Indique el motivo.</p>
+      <div class="field">
+        <label for="fc-motivo">Motivo</label>
+        <textarea class="input input--area" id="fc-motivo" maxlength="400"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="fc-reabrir-save">Reabrir mes</button>
+    </div>
+  </dialog>
 </div>
-<div id="resumen" class="mb-4"></div>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table" id="tablaMeses">
-      <thead><tr><th>Mes</th><th>Estado</th><th>Cobertura</th><th>Salidas</th><th>Pendientes</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-@section PageScripts {
-<script>
-  const params = new URLSearchParams(location.search);
-  function monthName(mes) { return ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mes-1] || mes; }
-  function render(c) {
-    if (!c) { $('#resumen').html(''); $('#tablaMeses tbody').empty(); return; }
-    $('#resumen').html(`<div class="row g-3">
-      <div class="col-md-3"><div class="card"><div class="card-body"><small>Campo</small><h6 class="mb-0">${c.codigoCampo} ${c.nombreCampo}</h6></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><small>Cobertura</small><h6 class="mb-0">${Number(c.coberturaPorcentaje||0).toFixed(1)}%</h6></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><small>Salidas</small><h6 class="mb-0">${c.salidasConsideradas}</h6></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><small>Ítems pendientes</small><h6 class="mb-0">${c.itemsPendientes}</h6></div></div></div>
-    </div>`);
-    const rows = (c.meses||[]).map(m => `<tr>
-      <td>${monthName(m.mes)} ${m.anio}</td>
-      <td><span class="badge ${m.estadoCierre==='CERRADO'?'bg-label-secondary':'bg-label-success'}">${m.estadoCierre}</span></td>
-      <td>${Number(m.coberturaPorcentaje||0).toFixed(1)}%</td>
-      <td>${m.salidas}</td>
-      <td>${m.itemsPendientes}</td>
-      <td>
-        <a class="btn btn-sm btn-outline-primary" href="/paltos/fertilizacion/control/${c.campoCampaniaId}/salidas?anio=${m.anio}&mes=${m.mes}">Salidas</a>
-        ${m.estadoCierre==='CERRADO'
-          ? `<button class="btn btn-sm btn-outline-warning reabrir" data-anio="${m.anio}" data-mes="${m.mes}">Reabrir</button>`
-          : `<button class="btn btn-sm btn-outline-secondary cerrar" data-anio="${m.anio}" data-mes="${m.mes}">Cerrar</button>`}
-      </td></tr>`).join('');
-    $('#tablaMeses tbody').html(rows);
-  }
-  async function load(id) {
-    const res = await erp.get('?handler=Data&campoCampaniaId=' + id);
-    render(res?.data);
-  }
-  erp.get('?handler=Campanias').then(res => {
-    const items = res?.data || [];
-    $('#campoCampaniaId').html(items.map(c => `<option value="${c.campoCampaniaId}">${c.codigoCampo} · ${c.codigo}</option>`).join(''));
-    const selected = params.get('campoCampaniaId') || items[0]?.campoCampaniaId;
-    if (selected) { $('#campoCampaniaId').val(selected); load(selected); }
-  });
-  $('#campoCampaniaId').on('change', function () { load(this.value); });
-  $('#tablaMeses').on('click', '.cerrar', async function () {
-    if (!await erp.confirm('¿Cerrar mes?')) return;
-    const id = $('#campoCampaniaId').val();
-    const res = await erp.post(`?handler=Cerrar&campoCampaniaId=${id}`, { anio: Number($(this).data('anio')), mes: Number($(this).data('mes')) });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Cerrado');
-    if (res.data) render(res.data);
-  });
-  $('#tablaMeses').on('click', '.reabrir', async function () {
-    const motivo = prompt('Motivo para reabrir') || '';
-    if (!motivo) return;
-    const id = $('#campoCampaniaId').val();
-    const res = await erp.post(`?handler=Reabrir&campoCampaniaId=${id}`, { anio: Number($(this).data('anio')), mes: Number($(this).data('mes')), motivo });
-    erp.toast(res.success ? 'success' : 'error', res.message || 'Reabierto');
-    if (res.data) render(res.data);
-  });
-</script>
-}

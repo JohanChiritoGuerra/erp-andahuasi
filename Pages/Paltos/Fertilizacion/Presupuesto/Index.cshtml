@@ -3,38 +3,55 @@
 @{
   ViewData["Title"] = "Presupuesto de fertilización";
 }
-@section VendorStyles {
-  <link rel="stylesheet" href="~/vendor/libs/sweetalert2/sweetalert2.dist.css" />
-  <link rel="stylesheet" href="~/css/paltos-presupuesto.css" />
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
 }
 @section VendorScripts {
   <script src="~/vendor/libs/sweetalert2/sweetalert2.dist.js"></script>
   <script src="~/js/erp.js"></script>
-  <script src="~/js/erp/paltos-presupuesto.js"></script>
+  <script src="~/js/fert-presupuesto.js" asp-append-version="true"></script>
 }
-<h4 class="mb-1">Presupuesto</h4>
-<p class="text-muted mb-4">Matriz mensual de objetivos por elemento (kg/ha).</p>
-<div class="card mb-4">
-  <div class="card-body row g-3 align-items-end">
-    <div class="col-md-6">
-      <label class="form-label">Campaña</label>
-      <select class="form-select" id="campoCampaniaId"></select>
+
+<div class="erp-ds" id="fert-presupuesto">
+  <div class="fp">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Presupuesto de fertilización</h1>
+        <p class="page-sub">Objetivos mensuales en kg de elemento por hectárea, por campo y campaña</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" id="fp-control" href="/paltos/fertilizacion/control"><i class="ri ri-line-chart-line"></i>Ver control</a>
+      </div>
     </div>
-    <div class="col-md-3">
-      <label class="form-label">Rendimiento objetivo (t/ha)</label>
-      <input type="number" step="0.01" class="form-control" id="rendimiento" />
+
+    <div class="card fp-pick">
+      <div class="step-head"><span class="step-num">1</span>Seleccionar presupuesto</div>
+      <div class="fp-tools">
+        <label class="switch">
+          <input type="checkbox" id="fp-activos" checked role="switch" />
+          <span class="switch-ui" aria-hidden="true"></span>
+          <span class="switch-text">Activos</span>
+        </label>
+        <div class="field">
+          <span class="field-label">Campo</span>
+          <div class="dropdown" id="fp-campo-dd">
+            <input type="hidden" id="fp-campo" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Seleccionar campo</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" id="fp-campo-menu" hidden></div>
+          </div>
+        </div>
+        <div class="field fp-camp">
+          <div class="dropdown" id="fp-camp-dd">
+            <input type="hidden" id="fp-camp" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Seleccionar campaña</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" id="fp-camp-menu" hidden></div>
+          </div>
+        </div>
+        <div class="fp-facts" id="fp-facts" hidden></div>
+        <div class="fp-pills" id="fp-pills"></div>
+      </div>
     </div>
-    <div class="col-md-3">
-      <button class="btn btn-primary" id="btnGuardar">Guardar presupuesto</button>
-    </div>
-    <div class="col-12">
-      <label class="form-label">Observaciones</label>
-      <textarea class="form-control" id="observaciones"></textarea>
-    </div>
-  </div>
-</div>
-<div class="card">
-  <div class="card-body table-responsive" id="matrizWrap">
-    <p class="text-muted mb-0">Seleccione una campaña.</p>
+
+    <div id="fp-body"><div class="empty">Cargando campañas…</div></div>
   </div>
 </div>

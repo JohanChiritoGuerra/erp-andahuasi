@@ -48,4 +48,28 @@ public class IndexModel : PageModel
         var response = await _paltos.ReconstruirHistoricoAsync(request.CodigosCampo, request.PresupuestoReferenciaCampoCampaniaId);
         return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campanias, message = response.BaseResponse.Message });
     }
+
+    public async Task<IActionResult> OnGetCampoAsync(long id)
+    {
+        var response = await _paltos.GetCampoAsync(id);
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campo, message = response.BaseResponse.Message });
+    }
+
+    public async Task<IActionResult> OnGetCampaniasAsync()
+    {
+        var response = await _paltos.GetCampaniasCampoAsync();
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campanias, message = response.BaseResponse.Message });
+    }
+
+    public async Task<IActionResult> OnPostCampaniaAsync([FromBody] CrearCampaniaCampoRequest request)
+    {
+        var response = await _paltos.CrearCampaniaAsync(request);
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campania, message = response.BaseResponse.Message });
+    }
+
+    public async Task<IActionResult> OnPostAccionAsync(long campoCampaniaId, string accion, [FromBody] AccionCampaniaRequest request)
+    {
+        var response = await _paltos.AccionarCampaniaAsync(campoCampaniaId, accion, request?.Motivo);
+        return new JsonResult(new { success = response.BaseResponse.Success, data = response.Campania, message = response.BaseResponse.Message });
+    }
 }
