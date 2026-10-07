@@ -52,6 +52,9 @@ public class ErpApiClient
     public Task<T> PostAsync<T>(string path, object? body, CancellationToken ct = default) =>
         SendAsync<T>(HttpMethod.Post, path, body, ct);
 
+    public Task<T> PostLargoAsync<T>(string path, object? body, CancellationToken ct = default) =>
+        SendAsync<T>(HttpMethod.Post, path, body, ct, "ErpApiLargo");
+
     public Task<T> PutAsync<T>(string path, object? body, CancellationToken ct = default) =>
         SendAsync<T>(HttpMethod.Put, path, body, ct);
 
@@ -80,9 +83,9 @@ public class ErpApiClient
         return JsonSerializer.Deserialize<T>(raw, JsonOptions) ?? throw new ErpApiException(500, "Respuesta inválida de la API.");
     }
 
-    private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct)
+    private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct, string cliente = "ErpApi")
     {
-        using var response = await SendRawAsync(method, path, body, null, ct);
+        using var response = await SendRawAsync(method, path, body, null, ct, cliente);
         var raw = await response.Content.ReadAsStringAsync(ct);
         if (string.IsNullOrWhiteSpace(raw))
         {
@@ -102,24 +105,24 @@ public class ErpApiClient
         }
     }
 
-    private async Task<HttpResponseMessage> SendRawAsync(HttpMethod method, string path, object? body, HttpContent? content, CancellationToken ct)
+    private async Task<HttpResponseMessage> SendRawAsync(HttpMethod method, string path, object? body, HttpContent? content, CancellationToken ct, string cliente = "ErpApi")
     {
         var token = await EnsureAccessTokenAsync(ct);
-        var response = await DispatchAsync(method, path, body, content, token, ct);
+        var response = await DispatchAsync(method, path, body, content, token, ct, cliente);
 
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             response.Dispose();
             token = await EnsureAccessTokenAsync(ct, force: true);
-            response = await DispatchAsync(method, path, body, content, token, ct);
+            response = await DispatchAsync(method, path, body, content, token, ct, cliente);
         }
 
         return response;
     }
 
-    private async Task<HttpResponseMessage> DispatchAsync(HttpMethod method, string path, object? body, HttpContent? content, string token, CancellationToken ct)
+    private async Task<HttpResponseMessage> DispatchAsync(HttpMethod method, string path, object? body, HttpContent? content, string token, CancellationToken ct, string cliente = "ErpApi")
     {
-        var client = _factory.CreateClient("ErpApi");
+        var client = _factory.CreateClient(cliente);
         using var request = new HttpRequestMessage(method, path.TrimStart('/'));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

@@ -33,6 +33,7 @@ builder.Services.AddScoped<ErpApiClient>();
 builder.Services.AddScoped<SistemaApi>();
 builder.Services.AddScoped<RrhhApi>();
 builder.Services.AddScoped<PaltosApi>();
+builder.Services.AddScoped<ComercializacionApi>();
 builder.Services.AddScoped<IMenuProvider, MenuProvider>();
 
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -49,6 +50,13 @@ builder.Services.AddHttpClient("ErpApi", (sp, client) =>
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ErpApiOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(60);
+}).ConfigurePrimaryHttpMessageHandler(() => CreateHandler(isDevelopment));
+
+builder.Services.AddHttpClient("ErpApiLargo", (sp, client) =>
+{
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ErpApiOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromMinutes(15);
 }).ConfigurePrimaryHttpMessageHandler(() => CreateHandler(isDevelopment));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

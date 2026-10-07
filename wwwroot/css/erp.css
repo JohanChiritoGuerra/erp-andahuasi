@@ -658,8 +658,8 @@ body {
 
 /* Login SIGERP — variante neón. La anterior está en erp.classic.bak y Login.classic.bak */
 .erp-login {
-  --erp-login-primary: #00A948;
-  --erp-login-primary-rgb: 0, 169, 72;
+  --erp-login-primary: #0067C0;
+  --erp-login-primary-rgb: 0, 103, 192;
   position: relative;
   display: flex;
   min-height: 100dvh;
@@ -696,7 +696,7 @@ body {
   border-radius: 28px;
   border: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.22));
-  padding: 1.25rem 1.7rem 3.05rem;
+  padding: 2.5rem 1.7rem 3.05rem;
   box-shadow:
     inset 0 0 40px rgba(255, 255, 255, 0.06),
     0 18px 40px rgba(0, 0, 0, 0.22);
@@ -708,18 +708,35 @@ body {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
-  margin: 0 0 2.6rem;
+  width: max-content;
+  max-width: 100%;
+  gap: 0.28rem;
+  margin: 0 auto 2.5rem;
 }
 
 .erp-login__logo {
   display: block;
-  height: 6.5rem;
-  width: auto;
-  max-width: 100%;
+  width: 0;
+  min-width: 100%;
+  height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+  filter: none;
+}
+
+.erp-login__lugar {
+  margin: 0;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-text-stroke: 2.15px #45525f;
+  paint-order: stroke fill;
 }
 
 .erp-login__alert {
@@ -754,14 +771,14 @@ body {
   align-items: center;
   gap: 0.65rem;
   min-height: 48px;
-  border: 1px solid rgba(28, 43, 34, 0.16);
+  border: 1px solid rgba(16, 36, 56, 0.16);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.72);
   padding: 0 0.85rem;
 }
 
 .erp-login__control:hover {
-  border-color: rgba(0, 169, 72, 0.45);
+  border-color: rgba(0, 103, 192, 0.45);
 }
 
 .erp-login__control:focus-within {
@@ -773,7 +790,7 @@ body {
 .erp-login__glyph,
 .erp-login__eye {
   flex: 0 0 auto;
-  color: rgba(28, 43, 34, 0.62);
+  color: rgba(16, 36, 56, 0.62);
   font-size: 1.15rem;
   line-height: 1;
 }
@@ -787,7 +804,7 @@ body {
   border: 0;
   background: transparent;
   padding: 0;
-  color: #1c2b22;
+  color: #102438;
   font-size: 1.35rem;
   cursor: pointer;
 }
@@ -811,12 +828,12 @@ body {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: #1c2b22;
+  color: #102438;
   padding: 0.7rem 0;
 }
 
 .erp-login .form-control.erp-login__input::placeholder {
-  color: rgba(28, 43, 34, 0.45);
+  color: rgba(16, 36, 56, 0.45);
 }
 
 .erp-login .form-control.erp-login__input:-webkit-autofill,
@@ -829,9 +846,9 @@ body {
   border-radius: 0 !important;
   background-color: transparent !important;
   background-image: none !important;
-  color: #1c2b22 !important;
-  -webkit-text-fill-color: #1c2b22 !important;
-  caret-color: #1c2b22;
+  color: #102438 !important;
+  -webkit-text-fill-color: #102438 !important;
+  caret-color: #102438;
   box-shadow: 0 0 0 1000px transparent inset !important;
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
   transition: background-color 99999s ease-out 0s, color 99999s ease-out 0s;
@@ -883,6 +900,7 @@ body {
 .erp-login__submit {
   display: flex;
   width: 100%;
+  margin-top: 1.75rem;
   min-height: 48px;
   align-items: center;
   justify-content: center;
@@ -893,8 +911,8 @@ body {
   font-size: 1.05rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(180deg, #2dcc6a 0%, #00A948 58%, #008a3a 100%);
-  box-shadow: 0 10px 22px rgba(0, 169, 72, 0.32);
+  background: linear-gradient(180deg, #2b86d6 0%, #0067C0 58%, #0056a1 100%);
+  box-shadow: 0 10px 22px rgba(0, 103, 192, 0.32);
 }
 
 .erp-login__submit i {

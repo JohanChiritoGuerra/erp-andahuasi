@@ -1,0 +1,287 @@
+@page "/rrhh/planilla/calculo"
+@model ErpAndahuasi.Pages.Rrhh.Planilla.CalculoPlanilla.IndexModel
+@{
+  ViewData["Title"] = "Cálculo de planilla";
+  var tenant = Tenants.Resolve(Model.EmpresaId);
+  var anio = DateTime.Now.Year;
+  var mes = DateTime.Now.Month.ToString("00");
+  var meses = new[] { "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds pl-calc" id="pl-calc" data-empresa="@Model.EmpresaId" data-hub="@(Model.EsCentral ? "1" : "0")" data-motor="@(Model.MotorDisponible ? "1" : "0")">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Cálculo de planilla</h1>
+      <p class="page-sub">Ganancias, descuentos y boleta del periodo. Las boletas bloqueadas no se recalculan.</p>
+    </div>
+  </div>
+
+  <div class="pl-ribbon" role="toolbar" aria-label="Acciones de planilla">
+    <div class="pl-ribbon-group">
+      <button type="button" class="pl-ribbon-btn" id="pl-individual" title="Muestra el cálculo de un trabajador, concepto por concepto, sin grabar la planilla.">
+        <i class="ri ri-guide-line"></i>
+        <span>Cálculo individual</span>
+      </button>
+    </div>
+    <div class="pl-ribbon-group">
+      <div class="dropdown" id="pl-cierre-dd">
+        <button type="button" class="pl-ribbon-btn" data-dropdown-btn aria-expanded="false" aria-haspopup="true">
+          <i class="ri ri-calendar-check-line"></i>
+          <span>Opciones de cierre</span>
+        </button>
+        <div class="dropdown-menu pl-cierre-menu" hidden>
+          <span class="pl-cierre-label">Modo</span>
+          <div class="segmented" aria-label="Modo de cierre">
+            <input type="radio" name="pl-cierre" id="pl-cierre-rep" value="0" checked />
+            <label for="pl-cierre-rep">Reproceso</label>
+            <input type="radio" name="pl-cierre" id="pl-cierre-def" value="1" />
+            <label for="pl-cierre-def" title="Definitivo marca como pagadas las cuotas de préstamo descontadas en este periodo.">Definitivo</label>
+          </div>
+          <button type="button" class="btn" id="pl-cerrar-planilla" disabled title="Cierra el mes cuando el alcance es Toda y todas las boletas están procesadas.">Cerrar planilla</button>
+        </div>
+      </div>
+    </div>
+    <div class="pl-ribbon-group">
+      <button type="button" class="pl-ribbon-btn" id="pl-bloquear-lote" disabled title="Bloquea todas las boletas de la lista cuando cada una está procesada.">
+        <i class="ri ri-lock-line"></i>
+        <span>Bloquear boletas de la lista</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="pl-stack">
+    <section class="card pl-card">
+      <div class="pl-brand" aria-hidden="true"></div>
+      <div class="pl-card-body">
+        <div class="step-head"><span class="step-num">1</span>Empresa</div>
+        <div class="pl-empresa">
+          <span class="pl-marca" aria-hidden="true">@Model.EmpresaId</span>
+          <div>
+            <span class="stat-label">Empresa</span>
+            <strong class="pl-empresa-nombre">@tenant.Nombre</strong>
+          </div>
+        </div>
+        @if (Model.EsCentral)
+        {
+          <div class="field">
+            <span class="field-label">Empresa a calcular</span>
+            <div class="segmented pl-empresas">
+              <input type="radio" name="pl-empresa" id="pl-emp-02" value="02" checked />
+              <label for="pl-emp-02">Agraria</label>
+              <input type="radio" name="pl-empresa" id="pl-emp-05" value="05" />
+              <label for="pl-emp-05">San Nicolás</label>
+              <input type="radio" name="pl-empresa" id="pl-emp-06" value="06" />
+              <label for="pl-emp-06">KM 41.5</label>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="card pl-card pl-card-list">
+      <div class="pl-card-body">
+        <div class="step-head"><span class="step-num">2</span>Periodo</div>
+        <div class="pl-periodo">
+          <div class="field">
+            <label class="field-label" for="pl-anio">Año</label>
+            <input class="input" id="pl-anio" type="number" min="2000" max="2100" value="@anio" />
+          </div>
+          <div class="field">
+            <span class="field-label">Mes</span>
+            <div class="dropdown" id="pl-mes-dd">
+              <input type="hidden" id="pl-mes" value="@mes" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn>
+                <span data-dropdown-label>@meses[DateTime.Now.Month - 1]</span>
+                <i class="ri ri-arrow-down-s-line"></i>
+              </button>
+              <div class="dropdown-menu" hidden>
+                @for (var i = 0; i < meses.Length; i++)
+                {
+                  var id = (i + 1).ToString("00");
+                  <button type="button" class="menu-item @(id == mes ? "is-selected" : "")" data-value="@id">@meses[i]<i class="ri ri-check-line"></i></button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-head"><span class="step-num">3</span>Alcance</div>
+        <div class="pl-alcance">
+            <div class="segmented" id="pl-forma">
+              <input type="radio" name="pl-forma" id="pl-forma-todos" value="Todos" checked />
+              <label for="pl-forma-todos">Toda</label>
+              <input type="radio" name="pl-forma" id="pl-forma-seccion" value="PorSeccion" />
+              <label for="pl-forma-seccion">Sección</label>
+              <input type="radio" name="pl-forma" id="pl-forma-trab" value="PorTrabajador" />
+              <label for="pl-forma-trab">Trabajador</label>
+            </div>
+        </div>
+
+        <div class="pl-alcance-extra">
+          <div class="field" id="pl-seccion-field" hidden>
+            <span class="field-label">Sección</span>
+            <div class="dropdown" id="pl-seccion-dd">
+              <input type="hidden" id="pl-seccion" value="" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn>
+                <span data-dropdown-label>Sección</span>
+                <i class="ri ri-arrow-down-s-line"></i>
+              </button>
+              <div class="dropdown-menu" id="pl-seccion-menu" hidden></div>
+            </div>
+          </div>
+          <button type="button" class="btn" id="pl-abrir-busqueda" hidden>Añadir trabajadores</button>
+        </div>
+
+        <div class="data-table pl-table" id="pl-table">
+          <div class="dt-head">
+            <span>Código</span><span>Nombre</span><span>Sección</span><span>Estado</span><span class="pl-col-quitar" hidden></span>
+          </div>
+          <div class="dt-body" id="pl-body">
+            <div class="dt-empty">Cargando trabajadores del periodo.</div>
+          </div>
+          <div class="dt-foot"><span id="pl-conteo">0 trabajadores</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card pl-card pl-card-run">
+      <div class="pl-card-body pl-proceso">
+        <div class="step-head"><span class="step-num">4</span>Iniciar cálculo</div>
+        <div id="pl-error" class="note note-danger" hidden></div>
+        <button type="button" class="btn btn-primary" id="pl-calcular" @(Model.MotorDisponible ? "" : "disabled")><i class="ri ri-calculator-line"></i>Calcular planilla</button>
+        <div id="pl-resultado" hidden>
+          <p class="hint-text" id="pl-resultado-texto"></p>
+          <div id="pl-excesos"></div>
+          <pre class="pl-log" id="pl-log"></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="pl-menu" id="pl-menu" hidden role="menu">
+    <button type="button" role="menuitem" data-accion="bloquear"><i class="ri ri-lock-line"></i>Bloquear boleta</button>
+    <button type="button" role="menuitem" data-accion="ver"><i class="ri ri-file-list-3-line"></i>Visualizar boleta</button>
+    <button type="button" role="menuitem" data-accion="detalle" id="pl-menu-detalle" hidden><i class="ri ri-error-warning-line"></i>Ver detalle del error</button>
+  </div>
+
+  <dialog class="modal" id="pl-busca">
+    <div class="modal-head">
+      <i class="ri ri-search-line"></i>
+      <span class="modal-title">Añadir trabajadores</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <label class="search">
+        <i class="ri ri-search-line"></i>
+        <input type="search" id="pl-busca-q" placeholder="Código o nombre" />
+        <button type="button" class="search-clear" id="pl-busca-clear" hidden aria-label="Limpiar búsqueda"><i class="ri ri-close-line"></i></button>
+      </label>
+      <div class="data-table pl-busca-table">
+        <div class="dt-head"><span></span><span>Código</span><span>Nombre</span><span>Sección</span></div>
+        <div class="dt-body" id="pl-busca-body"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="pl-busca-add">Añadir</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="pl-boleta">
+    <div class="modal-head">
+      <i class="ri ri-file-list-3-line" id="pl-boleta-icono"></i>
+      <span class="modal-title" id="pl-boleta-titulo">Boleta</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="pl-boleta-texto"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cerrar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="pl-confirma">
+    <div class="modal-head">
+      <i class="ri ri-calculator-line"></i>
+      <span class="modal-title">Calcular planilla</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="pl-confirma-texto"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="pl-confirma-ok">Calcular</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="pl-confirma-bloqueo">
+    <div class="modal-head">
+      <i class="ri ri-lock-line"></i>
+      <span class="modal-title">Bloquear boleta</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="pl-bloqueo-texto"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="pl-bloqueo-ok">Bloquear</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="pl-ind">
+    <div class="modal-head">
+      <i class="ri ri-guide-line"></i>
+      <span class="modal-title">Cálculo individual</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="pl-ind-periodo" id="pl-ind-periodo"></p>
+      <p id="pl-ind-aviso" class="note note-danger" hidden></p>
+      <div id="pl-ind-elige">
+        <label class="search">
+          <i class="ri ri-search-line"></i>
+          <input type="search" id="pl-ind-q" placeholder="Código o nombre" />
+        </label>
+        <div class="pl-ind-lista" id="pl-ind-lista"></div>
+      </div>
+      <div id="pl-ind-paso" hidden>
+        <p class="pl-ind-progreso" id="pl-ind-progreso"></p>
+        <div class="pl-ind-scroll">
+          <p class="pl-ind-grupo" id="pl-ind-grupo"></p>
+          <h2 class="pl-ind-titulo" id="pl-ind-titulo"></h2>
+          <p class="pl-ind-formula" id="pl-ind-formula"></p>
+          <p class="pl-ind-monto" id="pl-ind-monto" hidden></p>
+          <div id="pl-ind-origen" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" id="pl-ind-atras" hidden>Anterior</button>
+      <button type="button" class="btn btn-primary" id="pl-ind-siguiente" disabled>Ver cálculo</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="pl-visor">
+    <div id="pl-visor-body"></div>
+  </dialog>
+
+  <dialog class="modal" id="pl-espera">
+    <div class="modal-head">
+      <i class="ri ri-loader-4-line"></i>
+      <span class="modal-title">Calculando planilla</span>
+    </div>
+    <div class="modal-body">
+      <p>Calculando ganancias, descuentos y boletas del periodo. Esta operación puede tardar varios minutos.</p>
+    </div>
+  </dialog>
+</div>
+
+@section VendorScripts {
+  <script src="~/js/erp.js" asp-append-version="true"></script>
+  <script src="~/js/calculo-planilla.js" asp-append-version="true"></script>
+}

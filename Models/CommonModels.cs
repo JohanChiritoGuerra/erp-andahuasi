@@ -41,8 +41,8 @@ public static class Tenants
     public static readonly IReadOnlyDictionary<string, TenantInfo> Catalog = new Dictionary<string, TenantInfo>(StringComparer.OrdinalIgnoreCase)
     {
         ["02"] = new() { EmpresaId = "02", Nombre = "Andahuasi", PrimaryColor = "#0067C0" },
-        ["05"] = new() { EmpresaId = "05", Nombre = "San Nicolás", PrimaryColor = "#7A3A9A" },
-        ["06"] = new() { EmpresaId = "06", Nombre = "Andahuasi KM 41.5", PrimaryColor = "#13A842" }
+        ["05"] = new() { EmpresaId = "05", Nombre = "San Nicolás", PrimaryColor = "#80397B" },
+        ["06"] = new() { EmpresaId = "06", Nombre = "Andahuasi KM 41.5", PrimaryColor = "#14A843" }
     };
 
     public static TenantInfo Resolve(string? empresaId) =>

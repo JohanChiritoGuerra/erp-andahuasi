@@ -296,4 +296,35 @@ public class RrhhApi
         request.EmpresaId = _session.Current.EmpresaId;
         return _api.PutAsync<PerfilTrabajadorResponse>("api/PerfilTrabajador/ActualizarPerfil", request);
     }
+
+    public Task<CalculoPlanillaPreviewResponse> PrevisualizarPlanillaAsync(CalculoPlanillaPreviewRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        return _api.PostAsync<CalculoPlanillaPreviewResponse>("api/Rrhh/Planilla/CalculoPlanilla/Previsualizar", request);
+    }
+
+    public Task<CalculoPlanillaEjecutarResponse> EjecutarPlanillaAsync(CalculoPlanillaEjecutarRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        request.UsrSistema = _session.Current.UsuaId;
+        return _api.PostLargoAsync<CalculoPlanillaEjecutarResponse>("api/Rrhh/Planilla/CalculoPlanilla/Ejecutar", request);
+    }
+
+    public Task<BloquearPlanillaResponse> BloquearPlanillaAsync(BloquearPlanillaRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        return _api.PostAsync<BloquearPlanillaResponse>("api/Rrhh/Planilla/CalculoPlanilla/Bloquear", request);
+    }
+
+    public Task<BoletaPagoResponse> ObtenerBoletaAsync(CalculoPlanillaPreviewRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        return _api.PostAsync<BoletaPagoResponse>("api/Rrhh/Planilla/CalculoPlanilla/Boleta", request);
+    }
+
+    public Task<ExplicacionPlanillaResponse> ExplicarPlanillaAsync(CalculoPlanillaPreviewRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        return _api.PostLargoAsync<ExplicacionPlanillaResponse>("api/Rrhh/Planilla/CalculoPlanilla/Explicar", request);
+    }
 }

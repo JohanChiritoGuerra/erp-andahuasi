@@ -1,0 +1,221 @@
+@page "/comercializacion/despacho-azucar"
+@model ErpAndahuasi.Pages.Comercializacion.DespachoAzucar.IndexModel
+@{
+  ViewData["Title"] = "Despacho de azúcar";
+  ViewData["shellFill"] = true;
+  var hoy = DateTime.Now.ToString("yyyy-MM-dd");
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+@section VendorScripts {
+  <script src="~/js/erp.js"></script>
+}
+
+<div class="erp-ds erp-ds--fill" id="despacho-azucar">
+  <div class="da-page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title" id="da-titulo">Por despachar</h1>
+        <p class="page-sub" id="da-subtitulo">Comprobantes de venta pendientes de despacho</p>
+      </div>
+    </div>
+
+    <div class="da-tools">
+    <div class="segmented da-tabs" id="da-tabs">
+      <input type="radio" name="da-tab" id="da-tab-despacho" value="despacho" checked />
+      <label for="da-tab-despacho"><i class="ri ri-truck-line"></i>Por despachar</label>
+      <input type="radio" name="da-tab" id="da-tab-orden" value="orden" />
+      <label for="da-tab-orden"><i class="ri ri-file-list-3-line"></i>Órdenes internas</label>
+      <input type="radio" name="da-tab" id="da-tab-reporte" value="reporte" />
+      <label for="da-tab-reporte"><i class="ri ri-checkbox-circle-line"></i>Despachados</label>
+    </div>
+
+    <div class="da-barra">
+      <div class="da-metric">
+        <i class="ri ri-file-list-3-line"></i>
+        <span id="da-stat-a-lbl">Comprobantes</span>
+        <b id="da-stat-a">0</b>
+      </div>
+      <div class="da-metric">
+        <i class="ri ri-archive-line"></i>
+        <span>Unidades</span>
+        <b id="da-stat-b">0</b>
+      </div>
+      <div class="da-acciones">
+        <button type="button" class="btn btn-primary da-icon" id="da-registrar-abrir" hidden aria-label="Registrar orden" title="Registrar orden">
+          <i class="ri ri-add-line"></i>
+        </button>
+        <button type="button" class="btn da-icon" id="da-refrescar" aria-label="Actualizar" title="Actualizar"><i class="ri ri-refresh-line"></i></button>
+      </div>
+    </div>
+
+    <div class="dropdown da-producto" id="da-prod-dd">
+      <input type="hidden" id="da-prod" value="2" />
+      <button type="button" class="dropdown-btn" data-dropdown-btn aria-label="Producto">
+        <span data-dropdown-label>AZUCAR RUBIA DOMESTICA x 50 kg.</span>
+        <i class="ri ri-arrow-down-s-line"></i>
+      </button>
+      <div class="dropdown-menu" hidden>
+        <button type="button" class="menu-item is-selected" data-value="2">AZUCAR RUBIA DOMESTICA x 50 kg.<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="22153">AZUCAR RUBIA DOMESTICA 50 kg (POLIPROPILENO)<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="22139">AZUCAR RUBIA DOMESTICA - 25 Kg (POLIPROPILENO)<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="22122">AZUCAR RUBIA DOMESTICA - 5 kg.<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="22141">AZUCAR RUBIA DULCE AZUCAR (1 KG)<i class="ri ri-check-line"></i></button>
+      </div>
+    </div>
+
+    <div class="da-filtro">
+      <div class="segmented da-periodo" id="da-periodo" hidden>
+        <input type="radio" name="da-periodo" id="da-dia" value="dia" checked />
+        <label for="da-dia">Día</label>
+        <input type="radio" name="da-periodo" id="da-mes" value="mes" />
+        <label for="da-mes">Mes</label>
+      </div>
+      <input class="input da-fecha" id="da-fecha" type="date" value="@hoy" aria-label="Fecha del despacho" hidden />
+      <label class="search on-panel">
+        <i class="ri ri-search-line"></i>
+        <input type="search" id="da-q" placeholder="Número de comprobante u orden" aria-label="Buscar" />
+        <button type="button" class="search-clear" data-search-clear aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+      </label>
+    </div>
+    </div>
+
+    <div class="note note-danger" id="da-error" hidden></div>
+
+    <div class="data-table" id="da-table" style="--dt-cols:minmax(160px,1.3fr) minmax(120px,1fr) 120px 90px">
+      <div class="dt-head">
+        <span id="da-h1">Comprobante</span>
+        <span id="da-h2">Cliente</span>
+        <span id="da-h3">Fecha</span>
+        <span id="da-h4" class="da-num">Cantidad</span>
+      </div>
+      <div class="dt-body" id="da-rows"></div>
+      <div class="dt-foot"><span id="da-count">Cargando…</span></div>
+    </div>
+  </div>
+
+  <dialog class="modal" id="da-despachar" aria-labelledby="da-despachar-t">
+    <div class="modal-head">
+      <i class="ri ri-truck-line"></i>
+      <span class="modal-title" id="da-despachar-t">Despachar comprobante</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <dl class="da-ficha" id="da-despachar-ficha"></dl>
+      <div class="field">
+        <label for="da-despachar-fecha">Fecha de despacho</label>
+        <input class="input" id="da-despachar-fecha" type="date" value="@hoy" />
+      </div>
+      <div class="note note-danger" id="da-despachar-aviso" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="da-despachar-ok"><i class="ri ri-check-line"></i>Despachar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="da-ver" aria-labelledby="da-ver-t">
+    <div class="modal-head">
+      <i class="ri ri-file-list-3-line"></i>
+      <span class="modal-title" id="da-ver-t">Orden interna</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <dl class="da-ficha" id="da-ver-ficha"></dl>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cerrar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal-form" id="da-registrar" aria-labelledby="da-registrar-t">
+    <div class="modal-head">
+      <i class="ri ri-add-line"></i>
+      <span class="modal-title" id="da-registrar-t">Registrar orden interna</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="da-reg-numero">Número</label>
+        <input class="input" id="da-reg-numero" type="text" inputmode="numeric" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="da-reg-fecha">Fecha</label>
+        <input class="input" id="da-reg-fecha" type="date" value="@hoy" />
+      </div>
+      <div class="field">
+        <span class="field-label">Destino</span>
+        <div class="dropdown" id="da-dest-dd">
+          <input type="hidden" id="da-dest" value="" />
+          <button type="button" class="dropdown-btn" data-dropdown-btn>
+            <span data-dropdown-label>Seleccionar destino</span>
+            <i class="ri ri-arrow-down-s-line"></i>
+          </button>
+          <div class="dropdown-menu" hidden>
+            <button type="button" class="menu-item" data-value="TIENDA ANDAHUASI">TIENDA ANDAHUASI<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="TIENDA HUACHO">TIENDA HUACHO<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="RACIONAMIENTO">RACIONAMIENTO<i class="ri ri-check-line"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">Producto</span>
+        <div class="dropdown" id="da-reg-prod-dd">
+          <input type="hidden" id="da-reg-prod" value="" />
+          <button type="button" class="dropdown-btn" data-dropdown-btn>
+            <span data-dropdown-label>Seleccionar producto</span>
+            <i class="ri ri-arrow-down-s-line"></i>
+          </button>
+          <div class="dropdown-menu" hidden>
+            <button type="button" class="menu-item" data-value="2">AZUCAR RUBIA DOMESTICA x 50 kg.<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="22153">AZUCAR RUBIA DOMESTICA 50 kg (POLIPROPILENO)<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="22139">AZUCAR RUBIA DOMESTICA - 25 Kg (POLIPROPILENO)<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="22122">AZUCAR RUBIA DOMESTICA - 5 kg.<i class="ri ri-check-line"></i></button>
+            <button type="button" class="menu-item" data-value="22141">AZUCAR RUBIA DULCE AZUCAR (1 KG)<i class="ri ri-check-line"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="da-reg-cantidad">Cantidad</label>
+        <input class="input" id="da-reg-cantidad" type="number" min="1" step="1" />
+      </div>
+      <div class="note note-danger" id="da-reg-aviso" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="da-reg-ok">Guardar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="da-anular" aria-labelledby="da-anular-t">
+    <div class="modal-head">
+      <i class="ri ri-close-circle-line"></i>
+      <span class="modal-title" id="da-anular-t">Comprobante despachado</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <dl class="da-ficha" id="da-anular-ficha"></dl>
+      <p class="hint-text">Esta acción elimina el despacho registrado de este comprobante.</p>
+      <div class="note note-danger" id="da-anular-aviso" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-danger" id="da-anular-ok">Anular despacho</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="da-espera" aria-labelledby="da-espera-t">
+    <div class="modal-head">
+      <i class="ri ri-loader-4-line"></i>
+      <span class="modal-title" id="da-espera-t">Espere</span>
+    </div>
+    <div class="modal-body">
+      <p id="da-espera-txt">Procesando…</p>
+    </div>
+  </dialog>
+</div>
+
+@section PageScripts {
+  <script src="~/js/despacho-azucar.js" asp-append-version="true"></script>
+}

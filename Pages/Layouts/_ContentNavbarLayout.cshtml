@@ -60,6 +60,7 @@
 
 @section PageScripts {
   <script src="~/js/shell.js" asp-append-version="true"></script>
+  <script src="~/js/fecha.js" asp-append-version="true"></script>
   @RenderSection("PageScripts", required: false)
 }
 
@@ -68,13 +69,13 @@
 
   <aside class="sidebar" aria-label="Navegación principal">
     <div class="sb-brand">
+      <button type="button" class="icon-btn" data-sidebar-toggle aria-label="Contraer o expandir menú">
+        <i class="ri ri-layout-left-line"></i>
+      </button>
       <a href="/" aria-label="Andahuasi, inicio">
         <img class="shell-logo shell-logo--light" src="~/img/branding/logo-andahuasi-claro.svg" alt="Andahuasi" />
         <img class="shell-logo shell-logo--dark" src="~/img/branding/logo-andahuasi-oscuro.svg" alt="" />
       </a>
-      <button type="button" class="icon-btn" data-sidebar-toggle aria-label="Contraer o expandir menú">
-        <i class="ri ri-layout-left-line"></i>
-      </button>
     </div>
 
     <div class="sb-search">
