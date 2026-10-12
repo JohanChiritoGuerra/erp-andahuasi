@@ -84,7 +84,7 @@
           <div class="pl-ribbon" role="toolbar" aria-label="Acciones de la operación">
             <div class="pl-ribbon-group">
               <button type="button" class="pl-ribbon-btn" id="tc-agregar"><i class="ri ri-user-add-line"></i><span>Agregar trabajadores</span></button>
-              <button type="button" class="pl-ribbon-btn" id="tc-cargar" hidden title="Carga a todos los que siguen con contrato al cierre del mes y aún no cobran la mensualidad."><i class="ri ri-group-line"></i><span>Cargar activos del mes</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-cargar"><i class="ri ri-group-line"></i><span>Cargar pendientes del mes</span></button>
               <button type="button" class="pl-ribbon-btn" id="tc-quitar" disabled><i class="ri ri-user-unfollow-line"></i><span>Quitar de la lista</span></button>
             </div>
             <div class="pl-ribbon-group">
@@ -180,7 +180,7 @@
         </div>
       </div>
       <div class="data-table pl-busca-table tc-busca-table">
-        <div class="dt-head"><span></span><span>Código</span><span>Nombre</span><span>DNI</span><span>Cese</span><span>Estado</span></div>
+        <div class="dt-head"><button type="button" class="tc-check-todos" id="tc-busca-todos-chk" title="Marcar o desmarcar todos los que se ven en la lista"><i class="ri ri-checkbox-blank-line"></i></button><span>Código</span><span>Nombre</span><span>DNI</span><span>Cese</span><span>Estado</span></div>
         <div class="dt-body" id="tc-busca-body"></div>
       </div>
       <div id="tc-busca-error" class="note note-danger tc-busca-error" hidden></div>

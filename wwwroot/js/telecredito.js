@@ -214,7 +214,11 @@
 
     const editable = borrador();
     $('tc-agregar').disabled = !editable;
-    $('tc-cargar').hidden = actual.tipoOperacion !== 'M';
+    const esM = actual.tipoOperacion === 'M';
+    $('tc-cargar').querySelector('span').textContent = esM ? 'Cargar pendientes del mes' : 'Cargar cesados del rango';
+    $('tc-cargar').title = esM
+      ? 'Carga a todos los que trabajaron en el mes y aún no cobran su mensualidad, incluidos los que cesaron sin operación propia. Excluye a los ya liquidados.'
+      : 'Carga a todos los que cesan en el rango de la operación, menos los que ya están en otra operación.';
     $('tc-cargar').disabled = !editable;
     $('tc-quitar').disabled = !editable || quitar.size === 0;
     $('tc-actualizar').disabled = !editable || detalle.length === 0;
@@ -228,11 +232,17 @@
 
     const cols = [];
     const head = [];
-    if (editable) { cols.push('28px'); head.push('<span></span>'); }
-    cols.push('4.5rem', 'minmax(10rem, 1fr)', '5.5rem');
-    head.push('<span>Código</span>', '<span>Trabajador</span>', '<span>Cese</span>');
-    if (incluyeM()) { cols.push('6.5rem'); head.push('<span class="tc-num">Mensualidad</span>'); }
-    if (incluyeL()) { cols.push('6.5rem'); head.push('<span class="tc-num">Liquidación</span>'); }
+    if (editable) {
+      cols.push('28px');
+      const todos = detalle.length > 0 && detalle.every((d) => quitar.has(d.trabId));
+      const alguno = detalle.some((d) => quitar.has(d.trabId));
+      head.push('<button type="button" class="tc-check-todos" id="tc-quitar-todos" title="Marcar o desmarcar a todos para quitar"' + (detalle.length ? '' : ' disabled') +
+        '><i class="ri ri-' + (todos ? 'checkbox-line' : (alguno ? 'checkbox-indeterminate-line' : 'checkbox-blank-line')) + '"></i></button>');
+    }
+    cols.push('3.75rem', 'minmax(8rem, 1fr)', '8.25rem', '5.25rem');
+    head.push('<span>Código</span>', '<span>Trabajador</span>', '<span>Cuenta</span>', '<span>Cese</span>');
+    if (incluyeM()) { cols.push('5.75rem'); head.push('<span class="tc-num">Mensualidad</span>'); }
+    if (incluyeL()) { cols.push('5.75rem'); head.push('<span class="tc-num">Liquidación</span>'); }
     $('tc-table').style.setProperty('--dt-cols', cols.join(' '));
     $('tc-table-head').innerHTML = head.join('');
 
@@ -248,19 +258,21 @@
         const celdas = [];
         if (editable) celdas.push(`<span class="pl-check"><i class="ri ri-checkbox-${sel ? '' : 'blank-'}line"></i></span>`);
         celdas.push(`<span class="dt-code">${id}</span>`,
-          `<span class="tc-trab"><span class="dt-desc">${esc(d.nombre)}</span><span class="dt-muted">DNI ${esc(d.dni || '—')} · ${
-            d.cuenta ? 'Cta. ' + esc(d.cuenta) : '<span class="tc-falta">sin cuenta</span>'}</span></span>`,
+          `<span class="tc-trab"><span class="dt-desc">${esc(d.nombre)}</span><span class="dt-muted">DNI ${esc(d.dni || '—')}</span></span>`,
+          d.cuenta ? `<span class="dt-muted tc-cuenta">${esc(d.cuenta)}</span>` : '<span><span class="pill pill-warning">Sin cuenta</span></span>',
           `<span class="dt-muted">${fecha(d.fechaCese)}</span>`);
         if (incluyeM()) celdas.push(`<span class="tc-num">${monto(d.montoMensualidad)}</span>`);
         if (incluyeL()) celdas.push(`<span class="tc-num">${monto(d.montoLiquidacion)}</span>`);
         return editable
-          ? `<button type="button" class="dt-row tc-row${sel ? ' is-selected' : ''}" data-trab="${id}" aria-pressed="${sel}">${celdas.join('')}</button>`
-          : `<div class="dt-row tc-row">${celdas.join('')}</div>`;
+          ? `<button type="button" class="dt-row tc-row${sel ? ' is-selected' : ''}${d.cuenta ? '' : ' tc-sin-cuenta'}" data-trab="${id}" aria-pressed="${sel}">${celdas.join('')}</button>`
+          : `<div class="dt-row tc-row${d.cuenta ? '' : ' tc-sin-cuenta'}">${celdas.join('')}</div>`;
       }).join('');
     }
 
     const n = detalle.length;
-    $('tc-conteo').textContent = n + (n === 1 ? ' trabajador' : ' trabajadores') + (quitar.size ? ' · ' + quitar.size + ' marcado(s)' : '');
+    const sinCuenta = detalle.filter((d) => !d.cuenta).length;
+    $('tc-conteo').innerHTML = esc(n + (n === 1 ? ' trabajador' : ' trabajadores') + (quitar.size ? ' · ' + quitar.size + ' marcado(s)' : '')) +
+      (sinCuenta ? ' · <span class="tc-falta">' + sinCuenta + ' sin cuenta</span>' : '');
     // Totales del procedimiento: lo que se deposita (montos > 0).
     const t = totales || {};
     const partes = [];
@@ -333,14 +345,26 @@
     return root.querySelector('input[name="tc-busca-filtro"]:checked')?.value === 'sug';
   }
 
-  function pintarBusqueda() {
+  /* Candidatos que se ven con el filtro y la búsqueda actuales. */
+  function candidatosVisibles() {
     const q = $('tc-busca-q').value.trim().toLowerCase();
     const sug = soloSugeridos();
-    const rows = candidatos.filter((c) => {
+    return candidatos.filter((c) => {
       if (sug && !c.sugerido) return false;
       if (!q) return true;
       return [c.trabId, c.nombre, c.dni].some((v) => String(v || '').toLowerCase().includes(q));
     });
+  }
+
+  /* Ícono de la casilla de encabezado: vacía, parcial o completa. */
+  function iconoTodos(boton, total, marcados) {
+    boton.disabled = total === 0;
+    boton.querySelector('i').className = 'ri ri-' + (marcados === 0 ? 'checkbox-blank-line' : (marcados === total ? 'checkbox-line' : 'checkbox-indeterminate-line'));
+  }
+
+  function pintarBusqueda() {
+    const sug = soloSugeridos();
+    const rows = candidatosVisibles();
     const body = $('tc-busca-body');
     if (!rows.length) {
       body.innerHTML = '<div class="dt-empty">' + (sug
@@ -365,6 +389,8 @@
         </button>`;
       }).join('');
     }
+    const elegibles = rows.filter((c) => !c.enOperacion && !c.ocupado);
+    iconoTodos($('tc-busca-todos-chk'), elegibles.length, elegibles.filter((c) => marcar.has(c.trabId)).length);
     $('tc-busca-add').disabled = marcar.size === 0;
     $('tc-busca-conteo').textContent = marcar.size ? marcar.size + ' marcado(s)' : '';
   }
@@ -488,6 +514,24 @@
   /* Solo en borrador: arma los archivos con los montos del momento y los guarda. No descarga. */
   async function generar() {
     if (!borrador()) return;
+    // Sin cuenta no hay abono: se avisa antes y se ofrece marcarlos para quitarlos de la lista.
+    const sinCuenta = detalle.filter((d) => !d.cuenta);
+    if (sinCuenta.length) {
+      const marcarlos = await confirmar({
+        titulo: 'Trabajadores sin cuenta bancaria',
+        icono: 'ri-error-warning-line',
+        texto: 'No se pueden generar los archivos: ' + (sinCuenta.length === 1 ? 'este trabajador no tiene' : 'estos ' + sinCuenta.length + ' trabajadores no tienen') +
+          ' cuenta bancaria. Quítelos de la lista (o registre su cuenta y pulse «Actualizar montos») y vuelva a generar.',
+        lista: sinCuenta.map((d) => d.trabId + ' · ' + d.nombre),
+        boton: sinCuenta.length === 1 ? 'Marcarlo para quitar' : 'Marcarlos para quitar'
+      });
+      if (marcarlos) {
+        quitar = new Set(sinCuenta.map((d) => d.trabId));
+        pintarDetalle();
+        aviso((sinCuenta.length === 1 ? '1 trabajador marcado' : sinCuenta.length + ' trabajadores marcados') + '. Revise y pulse «Quitar de la lista».');
+      }
+      return;
+    }
     const fechaProceso = await confirmar({
       titulo: actual.fecArchivo ? 'Generar y reemplazar' : 'Generar archivos',
       icono: 'ri-file-excel-2-line',
@@ -746,6 +790,18 @@
     const id = row.dataset.trab;
     if (marcar.has(id)) marcar.delete(id); else marcar.add(id);
     pintarBusqueda();
+  });
+  $('tc-busca-todos-chk').addEventListener('click', () => {
+    const elegibles = candidatosVisibles().filter((c) => !c.enOperacion && !c.ocupado);
+    const todos = elegibles.length > 0 && elegibles.every((c) => marcar.has(c.trabId));
+    elegibles.forEach((c) => (todos ? marcar.delete(c.trabId) : marcar.add(c.trabId)));
+    pintarBusqueda();
+  });
+  $('tc-table-head').addEventListener('click', (ev) => {
+    if (!ev.target.closest('#tc-quitar-todos') || !borrador()) return;
+    const todos = detalle.length > 0 && detalle.every((d) => quitar.has(d.trabId));
+    quitar = todos ? new Set() : new Set(detalle.map((d) => d.trabId));
+    pintarDetalle();
   });
   $('tc-busca-add').addEventListener('click', agregar);
 
