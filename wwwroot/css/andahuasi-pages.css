@@ -685,10 +685,11 @@
   #fert-presupuesto .fp-yield .input { width: 100%; min-width: 0; max-width: 100%; }
 }
 
-/* Cálculo de planilla: el acento de la pantalla sigue a la empresa de la sesión.
+/* Cálculo de planilla y Telecrédito: el acento de la pantalla sigue a la empresa.
    05 = Color.FromArgb(128, 57, 123). 06 parte de Color.FromArgb(20, 168, 67);
    el botón usa un verde más oscuro para que el texto blanco cumpla contraste. */
-.erp-ds.pl-calc[data-empresa="05"] {
+.erp-ds.pl-calc[data-empresa="05"],
+.erp-ds.tc-page[data-empresa="05"] {
   --accent: #80397b;
   --accent-hover: #6a2f66;
   --accent-fg: #ffffff;
@@ -696,7 +697,8 @@
   --accent-text: #6a2f66;
   --planilla-brand: #80397b;
 }
-.erp-ds.pl-calc[data-empresa="06"] {
+.erp-ds.pl-calc[data-empresa="06"],
+.erp-ds.tc-page[data-empresa="06"] {
   --accent: #0d7533;
   --accent-hover: #0a5c28;
   --accent-fg: #ffffff;
@@ -704,7 +706,8 @@
   --accent-text: #0c6b2e;
   --planilla-brand: #14a843;
 }
-.erp-ds.pl-calc[data-empresa="02"] {
+.erp-ds.pl-calc[data-empresa="02"],
+.erp-ds.tc-page[data-empresa="02"] {
   --accent: #0067c0;
   --accent-hover: #0056a1;
   --accent-fg: #ffffff;
@@ -712,12 +715,16 @@
   --planilla-brand: #0067c0;
 }
 [data-theme="dark"] .erp-ds.pl-calc[data-empresa="05"],
-[data-bs-theme="dark"] .erp-ds.pl-calc[data-empresa="05"] {
+[data-bs-theme="dark"] .erp-ds.pl-calc[data-empresa="05"],
+[data-theme="dark"] .erp-ds.tc-page[data-empresa="05"],
+[data-bs-theme="dark"] .erp-ds.tc-page[data-empresa="05"] {
   --accent-text: #e4b6e0;
   --accent-hover: #9a4d94;
 }
 [data-theme="dark"] .erp-ds.pl-calc[data-empresa="06"],
-[data-bs-theme="dark"] .erp-ds.pl-calc[data-empresa="06"] {
+[data-bs-theme="dark"] .erp-ds.pl-calc[data-empresa="06"],
+[data-theme="dark"] .erp-ds.tc-page[data-empresa="06"],
+[data-bs-theme="dark"] .erp-ds.tc-page[data-empresa="06"] {
   --accent: #14924a;
   --accent-text: #8ee0a8;
   --accent-hover: #0d7533;
@@ -1108,3 +1115,110 @@
   background: transparent; color: var(--accent-text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 .fecha-pop__link:hover { background: var(--accent-soft); }
+
+/* Telecrédito BCP: operaciones a la izquierda, trabajadores de la elegida a la derecha. */
+.erp-ds.tc-page { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+.erp-ds.tc-page > .page-head { flex-shrink: 0; align-items: center; }
+.erp-ds .tc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 12px; }
+.erp-ds .tc-card { padding: 0; gap: 0; min-height: 0; display: flex; flex-direction: column; }
+.erp-ds .tc-card-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+.erp-ds .tc-ops-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.erp-ds .tc-filtro { display: flex; gap: 8px; }
+.erp-ds .tc-filtro > .field { flex: 1; min-width: 0; }
+.erp-ds .tc-ops-lista { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.erp-ds .tc-op {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--border);
+  background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.erp-ds .tc-op:last-child { border-bottom: 0; }
+.erp-ds .tc-op:hover { background: var(--hover); }
+.erp-ds .tc-op.is-selected { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.erp-ds .tc-op-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.erp-ds .tc-op-tipo { font-size: 12.5px; color: var(--accent-text); font-weight: 600; }
+.erp-ds #tc-det:not([hidden]) { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.erp-ds .tc-det-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.erp-ds .tc-det-titulo { font-size: 15px; }
+.erp-ds .tc-det-head .hint-text { margin: 2px 0 0; }
+.erp-ds .tc-table { flex: 1; min-height: 0; }
+.erp-ds .tc-table .dt-code,
+.erp-ds .tc-table .dt-desc,
+.erp-ds .tc-table .dt-muted { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erp-ds .tc-table button.dt-row { width: 100%; border-left: 0; border-right: 0; border-top: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.erp-ds .tc-table button.dt-row.is-selected { background: var(--accent-soft); }
+.erp-ds .tc-table .dt-row.is-selected .pl-check,
+.erp-ds .tc-table button.dt-row:hover .pl-check { color: var(--accent-text); }
+.erp-ds .tc-num { text-align: right; font-variant-numeric: tabular-nums; }
+.erp-ds .tc-lista { margin: 4px 0 0; padding-left: 18px; }
+.erp-ds .tc-form { display: flex; flex-direction: column; gap: 12px; }
+.erp-ds .tc-fechas { display: flex; flex-wrap: wrap; gap: 12px; }
+.erp-ds .tc-fechas > .field { width: 10rem; }
+.erp-ds .tc-tipos label { font-size: 12px; padding: 0 6px; }
+.erp-ds #tc-crear { width: min(560px, calc(100vw - 32px)); }
+.erp-ds #tc-busca { width: min(980px, calc(100vw - 32px)); }
+.erp-ds .tc-busca-barra { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.erp-ds .tc-busca-barra .search { flex: 1; min-width: 14rem; }
+.erp-ds .tc-busca-table { max-height: 420px; --dt-cols: 28px 5.5rem minmax(10rem, 1fr) 6rem 6rem 9rem; }
+.erp-ds #tc-busca .modal-foot .hint-text { margin-right: auto; }
+@media (max-width: 900px) {
+  .erp-ds.tc-page { overflow: auto; }
+  .erp-ds .tc-grid { grid-template-columns: minmax(0, 1fr); flex: none; }
+  .erp-ds .tc-ops-lista { max-height: 18rem; }
+  .erp-ds .tc-table { min-height: 18rem; }
+  .erp-ds .tc-table .dt-body { max-height: min(55vh, 26rem); }
+}
+.erp-ds .tc-busca-error { margin-top: 8px; }
+.erp-ds .tc-head { justify-content: flex-start; gap: 12px; }
+.erp-ds .tc-head .pl-marca { width: 40px; height: 40px; font-size: 13px; flex-shrink: 0; }
+.erp-ds .tc-head-texto { min-width: 0; }
+.erp-ds .tc-titulo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 20px; }
+.erp-ds .tc-titulo-sep { color: var(--faint); font-weight: 400; }
+.erp-ds .tc-titulo-opcion { color: var(--accent-text); }
+.erp-ds #tc-confirma { width: min(480px, calc(100vw - 32px)); }
+.erp-ds #tc-confirma .modal-body p { margin: 0; line-height: 1.5; }
+.erp-ds #tc-confirma .tc-lista { margin-top: 8px; color: var(--muted); font-size: 12.5px; }
+.erp-ds #tc-confirma .tc-confirma-fecha { margin-top: 14px; }
+.erp-ds #tc-confirma .tc-confirma-fecha .hint-text { margin-top: 4px; }
+.erp-ds .tc-toast {
+  position: fixed; right: 24px; bottom: 24px; z-index: 60; display: flex; align-items: center; gap: 8px;
+  max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--panel); color: var(--text); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  box-shadow: var(--shadow-popover); font-size: 13px;
+}
+.erp-ds .tc-toast[hidden] { display: none; }
+.erp-ds .tc-toast i { color: var(--accent-text); font-size: 16px; }
+/* La barra de Telecrédito tiene más botones que la de planilla: ocupa todo el ancho y salta de línea. */
+.erp-ds #tc-det .pl-ribbon { width: 100%; max-width: none; justify-content: flex-start; flex-wrap: wrap; margin-top: 0; }
+/* En pantallas angostas la tabla se desplaza a lo ancho en vez de cortar columnas. */
+.erp-ds .tc-table { overflow-x: auto; }
+.erp-ds .tc-table .dt-head,
+.erp-ds .tc-table .dt-row { min-width: 520px; gap: 8px; }
+/* El filtro del buscador no se encoge: cada opción en una sola línea. */
+.erp-ds .tc-busca-filtro { flex: 0 0 auto; }
+.erp-ds .tc-busca-filtro label { white-space: nowrap; padding: 0 14px; }
+.erp-ds .tc-busca-barra { align-items: center; }
+.erp-ds .tc-busca-table .dt-body { min-height: 12rem; }
+.erp-ds .tc-trab { display: flex; flex-direction: column; min-width: 0; }
+.erp-ds .tc-trab > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erp-ds .tc-trab .dt-muted { font-size: 11.5px; }
+/* La casilla se ve siempre, para que se note que la fila se puede marcar. */
+.erp-ds .tc-table .pl-check,
+.erp-ds .tc-busca-table .pl-check { color: var(--faint); }
+.erp-ds .tc-busca-table .dt-row:disabled .pl-check { visibility: hidden; }
+@media (max-width: 1280px) {
+  .erp-ds .tc-grid { grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); }
+}
+.erp-ds .tc-sin { color: var(--faint); }
+.erp-ds .tc-falta { color: var(--warning-fg); font-weight: 600; }
+.erp-ds .tc-table .dt-foot #tc-total { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+@keyframes tc-giro { to { transform: rotate(360deg); } }
+.erp-ds .tc-girando { animation: tc-giro .8s linear infinite; }
+/* Correo para enviar los archivos */
+.erp-ds #tc-correo-dlg { width: min(980px, calc(100vw - 32px)); }
+.erp-ds .tc-correo-body { display: flex; flex-direction: column; gap: 12px; }
+.erp-ds .tc-correo-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.erp-ds .tc-correo-label .btn { height: 28px; font-size: 12px; gap: 6px; }
+.erp-ds .tc-correo-vista {
+  max-height: 52vh; overflow: auto; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: #ffffff; color: #1f2328;
+}
+.erp-ds .tc-correo-vista:focus { outline: 2px solid var(--accent); }

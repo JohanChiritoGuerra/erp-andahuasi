@@ -327,4 +327,14 @@ public class RrhhApi
         request.EmpresaId = _session.Current.EmpresaId;
         return _api.PostLargoAsync<ExplicacionPlanillaResponse>("api/Rrhh/Planilla/CalculoPlanilla/Explicar", request);
     }
+
+    /// <summary>
+    /// Telecrédito: EmpresaId es la sesión (agraria) y EmpresaOperacionId la partner de la página.
+    /// </summary>
+    public Task<T> TelecreditoAsync<T>(string accion, TelecreditoRequest request)
+    {
+        request.EmpresaId = _session.Current.EmpresaId;
+        request.UsrSistema = _session.Current.UsuaId;
+        return _api.PostAsync<T>("api/Rrhh/Planilla/Telecredito/" + accion, request);
+    }
 }

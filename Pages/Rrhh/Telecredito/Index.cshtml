@@ -1,0 +1,246 @@
+@page "/rrhh/telecredito/{empresaId}"
+@model ErpAndahuasi.Pages.Rrhh.Telecredito.IndexModel
+@{
+  ViewData["Title"] = "Generar archivo Telecrédito BCP";
+  var conocida = Tenants.Catalog.TryGetValue(Model.EmpresaId, out var tenant);
+  var nombre = conocida ? tenant!.Nombre : "Empresa " + Model.EmpresaId;
+  var hoy = DateTime.Today.ToString("yyyy-MM-dd");
+  var mesActual = DateTime.Today.Month.ToString("00");
+  var meses = new[] { "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds tc-page" id="tc-page" data-empresa="@Model.EmpresaId" data-hoy="@hoy">
+  <div class="page-head tc-head">
+    <span class="pl-marca" aria-hidden="true">@Model.EmpresaId</span>
+    <div class="tc-head-texto">
+      <h1 class="page-title tc-titulo">
+        <span id="tc-empresa-nombre">@nombre</span>
+        <span class="tc-titulo-sep" aria-hidden="true">·</span>
+        <span class="tc-titulo-opcion">Generar archivos para pago Telecrédito BCP</span>
+      </h1>
+      <p class="page-sub">Listas de trabajadores para pagar mensualidad y liquidación. Al cerrar una lista se genera el archivo del banco.</p>
+    </div>
+  </div>
+
+  @if (!Model.EsCentral)
+  {
+    <div class="note note-danger">Esta opción se usa desde la sesión de Andahuasi (02).</div>
+  }
+
+  <div class="tc-grid">
+    <section class="card tc-card tc-ops">
+      <div class="pl-brand" aria-hidden="true"></div>
+      <div class="tc-card-body">
+        <div class="tc-ops-head">
+          <div class="step-head"><span class="step-num">1</span>Operaciones</div>
+          <button type="button" class="btn btn-primary" id="tc-nueva" @(Model.EsCentral ? "" : "disabled")><i class="ri ri-add-line"></i>Nueva</button>
+        </div>
+        <div class="tc-filtro">
+          <div class="field">
+            <label class="field-label" for="tc-anio">Año</label>
+            <input class="input" id="tc-anio" type="number" min="2000" max="2100" value="@DateTime.Today.Year" />
+          </div>
+          <div class="field">
+            <span class="field-label">Mes</span>
+            <div class="dropdown" id="tc-mes-dd">
+              <input type="hidden" id="tc-mes" value="@mesActual" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn>
+                <span data-dropdown-label>@meses[DateTime.Today.Month - 1]</span>
+                <i class="ri ri-arrow-down-s-line"></i>
+              </button>
+              <div class="dropdown-menu" hidden>
+                <button type="button" class="menu-item" data-value="">Todos<i class="ri ri-check-line"></i></button>
+                @for (var i = 0; i < meses.Length; i++)
+                {
+                  var id = (i + 1).ToString("00");
+                  <button type="button" class="menu-item @(id == mesActual ? "is-selected" : "")" data-value="@id">@meses[i]<i class="ri ri-check-line"></i></button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tc-ops-lista" id="tc-ops-lista" role="listbox" aria-label="Operaciones">
+          <div class="dt-empty">Cargando operaciones.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card tc-card tc-det">
+      <div class="tc-card-body">
+        <div class="step-head"><span class="step-num">2</span>Trabajadores</div>
+        <div id="tc-error" class="note note-danger" hidden></div>
+        <div id="tc-sin-sel" class="dt-empty">Elija una operación o cree una nueva.</div>
+        <div id="tc-det" hidden>
+          <div class="tc-det-head">
+            <div>
+              <strong class="tc-det-titulo" id="tc-det-titulo"></strong>
+              <p class="hint-text" id="tc-det-sub"></p>
+            </div>
+            <span id="tc-det-estado"></span>
+          </div>
+          <div class="pl-ribbon" role="toolbar" aria-label="Acciones de la operación">
+            <div class="pl-ribbon-group">
+              <button type="button" class="pl-ribbon-btn" id="tc-agregar"><i class="ri ri-user-add-line"></i><span>Agregar trabajadores</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-cargar" hidden title="Carga a todos los que siguen con contrato al cierre del mes y aún no cobran la mensualidad."><i class="ri ri-group-line"></i><span>Cargar activos del mes</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-quitar" disabled><i class="ri ri-user-unfollow-line"></i><span>Quitar de la lista</span></button>
+            </div>
+            <div class="pl-ribbon-group">
+              <button type="button" class="pl-ribbon-btn" id="tc-actualizar" title="Vuelve a leer montos y cuentas de planilla y liquidación. Solo en borrador."><i class="ri ri-refresh-line"></i><span>Actualizar montos</span></button>
+            </div>
+            <div class="pl-ribbon-group">
+              <button type="button" class="pl-ribbon-btn" id="tc-cerrar"><i class="ri ri-lock-line"></i><span>Cerrar operación</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-generar" title="Arma los archivos del banco con los montos del momento y los guarda en la operación. Solo en borrador."><i class="ri ri-file-excel-2-line"></i><span>Generar archivos</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-excel" title="Descarga los archivos guardados en la operación, tal como quedaron."><i class="ri ri-download-2-line"></i><span>Descargar archivos</span></button>
+              <button type="button" class="pl-ribbon-btn" id="tc-correo" title="Arma el asunto y el cuerpo del correo para enviar los archivos."><i class="ri ri-mail-send-line"></i><span>Correo</span></button>
+            </div>
+            <div class="pl-ribbon-group">
+              <button type="button" class="pl-ribbon-btn" id="tc-eliminar"><i class="ri ri-delete-bin-line"></i><span>Eliminar operación</span></button>
+            </div>
+          </div>
+          <div id="tc-avisos" class="note note-warning" hidden></div>
+          <div class="data-table tc-table" id="tc-table">
+            <div class="dt-head" id="tc-table-head"></div>
+            <div class="dt-body" id="tc-body"></div>
+            <div class="dt-foot"><span id="tc-conteo">0 trabajadores</span><span id="tc-total"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <dialog class="modal" id="tc-crear">
+    <div class="modal-head">
+      <i class="ri ri-add-line"></i>
+      <span class="modal-title">Nueva operación</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body tc-form">
+      <div class="field">
+        <span class="field-label">Tipo</span>
+        <div class="segmented tc-tipos">
+          <input type="radio" name="tc-tipo" id="tc-tipo-ml" value="ML" checked />
+          <label for="tc-tipo-ml" title="Trabajadores que cesan durante el mes: boleta y liquidación.">Mensualidad y liquidación</label>
+          <input type="radio" name="tc-tipo" id="tc-tipo-m" value="M" />
+          <label for="tc-tipo-m" title="Fin de mes: boleta de los que siguen trabajando.">Mensualidad</label>
+          <input type="radio" name="tc-tipo" id="tc-tipo-l" value="L" />
+          <label for="tc-tipo-l" title="Inicios del mes siguiente: liquidación de los que cesaron al final del mes.">Liquidación</label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">Cese</span>
+        <div class="segmented tc-modo">
+          <input type="radio" name="tc-modo" id="tc-modo-dia" value="dia" checked />
+          <label for="tc-modo-dia">Un día</label>
+          <input type="radio" name="tc-modo" id="tc-modo-rango" value="rango" />
+          <label for="tc-modo-rango">Rango</label>
+        </div>
+      </div>
+      <div class="tc-fechas">
+        <div class="field">
+          <label class="field-label" for="tc-desde" id="tc-desde-label">Día</label>
+          <input class="input" id="tc-desde" type="date" value="@hoy" />
+        </div>
+        <div class="field" id="tc-hasta-field" hidden>
+          <label class="field-label" for="tc-hasta">Hasta</label>
+          <input class="input" id="tc-hasta" type="date" value="@hoy" />
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="tc-obs">Observación</label>
+        <input class="input" id="tc-obs" type="text" maxlength="250" placeholder="Opcional" />
+      </div>
+      <p id="tc-crear-error" class="note note-danger" hidden></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="tc-crear-ok">Crear</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="tc-busca">
+    <div class="modal-head">
+      <i class="ri ri-search-line"></i>
+      <span class="modal-title">Agregar trabajadores</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="tc-busca-barra">
+        <label class="search">
+          <i class="ri ri-search-line"></i>
+          <input type="search" id="tc-busca-q" placeholder="Código, nombre o DNI" />
+        </label>
+        <div class="segmented tc-busca-filtro">
+          <input type="radio" name="tc-busca-filtro" id="tc-busca-sug" value="sug" checked />
+          <label for="tc-busca-sug">Cesan en el rango</label>
+          <input type="radio" name="tc-busca-filtro" id="tc-busca-todos" value="todos" />
+          <label for="tc-busca-todos">Todos</label>
+        </div>
+      </div>
+      <div class="data-table pl-busca-table tc-busca-table">
+        <div class="dt-head"><span></span><span>Código</span><span>Nombre</span><span>DNI</span><span>Cese</span><span>Estado</span></div>
+        <div class="dt-body" id="tc-busca-body"></div>
+      </div>
+      <div id="tc-busca-error" class="note note-danger tc-busca-error" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <span class="hint-text" id="tc-busca-conteo"></span>
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="tc-busca-add" disabled>Agregar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal tc-confirma" id="tc-confirma">
+    <div class="modal-head">
+      <i class="ri ri-question-line" id="tc-confirma-icono"></i>
+      <span class="modal-title" id="tc-confirma-titulo"></span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="tc-confirma-texto"></p>
+      <ul class="tc-lista" id="tc-confirma-lista" hidden></ul>
+      <div class="field tc-confirma-fecha" id="tc-confirma-fecha-field" hidden>
+        <label class="field-label" for="tc-confirma-fecha">Fecha de proceso en el archivo</label>
+        <input class="input" id="tc-confirma-fecha" type="date" value="@hoy" />
+        <span class="hint-text">Por defecto es hoy. Es la fecha que el banco lee en el Excel (celda C7).</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="tc-confirma-ok">Aceptar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal tc-correo" id="tc-correo-dlg">
+    <div class="modal-head">
+      <i class="ri ri-mail-send-line"></i>
+      <span class="modal-title">Correo para enviar los archivos</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body tc-correo-body">
+      <div class="field">
+        <div class="tc-correo-label"><span class="field-label">Asunto</span><button type="button" class="btn btn-sm" id="tc-correo-copiar-asunto"><i class="ri ri-file-copy-line"></i>Copiar asunto</button></div>
+        <input class="input" id="tc-correo-asunto" type="text" />
+      </div>
+      <div class="field">
+        <div class="tc-correo-label"><span class="field-label">Cuerpo</span><button type="button" class="btn btn-sm" id="tc-correo-copiar-cuerpo"><i class="ri ri-file-copy-line"></i>Copiar cuerpo</button></div>
+        <div class="tc-correo-vista" id="tc-correo-cuerpo" contenteditable="true"></div>
+        <span class="hint-text">Puede editar el texto antes de copiarlo. Se pega en Outlook con negritas, colores y tabla.</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cerrar</button>
+    </div>
+  </dialog>
+
+  <div class="tc-toast" id="tc-toast" role="status" aria-live="polite" hidden>
+    <i class="ri ri-checkbox-circle-line"></i><span id="tc-toast-texto"></span>
+  </div>
+</div>
+
+@section VendorScripts {
+  <script src="~/js/erp.js" asp-append-version="true"></script>
+  <script src="~/js/telecredito.js" asp-append-version="true"></script>
+}

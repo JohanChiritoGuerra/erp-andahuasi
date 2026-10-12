@@ -156,6 +156,13 @@
       return;
     }
     ancla = input;
+    // Un <dialog> modal vuelve inerte todo lo que está fuera de él: el calendario
+    // debe vivir dentro del diálogo del input para recibir clics.
+    const contenedor = input.closest('dialog[open]') || document.body;
+    if (pop.parentElement !== contenedor) {
+      if (abierto()) pop.hidePopover();
+      contenedor.appendChild(pop);
+    }
     const actual = leer(input.value) || new Date();
     vista = new Date(actual.getFullYear(), actual.getMonth(), 1);
     pintar();
