@@ -14,7 +14,7 @@
       <p class="page-sub">Materiales · anual</p>
     </div>
     <div class="page-actions">
-      <button type="button" class="btn btn-primary" id="ppto-nuevo"><i class="ri ri-add-line"></i>Nuevo</button>
+      <a class="btn btn-primary" id="ppto-nuevo" href="/presupuesto/consumo/nuevo?anio=@DateTime.Today.Year"><i class="ri ri-add-line"></i>Nuevo</a>
     </div>
   </div>
 
@@ -49,29 +49,6 @@
     <div class="dt-foot"><span id="ppto-estado">Cargando…</span></div>
   </div>
 
-  <dialog class="modal" id="ppto-dlg-nuevo" aria-labelledby="ppto-dlg-nuevo-t">
-    <div class="modal-head">
-      <i class="ri ri-add-line"></i>
-      <span class="modal-title" id="ppto-dlg-nuevo-t">Nuevo presupuesto</span>
-      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
-    </div>
-    <div class="modal-body">
-      <label class="field">
-        <span class="field-label">Descripción</span>
-        <input class="input" id="ppto-desc" maxlength="50" />
-      </label>
-      <label class="field">
-        <span class="field-label">Centro de costo</span>
-        <input class="input" id="ppto-cc" placeholder="Código o nombre" autocomplete="off" />
-      </label>
-      <div id="ppto-cc-lista"></div>
-      <p class="field-error" id="ppto-nuevo-error" hidden></p>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn" data-cerrar>Cancelar</button>
-      <button type="button" class="btn btn-primary" id="ppto-crear">Guardar</button>
-    </div>
-  </dialog>
 </div>
 
 @section PageScripts {
@@ -81,11 +58,10 @@
   const filas = document.getElementById('ppto-filas');
   const hoy = new Date();
   anioEl.value = hoy.getMonth() >= 8 ? hoy.getFullYear() + 1 : hoy.getFullYear();
-  let centro = '';
 
   const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
   const mirada = () => document.querySelector('input[name="ppto-mirada"]:checked').value;
+  const enlaceNuevo = () => { document.getElementById('ppto-nuevo').href = `/presupuesto/consumo/nuevo?anio=${anioEl.value}`; };
 
   async function cargar() {
     document.getElementById('ppto-estado').textContent = 'Cargando…';
@@ -117,56 +93,9 @@
     }
   }
 
-  anioEl.addEventListener('change', cargar);
+  anioEl.addEventListener('change', () => { enlaceNuevo(); cargar(); });
   document.querySelectorAll('input[name="ppto-mirada"]').forEach(el => el.addEventListener('change', cargar));
-
-  const dlg = document.getElementById('ppto-dlg-nuevo');
-  document.getElementById('ppto-nuevo').addEventListener('click', () => { centro = ''; dlg.showModal(); });
-  dlg.querySelectorAll('[data-cerrar]').forEach(el => el.addEventListener('click', () => dlg.close()));
-
-  let timer;
-  document.getElementById('ppto-cc').addEventListener('input', () => {
-    centro = '';
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      const texto = document.getElementById('ppto-cc').value.trim();
-      const lista = document.getElementById('ppto-cc-lista');
-      lista.replaceChildren();
-      if (texto.length < 2) return;
-      const res = await fetch(`?handler=Centros&anio=${anioEl.value}&texto=${encodeURIComponent(texto)}`);
-      const data = await res.json();
-      for (const item of data.items || []) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'menu-item';
-        btn.textContent = `${item.codigo} · ${item.descripcion}`;
-        btn.addEventListener('click', () => {
-          centro = item.codigo;
-          document.getElementById('ppto-cc').value = btn.textContent;
-          lista.replaceChildren();
-        });
-        lista.appendChild(btn);
-      }
-    }, 250);
-  });
-
-  document.getElementById('ppto-crear').addEventListener('click', async () => {
-    const error = document.getElementById('ppto-nuevo-error');
-    error.hidden = true;
-    const res = await fetch('?handler=Crear', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
-      body: JSON.stringify({ anio: Number(anioEl.value), descripcion: document.getElementById('ppto-desc').value, centroCosto: centro })
-    });
-    const data = await res.json();
-    if (!data.baseResponse?.success) {
-      error.hidden = false;
-      error.textContent = data.baseResponse?.message || 'No se pudo crear.';
-      return;
-    }
-    location.href = `/presupuesto/consumo/${anioEl.value}/${data.correlativo}`;
-  });
-
+  enlaceNuevo();
   cargar();
 })();
 </script>

@@ -1,0 +1,264 @@
+@page "/presupuesto/consumo/nuevo"
+@model ErpAndahuasi.Pages.Presupuesto.Consumo.NuevoModel
+@{
+  ViewData["Title"] = "Nuevo presupuesto";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+  <style>
+    #ppto-nuevo .ppto-cuerpo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 16px; }
+    #ppto-nuevo .ppto-form { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+    #ppto-nuevo .ppto-busca { min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+    #ppto-nuevo .ppto-centro { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+    #ppto-nuevo .ppto-centro strong { font-size: 13px; font-weight: 600; }
+    #ppto-nuevo .data-table { --dt-cols: 132px minmax(180px, 1.4fr) minmax(120px, .8fr); flex: 1; }
+    #ppto-nuevo button.dt-row { width: 100%; border: 0; border-bottom: 1px solid var(--border); background: transparent; text-align: left; font: inherit; cursor: pointer; }
+    @@media (max-width: 900px) {
+      #ppto-nuevo .ppto-cuerpo { grid-template-columns: 1fr; overflow: auto; }
+      #ppto-nuevo .ppto-busca { min-height: 360px; }
+    }
+  </style>
+}
+
+<div class="erp-ds erp-ds--fill" id="ppto-nuevo" data-anio="@Model.Anio">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Nuevo presupuesto</h1>
+      <p class="page-sub">Materiales · @Model.Anio</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn" href="/presupuesto/consumo"><i class="ri ri-arrow-left-line"></i>Cancelar</a>
+      <button type="button" class="btn btn-primary" id="ppto-guardar" disabled>Guardar</button>
+    </div>
+  </div>
+
+  <div class="ppto-cuerpo">
+    <div class="ppto-form">
+      <div class="field">
+        <span class="field-label">Tipo</span>
+        <div class="dropdown" id="ppto-tipo-dd">
+          <input type="hidden" id="ppto-tipo" value="02" />
+          <button type="button" class="dropdown-btn" data-dropdown-btn>
+            <span data-dropdown-label>Anual</span>
+            <i class="ri ri-arrow-down-s-line"></i>
+          </button>
+          <div class="dropdown-menu" id="ppto-tipos" hidden></div>
+        </div>
+        <p class="field-help" id="ppto-tipo-ayuda">Elige el tipo y después el centro de costo.</p>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Centro de costo</span>
+        <input class="input" id="ppto-codigo" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="15 números y Enter" />
+        <span class="field-help">Enter busca el código en la tabla y dice si está activo.</span>
+      </label>
+
+      <div class="ppto-centro" id="ppto-centro" hidden>
+        <strong id="ppto-centro-nombre"></strong>
+        <span class="pill" id="ppto-centro-estado"></span>
+      </div>
+      <p class="field-help" id="ppto-gds"></p>
+      <p class="field-error" id="ppto-error" hidden></p>
+      <p class="note" id="ppto-existe" hidden></p>
+
+      <label class="field">
+        <span class="field-label">Descripción</span>
+        <input class="input" id="ppto-desc" maxlength="50" />
+        <span class="field-help">Hasta 50 caracteres. Se propone el nombre del centro.</span>
+      </label>
+    </div>
+
+    <div class="ppto-busca">
+      <label class="search">
+        <i class="ri ri-search-line"></i>
+        <input id="ppto-filtro" type="search" placeholder="Nombre del centro" autocomplete="off" />
+      </label>
+      <p class="field-help">Enter trae los centros activos. % deja texto en medio: camion%24 encuentra camion volvo nro 24.</p>
+      <div class="data-table">
+        <div class="dt-head"><span>Código</span><span>Descripción</span><span>Sección</span></div>
+        <div class="dt-body" id="ppto-lista">
+          <div class="empty">Escribe un nombre y presiona Enter.</div>
+        </div>
+        <div class="dt-foot"><span id="ppto-busca-estado"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const raiz = document.getElementById('ppto-nuevo');
+  const anio = Number(raiz.dataset.anio);
+  const tipoEl = document.getElementById('ppto-tipo');
+  const codigoEl = document.getElementById('ppto-codigo');
+  const descEl = document.getElementById('ppto-desc');
+  const errorEl = document.getElementById('ppto-error');
+  const existeEl = document.getElementById('ppto-existe');
+  const guardar = document.getElementById('ppto-guardar');
+  let descPropia = false;
+  let centroOk = false;
+
+  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+  const mostrarError = texto => {
+    errorEl.hidden = !texto;
+    errorEl.textContent = texto || '';
+  };
+
+  function puedeGuardar() {
+    const anual = tipoEl.value === '02';
+    guardar.disabled = !(anual && centroOk && descEl.value.trim());
+    document.getElementById('ppto-tipo-ayuda').textContent = anual
+      ? 'Elige el tipo y después el centro de costo.'
+      : 'En esta pantalla solo se crea el presupuesto anual.';
+  }
+
+  tipoEl.addEventListener('change', puedeGuardar);
+  document.getElementById('ppto-tipo-dd').addEventListener('click', () => setTimeout(puedeGuardar, 0));
+  descEl.addEventListener('input', () => { descPropia = true; puedeGuardar(); });
+
+  async function tipos() {
+    const res = await fetch('?handler=Tipos');
+    const data = await res.json();
+    const menu = document.getElementById('ppto-tipos');
+    menu.replaceChildren();
+    for (const item of data.items || []) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'menu-item' + (item.id === '02' ? ' is-selected' : '');
+      btn.dataset.value = item.id;
+      btn.textContent = item.descripcion;
+      const ico = document.createElement('i');
+      ico.className = 'ri ri-check-line';
+      btn.appendChild(ico);
+      menu.appendChild(btn);
+    }
+    const anual = (data.items || []).find(x => x.id === '02');
+    if (anual) document.querySelector('#ppto-tipo-dd [data-dropdown-label]').textContent = anual.descripcion;
+  }
+
+  async function consultar(codigo) {
+    centroOk = false;
+    existeEl.hidden = true;
+    document.getElementById('ppto-centro').hidden = true;
+    puedeGuardar();
+    if (codigo.length !== 15) {
+      mostrarError('El código del centro de costo tiene 15 números.');
+      return;
+    }
+    mostrarError('');
+    const res = await fetch(`?handler=Centro&anio=${anio}&codigo=${encodeURIComponent(codigo)}`);
+    const data = await res.json();
+    if (!data.baseResponse?.success) {
+      mostrarError(data.baseResponse?.message || 'No se encontró el centro.');
+      return;
+    }
+    document.getElementById('ppto-centro').hidden = false;
+    document.getElementById('ppto-centro-nombre').textContent = data.descripcion || '';
+    const estado = document.getElementById('ppto-centro-estado');
+    estado.textContent = data.activo ? 'Activo' : 'Inactivo';
+    estado.className = 'pill ' + (data.activo ? 'pill-success' : 'pill-danger');
+    document.getElementById('ppto-gds').textContent = data.gdsNombre || '';
+    if (!descPropia) descEl.value = (data.descripcion || '').slice(0, 50);
+    if (data.correlativoExistente) {
+      existeEl.hidden = false;
+      existeEl.textContent = data.baseResponse.message || '';
+      const enlace = document.createElement('a');
+      enlace.href = `/presupuesto/consumo/${anio}/${data.correlativoExistente}`;
+      enlace.textContent = ' Abrir';
+      existeEl.appendChild(enlace);
+    } else if (!data.activo) {
+      mostrarError(data.baseResponse.message || 'El centro de costo no está activo.');
+    } else {
+      centroOk = true;
+    }
+    puedeGuardar();
+  }
+
+  codigoEl.addEventListener('keydown', ev => {
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    consultar(codigoEl.value.trim());
+  });
+  codigoEl.addEventListener('input', () => {
+    codigoEl.value = codigoEl.value.replace(/\D/g, '').slice(0, 15);
+    centroOk = false;
+    puedeGuardar();
+  });
+
+  async function buscar() {
+    const texto = document.getElementById('ppto-filtro').value.trim();
+    const lista = document.getElementById('ppto-lista');
+    const estado = document.getElementById('ppto-busca-estado');
+    lista.replaceChildren();
+    if (texto.replace(/[%*\s]/g, '').length < 2) {
+      estado.textContent = '';
+      const vacio = document.createElement('div');
+      vacio.className = 'empty';
+      vacio.textContent = 'Escribe al menos 2 caracteres y presiona Enter.';
+      lista.appendChild(vacio);
+      return;
+    }
+    estado.textContent = 'Buscando…';
+    const res = await fetch(`?handler=Centros&anio=${anio}&texto=${encodeURIComponent(texto)}`);
+    const data = await res.json();
+    lista.replaceChildren();
+    if (!data.baseResponse?.success) {
+      estado.textContent = data.baseResponse?.message || 'No se pudo buscar.';
+      return;
+    }
+    const items = data.items || [];
+    estado.textContent = data.baseResponse.message || '';
+    if (!items.length) {
+      const vacio = document.createElement('div');
+      vacio.className = 'empty';
+      vacio.textContent = 'Ningún centro activo coincide con ese filtro.';
+      lista.appendChild(vacio);
+      return;
+    }
+    for (const item of items) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dt-row';
+      for (const textoFila of [item.codigo, item.descripcion, item.seccion || '']) {
+        const span = document.createElement('span');
+        span.textContent = textoFila || '';
+        btn.appendChild(span);
+      }
+      btn.addEventListener('click', () => {
+        lista.querySelectorAll('.dt-row').forEach(el => el.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        codigoEl.value = item.codigo;
+        consultar(item.codigo);
+      });
+      lista.appendChild(btn);
+    }
+  }
+
+  document.getElementById('ppto-filtro').addEventListener('keydown', ev => {
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    buscar();
+  });
+
+  guardar.addEventListener('click', async () => {
+    mostrarError('');
+    guardar.disabled = true;
+    const res = await fetch('?handler=Crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({ anio, descripcion: descEl.value, centroCosto: codigoEl.value.trim() })
+    });
+    const data = await res.json();
+    if (!data.baseResponse?.success) {
+      mostrarError(data.baseResponse?.message || 'No se pudo crear.');
+      puedeGuardar();
+      return;
+    }
+    location.href = `/presupuesto/consumo/${anio}/${data.correlativo}`;
+  });
+
+  tipos();
+})();
+</script>
+}
