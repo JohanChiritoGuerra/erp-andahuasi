@@ -33,7 +33,7 @@
             CatNombre = categoria.CatNombre,
             CatIcono = categoria.CatIcono,
             CatOrden = categoria.CatOrden,
-            Accesos = categoria.Accesos.Where(acceso => MenuUrl.Normalize(acceso.AccURL) != "/rrhh/perfil").ToList()
+            Accesos = categoria.Accesos.Where(acceso => MenuUrl.VaEnMenu(acceso.AccURL)).ToList()
           })
           .Where(categoria => categoria.Accesos.Count > 0)
           .ToList()

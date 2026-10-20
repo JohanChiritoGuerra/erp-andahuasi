@@ -126,6 +126,19 @@ public static class MenuUrl
         ["/paltos/fertilizacion/configuracion-items"] = "ri-settings-3-line"
     };
 
+    /// <summary>
+    /// Accesos que no se muestran en el menú: el perfil (va en el avatar) y los permisos que no son
+    /// páginas, como la edición del organigrama (solo habilita acciones dentro de /rrhh/organigrama).
+    /// </summary>
+    private static readonly HashSet<string> FueraDelMenu = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/rrhh/perfil",
+        "/rrhh/organigrama-edicion"
+    };
+
+    /// <summary>True si el acceso debe aparecer como opción del menú.</summary>
+    public static bool VaEnMenu(string? accUrl) => !FueraDelMenu.Contains(Normalize(accUrl));
+
     private static readonly Dictionary<string, string> TablerToRemix = new(StringComparer.OrdinalIgnoreCase)
     {
         ["tabler-users"] = "ri-group-line",
