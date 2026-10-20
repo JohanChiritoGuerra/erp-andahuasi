@@ -737,6 +737,8 @@
     $('pl-ind-periodo').textContent = nombrePeriodo();
     pintarIndLista();
     $('pl-ind').showModal();
+    // showModal enfoca el primer control (el botón cerrar); el usuario empieza escribiendo en la búsqueda.
+    $('pl-ind-q').focus();
   }
 
   $('pl-individual').disabled = !motorDe(empresaDestino());

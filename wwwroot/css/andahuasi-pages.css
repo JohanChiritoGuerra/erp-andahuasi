@@ -788,7 +788,7 @@
 .erp-ds .pl-ind-progreso { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
 .erp-ds .pl-ind-grupo { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .erp-ds .pl-ind-titulo { margin: 4px 0 0; font-size: 16px; font-weight: 600; }
-.erp-ds .pl-ind-formula { margin: 12px 0 0; padding: 12px; background: var(--field); border-radius: var(--radius-sm); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; line-height: 1.45; }
+.erp-ds .pl-ind-formula { margin: 12px 0 0; padding: 12px; background: var(--field); border-radius: var(--radius-sm); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-x: auto; }
 .erp-ds .pl-ind-monto { margin: 12px 0 0; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .erp-ds .pl-stack {
   display: flex; flex-direction: column; align-items: stretch; align-self: flex-start; gap: 12px; flex: 1; min-height: 0;
@@ -867,6 +867,8 @@
 .erp-ds .pl-menu button:hover { background: var(--hover); }
 .erp-ds .pl-menu button i { color: var(--icon); font-size: 16px; }
 .erp-ds .pl-exceso-lista { margin: 8px 0 0; padding-left: 18px; }
+/* Los mensajes de bloqueo del motor (p. ej. controles AFP/ONP) traen saltos de línea y una lista. */
+.erp-ds #pl-error, .erp-ds #pl-resultado-texto { white-space: pre-line; }
 .erp-ds #pl-visor.modal[open] { width: min(980px, calc(100vw - 32px)); height: fit-content; max-height: calc(100dvh - 24px); padding: 0; overflow: hidden; }
 .erp-ds #pl-visor-body { max-height: calc(100dvh - 24px); overflow: auto; background: var(--panel); color: var(--text); }
 .erp-ds .pl-bol { font-size: 12px; color: var(--text); }
