@@ -337,4 +337,28 @@ public class RrhhApi
         request.UsrSistema = _session.Current.UsuaId;
         return _api.PostAsync<T>("api/Rrhh/Planilla/Telecredito/" + accion, request);
     }
+
+    /// <summary>Organigrama de Gestión: todas las empresas en un solo árbol. empresaId es el tenant que valida la API.</summary>
+    public Task<OrganigramaResponse> GetOrganigramaArbolAsync() =>
+        _api.GetAsync<OrganigramaResponse>($"api/Rrhh/Organigrama/Arbol?empresaId={Uri.EscapeDataString(_session.Current.EmpresaId)}");
+
+    public Task<OrganigramaResponse> GetOrganigramaUnidadAsync(int unidadId) =>
+        _api.GetAsync<OrganigramaResponse>($"api/Rrhh/Organigrama/Unidad/{unidadId}?empresaId={Uri.EscapeDataString(_session.Current.EmpresaId)}");
+
+    public Task<OrganigramaResponse> BuscarPersonalOrganigramaAsync(string? q) =>
+        _api.GetAsync<OrganigramaResponse>($"api/Rrhh/Organigrama/Personal?empresaId={Uri.EscapeDataString(_session.Current.EmpresaId)}&q={Uri.EscapeDataString(q ?? string.Empty)}");
+
+    public Task<OrganigramaResponse> GetOrganigramaMofAsync(int puestoId, bool borrador) =>
+        _api.GetAsync<OrganigramaResponse>($"api/Rrhh/Organigrama/Puesto/{puestoId}/Mof?empresaId={Uri.EscapeDataString(_session.Current.EmpresaId)}&borrador={(borrador ? "true" : "false")}");
+
+    public Task<OrganigramaResponse> GetOrganigramaGdsAsync() =>
+        _api.GetAsync<OrganigramaResponse>($"api/Rrhh/Organigrama/Gds?empresaId={Uri.EscapeDataString(_session.Current.EmpresaId)}");
+
+    /// <summary>Mantenimiento del organigrama. EmpresaId y UsrSistema salen de la sesión, nunca del navegador.</summary>
+    public Task<OrganigramaResponse> OrganigramaPostAsync(string ruta, System.Text.Json.Nodes.JsonObject body)
+    {
+        body["empresaId"] = _session.Current.EmpresaId;
+        body["usrSistema"] = _session.Current.UsuaId;
+        return _api.PostAsync<OrganigramaResponse>("api/Rrhh/Organigrama/" + ruta, body);
+    }
 }

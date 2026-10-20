@@ -1,0 +1,346 @@
+@page "/rrhh/organigrama"
+@model ErpAndahuasi.Pages.Rrhh.Organigrama.IndexModel
+@{
+  ViewData["Title"] = "Organigrama de gestión";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+@section VendorScripts {
+  <script src="~/vendor/libs/d3-org-chart/d3.min.js"></script>
+  <script src="~/vendor/libs/d3-org-chart/d3-flextree.min.js"></script>
+  <script src="~/vendor/libs/d3-org-chart/d3-org-chart.min.js"></script>
+  <script src="~/js/erp.js" asp-append-version="true"></script>
+}
+
+<div class="erp-ds erp-ds--fill org-page" id="org-page" data-editar="@(Model.PuedeEditar ? "1" : "0")">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Organigrama de gestión</h1>
+      <p class="page-sub">La agraria y las empresas partner en una sola estructura. Es informativo: no reemplaza el organigrama legal de cada empresa.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn" data-org-accion="expandir"><i class="ri ri-expand-up-down-line"></i>Expandir todo</button>
+      <button type="button" class="btn" data-org-accion="contraer"><i class="ri ri-contract-up-down-line"></i>Contraer</button>
+      <button type="button" class="btn" data-org-accion="exportar"><i class="ri ri-image-line"></i>Exportar PNG</button>
+    </div>
+  </div>
+
+  <div class="toolbar org-toolbar">
+    <label class="search on-panel">
+      <i class="ri ri-search-line"></i>
+      <input type="search" id="org-q" placeholder="Buscar gerencia, departamento o sección" aria-label="Buscar unidad" autocomplete="off" />
+      <button type="button" class="search-clear" data-org-limpiar aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+    </label>
+    <div class="dropdown" id="org-empresa">
+      <input type="hidden" value="" />
+      <button type="button" class="dropdown-btn" data-dropdown-btn aria-label="Empresa">
+        <span data-dropdown-label>Todas las empresas</span><i class="ri ri-arrow-down-s-line"></i>
+      </button>
+      <div class="dropdown-menu" hidden>
+        <button type="button" class="menu-item is-selected" data-value="" data-org-filtro="empresa">Todas las empresas<i class="ri ri-check-line"></i></button>
+      </div>
+    </div>
+    <div class="dropdown" id="org-vinculo">
+      <input type="hidden" value="" />
+      <button type="button" class="dropdown-btn" data-dropdown-btn aria-label="Vínculo">
+        <span data-dropdown-label>Todo el personal</span><i class="ri ri-arrow-down-s-line"></i>
+      </button>
+      <div class="dropdown-menu" hidden>
+        <button type="button" class="menu-item is-selected" data-value="" data-org-filtro="vinculo">Todo el personal<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="PLANILLA" data-org-filtro="vinculo">Planilla<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="PRACTICANTE" data-org-filtro="vinculo">Practicantes<i class="ri ri-check-line"></i></button>
+        <button type="button" class="menu-item" data-value="RH" data-org-filtro="vinculo">Recibo por honorarios<i class="ri ri-check-line"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note note-warning" id="org-sin-ubicar" hidden></div>
+
+  <section class="org-canvas" aria-label="Organigrama">
+    <div class="org-chart" id="org-chart"></div>
+    <div class="org-estado" id="org-estado"><div class="empty">Cargando organigrama…</div></div>
+    <div class="org-zoom" role="group" aria-label="Zoom">
+      <button type="button" class="icon-btn" data-org-accion="acercar" aria-label="Acercar" title="Acercar"><i class="ri ri-zoom-in-line"></i></button>
+      <button type="button" class="icon-btn" data-org-accion="alejar" aria-label="Alejar" title="Alejar"><i class="ri ri-zoom-out-line"></i></button>
+      <button type="button" class="icon-btn" data-org-accion="ajustar" aria-label="Ajustar a la pantalla" title="Ajustar a la pantalla"><i class="ri ri-fullscreen-exit-line"></i></button>
+    </div>
+    <div class="org-leyenda" aria-label="Leyenda">
+      <span><i class="org-leyenda-caja nivel-0"></i>Gerencia General y Comité</span>
+      <span><i class="org-leyenda-caja nivel-1"></i>Gerencia de línea</span>
+      <span><i class="org-leyenda-caja nivel-2"></i>Departamento</span>
+      <span><i class="org-leyenda-caja nivel-3"></i>Sección</span>
+      <span><i class="org-leyenda-caja is-autonomo"></i>Autónomo u oficina</span>
+      <span><i class="org-leyenda-caja is-alerta"></i>Personal en GDS no activo</span>
+      <span><i class="org-leyenda-linea is-punteada"></i>Coordinación</span>
+    </div>
+  </section>
+
+  <dialog class="modal org-modal" id="org-unidad" aria-labelledby="org-unidad-t">
+    <div class="modal-head">
+      <i class="ri" id="org-unidad-icono"></i>
+      <span class="modal-title" id="org-unidad-t">Unidad</span>
+      <span class="pill" id="org-unidad-tipo"></span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+    </div>
+    <div class="modal-body org-unidad-body" id="org-unidad-body">
+      <div class="empty">Cargando…</div>
+    </div>
+  </dialog>
+
+  @if (Model.PuedeEditar)
+  {
+    <dialog class="modal modal-form" id="org-dlg-puesto" aria-labelledby="org-dlg-puesto-t">
+      <div class="modal-head">
+        <i class="ri ri-briefcase-4-line"></i>
+        <span class="modal-title" id="org-dlg-puesto-t">Puesto</span>
+        <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="note note-danger" data-org-error hidden></div>
+        <label class="field">
+          <span class="field-label">Nombre del puesto</span>
+          <input class="input" id="org-p-nombre" maxlength="120" placeholder="Ej.: Programador senior" autocomplete="off" />
+        </label>
+        <div class="field">
+          <span class="field-label">Jefe inmediato</span>
+          <div class="dropdown" id="org-p-superior">
+            <input type="hidden" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Ninguno (encabeza la unidad)</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" hidden></div>
+          </div>
+        </div>
+        <div class="field-grid">
+          <label class="field">
+            <span class="field-label">Plazas</span>
+            <input class="input" id="org-p-plazas" type="number" min="1" max="999" placeholder="Sin límite" />
+          </label>
+          <div class="field">
+            <span class="field-label">Cargo del contrato que sugiere este puesto</span>
+            <div class="dropdown" id="org-p-cargo">
+              <input type="hidden" value="" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Ninguno</span><i class="ri ri-arrow-down-s-line"></i></button>
+              <div class="dropdown-menu" hidden></div>
+            </div>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="org-p-jefatura" />
+          <span class="switch-ui"></span>
+          <span class="org-switch-text">Es jefatura de la unidad (su ocupante es el responsable)</span>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-danger" id="org-p-desactivar" hidden><i class="ri ri-delete-bin-line"></i>Desactivar</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn" data-modal-close>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="org-p-guardar"><i class="ri ri-save-3-line"></i>Guardar</button>
+      </div>
+    </dialog>
+
+    <dialog class="modal modal-form" id="org-dlg-mof" aria-labelledby="org-dlg-mof-t">
+      <div class="modal-head">
+        <i class="ri ri-file-text-line"></i>
+        <span class="modal-title" id="org-dlg-mof-t">MOF del puesto</span>
+        <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+      </div>
+      <div class="modal-body org-mof-form">
+        <div class="note note-danger" data-org-error hidden></div>
+        <p class="hint-text">Se guarda como borrador. Queda vigente cuando lo apruebas; la versión anterior pasa al historial.</p>
+        <label class="field">
+          <span class="field-label">Objetivo del puesto</span>
+          <textarea class="input input--area" id="org-m-objetivo" rows="3"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Funciones (una por línea)</span>
+          <textarea class="input input--area" id="org-m-funciones" rows="7"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Requisitos (formación, experiencia)</span>
+          <textarea class="input input--area" id="org-m-requisitos" rows="3"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Competencias</span>
+          <textarea class="input input--area" id="org-m-competencias" rows="3"></textarea>
+        </label>
+        <label class="field">
+          <span class="field-label">Relaciones internas y externas</span>
+          <textarea class="input input--area" id="org-m-relaciones" rows="3"></textarea>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" data-modal-close>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="org-m-guardar"><i class="ri ri-save-3-line"></i>Guardar borrador</button>
+      </div>
+    </dialog>
+
+    <dialog class="modal modal-form" id="org-dlg-unidad" aria-labelledby="org-dlg-unidad-t">
+      <div class="modal-head">
+        <i class="ri ri-node-tree"></i>
+        <span class="modal-title" id="org-dlg-unidad-t">Unidad</span>
+        <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="note note-danger" data-org-error hidden></div>
+        <div class="field-grid">
+          <label class="field field--full">
+            <span class="field-label">Nombre</span>
+            <input class="input" id="org-u-nombre" maxlength="120" placeholder="Ej.: Sección de Desarrollo" autocomplete="off" />
+          </label>
+          <div class="field">
+            <span class="field-label">Tipo</span>
+            <div class="dropdown" id="org-u-tipo">
+              <input type="hidden" value="" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Elige el tipo</span><i class="ri ri-arrow-down-s-line"></i></button>
+              <div class="dropdown-menu" hidden></div>
+            </div>
+          </div>
+          <label class="field">
+            <span class="field-label">Siglas (opcional)</span>
+            <input class="input" id="org-u-siglas" maxlength="20" autocomplete="off" />
+          </label>
+          <div class="field field--full">
+            <span class="field-label">Depende de</span>
+            <div class="dropdown" id="org-u-padre">
+              <input type="hidden" value="" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Ninguna (raíz)</span><i class="ri ri-arrow-down-s-line"></i></button>
+              <div class="dropdown-menu" hidden></div>
+            </div>
+            <span class="field-help">Solo se aceptan las dependencias permitidas (p. ej. una sección bajo un departamento o, por excepción, bajo una gerencia).</span>
+          </div>
+          <div class="field field--full">
+            <span class="field-label">Empresa que representa</span>
+            <div class="dropdown" id="org-u-empresa">
+              <input type="hidden" value="" />
+              <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Corporativa (todas)</span><i class="ri ri-arrow-down-s-line"></i></button>
+              <div class="dropdown-menu" hidden></div>
+            </div>
+            <span class="field-help">Solo para unidades propias de una empresa, como la Oficina KM 41.5.</span>
+          </div>
+          <label class="field field--full">
+            <span class="field-label">Descripción (opcional)</span>
+            <textarea class="input input--area" id="org-u-descripcion" maxlength="500" rows="2"></textarea>
+          </label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-danger" id="org-u-desactivar" hidden><i class="ri ri-delete-bin-line"></i>Desactivar</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn" data-modal-close>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="org-u-guardar"><i class="ri ri-save-3-line"></i>Guardar</button>
+      </div>
+    </dialog>
+
+    <dialog class="modal modal-form" id="org-dlg-criterio" aria-labelledby="org-dlg-criterio-t">
+      <div class="modal-head">
+        <i class="ri ri-map-pin-user-line"></i>
+        <span class="modal-title" id="org-dlg-criterio-t">Cómo se ubica el personal</span>
+        <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="note note-danger" data-org-error hidden></div>
+        <div class="segmented">
+          <input type="radio" id="org-c-gds" name="org-c-tipo" value="GDS" checked />
+          <label for="org-c-gds">GDS del contrato</label>
+          <input type="radio" id="org-c-cc" name="org-c-tipo" value="CC" />
+          <label for="org-c-cc">Centro de costo</label>
+        </div>
+        <div class="field" data-org-c="GDS">
+          <span class="field-label">GDS de AndahuasiBD</span>
+          <label class="search on-panel"><i class="ri ri-search-line"></i><input type="search" id="org-c-q" placeholder="Código o nombre de gerencia, departamento o sección" autocomplete="off" /></label>
+          <div class="org-a-resultados" id="org-c-lista"></div>
+        </div>
+        <label class="field" data-org-c="CC" hidden>
+          <span class="field-label">Centro de costo (15 dígitos)</span>
+          <input class="input" id="org-c-cc-valor" maxlength="15" inputmode="numeric" placeholder="910000037200000" autocomplete="off" />
+        </label>
+        <div class="field">
+          <span class="field-label">Aplica a</span>
+          <div class="dropdown" id="org-c-empresa">
+            <input type="hidden" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Todas las empresas</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" data-modal-close>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="org-c-guardar"><i class="ri ri-check-line"></i>Agregar</button>
+      </div>
+    </dialog>
+
+    <dialog class="modal modal-form" id="org-dlg-asignar" aria-labelledby="org-dlg-asignar-t">
+      <div class="modal-head">
+        <i class="ri ri-user-settings-line"></i>
+        <span class="modal-title" id="org-dlg-asignar-t">Asignar puesto</span>
+        <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="note note-danger" data-org-error hidden></div>
+        <div id="org-a-quien"></div>
+        <div class="field" id="org-a-puesto-campo">
+          <span class="field-label">Puesto</span>
+          <div class="dropdown" id="org-a-puesto">
+            <input type="hidden" value="" />
+            <button type="button" class="dropdown-btn" data-dropdown-btn><span data-dropdown-label>Elige un puesto</span><i class="ri ri-arrow-down-s-line"></i></button>
+            <div class="dropdown-menu" hidden></div>
+          </div>
+        </div>
+        <div class="field" id="org-a-buscar-campo" hidden>
+          <span class="field-label">Trabajador (cualquier empresa)</span>
+          <label class="search on-panel"><i class="ri ri-search-line"></i><input type="search" id="org-a-q" placeholder="Nombre, código o DNI" autocomplete="off" /></label>
+          <div class="org-a-resultados" id="org-a-resultados"></div>
+        </div>
+        <label class="field">
+          <span class="field-label">Desde</span>
+          <input class="input" id="org-a-fecha" type="date" />
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="org-a-adicional" />
+          <span class="switch-ui"></span>
+          <span class="org-switch-text">Cargo adicional (p. ej. integrante de un comité): no lo saca de su unidad</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="org-a-encargado" />
+          <span class="switch-ui"></span>
+          <span class="org-switch-text">Encargado del puesto</span>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" data-modal-close>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="org-a-guardar"><i class="ri ri-check-line"></i>Asignar</button>
+      </div>
+    </dialog>
+  }
+
+  <dialog class="modal org-modal org-interno" id="org-interno" aria-labelledby="org-interno-t">
+    <div class="modal-head">
+      <i class="ri ri-organization-chart"></i>
+      <span class="modal-title" id="org-interno-t">Organigrama interno</span>
+      <span class="pill" id="org-interno-origen"></span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line" style="font-size:17px"></i></button>
+    </div>
+    <div class="modal-body org-interno-body">
+      <div class="note" id="org-interno-nota" hidden></div>
+      <div class="org-interno-canvas">
+        <div class="org-chart" id="org-interno-chart"></div>
+        <div class="org-zoom" role="group" aria-label="Zoom">
+          <button type="button" class="icon-btn" data-org-interno="acercar" aria-label="Acercar" title="Acercar"><i class="ri ri-zoom-in-line"></i></button>
+          <button type="button" class="icon-btn" data-org-interno="alejar" aria-label="Alejar" title="Alejar"><i class="ri ri-zoom-out-line"></i></button>
+          <button type="button" class="icon-btn" data-org-interno="ajustar" aria-label="Ajustar a la pantalla" title="Ajustar a la pantalla"><i class="ri ri-fullscreen-exit-line"></i></button>
+          <button type="button" class="icon-btn" data-org-interno="exportar" aria-label="Exportar PNG" title="Exportar PNG"><i class="ri ri-image-line"></i></button>
+        </div>
+        <div class="org-leyenda" aria-label="Leyenda">
+          <span><i class="org-leyenda-caja nivel-1"></i>Jefatura</span>
+          <span><i class="org-leyenda-caja nivel-2"></i>Supervisión y coordinación</span>
+          <span><i class="org-leyenda-caja nivel-3"></i>Cargo o puesto</span>
+          <span><i class="org-leyenda-caja"></i>Trabajador</span>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>
+
+@section PageScripts {
+  <script src="~/js/organigrama.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,8 @@
+Librerías del organigrama (Pages/Rrhh/Organigrama). Copiadas tal cual del paquete npm.
+
+d3.min.js            d3 7.9.0            ISC   (LICENSE-d3-7.9.0)
+d3-flextree.min.js   d3-flextree 2.1.2   WTFPL (LICENSE-d3-flextree-2.1.2)
+d3-org-chart.min.js  d3-org-chart 3.1.1  MIT   (el paquete no trae archivo LICENSE; licencia declarada en su package.json)
+
+Orden de carga: d3 → d3-flextree → d3-org-chart.
+Para actualizar: npm pack <paquete>@<versión> y copiar los mismos archivos de build/ o dist/.

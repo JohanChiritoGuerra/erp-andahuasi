@@ -1230,3 +1230,192 @@
 /* Trabajador sin cuenta bancaria: no puede ir en el archivo */
 .erp-ds .tc-table .tc-sin-cuenta { background: var(--warning-bg); }
 .erp-ds .tc-table .tc-cuenta { font-variant-numeric: tabular-nums; }
+
+/* =====================  ORGANIGRAMA DE GESTIÓN  ===================== */
+.erp-ds.org-page { gap: 12px; }
+.erp-ds .org-toolbar { flex-shrink: 0; align-items: center; }
+.erp-ds .org-toolbar .dropdown { flex: 0 0 210px; }
+.erp-ds .org-switch-text { font-size: 13px; font-weight: 500; color: var(--item); white-space: nowrap; }
+.erp-ds.org-page > .note { flex-shrink: 0; }
+.erp-ds .org-canvas { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); }
+.erp-ds .org-chart { position: absolute; inset: 0; }
+.erp-ds .org-chart svg { display: block; }
+.erp-ds .org-estado { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.erp-ds .org-estado > * { max-width: 520px; }
+.erp-ds .org-zoom { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); box-shadow: var(--shadow-popover); }
+.erp-ds .org-leyenda { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 14px; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-size: 11.5px; color: var(--muted); }
+.erp-ds .org-leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.erp-ds .org-leyenda-linea { display: inline-block; width: 22px; border-top: 1.5px solid var(--hint); }
+.erp-ds .org-leyenda-linea.is-punteada { border-top-style: dashed; border-color: var(--faint); }
+.erp-ds .org-leyenda-caja { display: inline-block; width: 16px; height: 11px; border: 1px solid var(--border); border-radius: 2px; background: var(--panel); }
+.erp-ds .org-leyenda-caja.is-autonomo { border-style: dashed; border-color: var(--faint); }
+.erp-ds .org-leyenda-caja.is-alerta { border-color: var(--danger); background: var(--danger-bg); }
+.erp-ds .org-leyenda-caja.nivel-0 { box-shadow: inset 0 2px 0 var(--org-n0); }
+.erp-ds .org-leyenda-caja.nivel-1 { box-shadow: inset 0 2px 0 var(--org-n1); }
+.erp-ds .org-leyenda-caja.nivel-2 { box-shadow: inset 0 2px 0 var(--org-n2); }
+.erp-ds .org-leyenda-caja.nivel-3 { box-shadow: inset 0 2px 0 var(--org-n3); }
+
+/* Nodo del árbol */
+.erp-ds .org-node {
+  display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); color: var(--text);
+  cursor: pointer; overflow: hidden; font-family: var(--font-sans);
+}
+.erp-ds .org-node:hover { border-color: var(--hint); }
+/* Tono por nivel: solo la franja superior, el icono y la etiqueta del tipo. */
+.erp-ds.org-page { --org-n0: var(--accent); --org-n1: var(--info-fg); --org-n2: var(--success-fg); --org-n3: var(--warning-fg); }
+.erp-ds .org-node { --org-nivel: var(--org-n3); box-shadow: inset 0 3px 0 var(--org-nivel); }
+.erp-ds .org-node.nivel-0 { --org-nivel: var(--org-n0); }
+.erp-ds .org-node.nivel-1 { --org-nivel: var(--org-n1); }
+.erp-ds .org-node.nivel-2 { --org-nivel: var(--org-n2); }
+.erp-ds .org-node.nivel-3 { --org-nivel: var(--org-n3); }
+.erp-ds .org-node .org-node-top > i,
+.erp-ds .org-node .org-node-tipo { color: var(--org-nivel); }
+.erp-ds .org-node.nivel-3 .org-node-nombre { font-weight: 500; }
+.erp-ds .org-node.is-autonomo { border-style: dashed; border-color: var(--faint); box-shadow: none; background: var(--field); }
+.erp-ds .org-node.is-autonomo .org-node-top > i,
+.erp-ds .org-node.is-autonomo .org-node-tipo { color: var(--muted); }
+/* Espaciador invisible: solo prolonga la línea de dependencia hasta la fila de su nivel. */
+.erp-ds .org-espaciador { position: relative; pointer-events: none; }
+.erp-ds .org-espaciador::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid var(--hint); }
+/* Personal en un GDS no vigente en SeccionFuncional: la unidad se marca en rojo. */
+.erp-ds .org-node.is-alerta { border-color: var(--danger); background: var(--danger-bg); }
+.erp-ds .org-node-alerta { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; color: var(--danger-fg); font-weight: 600; white-space: nowrap; }
+.erp-ds .org-persona.is-alerta { box-shadow: inset 3px 0 0 var(--danger); padding-left: 8px; }
+.erp-ds .org-tarjeta-persona.is-alerta { border-color: var(--danger); background: var(--danger-bg); }
+.erp-ds .org-node.is-hit { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.erp-ds .org-node-top { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--muted); }
+.erp-ds .org-node-top > i { font-size: 14px; color: var(--icon); }
+.erp-ds .org-node-tipo { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.erp-ds .org-node-top .pill { height: 18px; padding: 0 6px; font-size: 10.5px; }
+.erp-ds .org-node-nombre { font-size: 13.5px; line-height: 17px; font-weight: 600; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.erp-ds .org-node.nivel-0 .org-node-nombre { font-size: 14.5px; }
+.erp-ds .org-node-resp { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--item); }
+.erp-ds .org-node-resp i { color: var(--icon); }
+.erp-ds .org-node-resp.is-vacio { color: var(--faint); }
+.erp-ds .org-node-foot { display: flex; align-items: center; gap: 10px; margin-top: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.erp-ds .org-node-n { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: var(--text); }
+.erp-ds .org-node-n i { color: var(--icon); }
+.erp-ds .org-node-btn { display: flex; align-items: center; justify-content: center; gap: 2px; box-sizing: border-box; width: 44px; height: 22px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--panel); color: var(--muted); font-size: 11px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; }
+.erp-ds .org-node-btn:hover { border-color: var(--accent); color: var(--accent-text); }
+
+/* Ventana de unidad: puestos a la izquierda, personal a la derecha */
+.erp-ds dialog.modal.org-modal[open] { width: min(1120px, calc(100% - 32px)); height: min(820px, calc(100dvh - 32px)); }
+.erp-ds dialog.modal.org-modal .modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.erp-ds .org-unidad-body { display: flex; flex-direction: column; gap: 12px; }
+.erp-ds .org-resumen { display: flex; gap: 24px; flex-wrap: wrap; flex-shrink: 0; }
+.erp-ds .org-dato { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 13px; color: var(--text); }
+.erp-ds .org-link { padding: 0; border: 0; background: transparent; color: var(--accent-text); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer; }
+.erp-ds .org-link:hover { text-decoration: underline; }
+.erp-ds .org-subs { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.erp-ds .org-chip { border: 0; cursor: pointer; gap: 4px; }
+.erp-ds .org-chip:hover { background: var(--hover); color: var(--text); }
+.erp-ds .org-chip.pill-info:hover { background: var(--info-bg); color: var(--info-fg); }
+.erp-ds .org-unidad-grid { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 12px; flex: 1; min-height: 0; }
+.erp-ds .org-puestos-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.erp-ds .org-puestos-acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+/* Fila de puesto: sangría por jefe inmediato, botón de selección y lápiz de edición. */
+.erp-ds .org-cargo.org-puesto-fila { padding: 0 4px 0 calc(10px + var(--sangria, 0px)); gap: 4px; cursor: default; }
+.erp-ds .org-puesto-btn { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; min-height: 32px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.erp-ds .org-puesto-btn > span:not(.badge) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erp-ds .org-puesto-btn > i { color: var(--org-n1); }
+.erp-ds .badge.pill-warning { background: var(--warning-bg); color: var(--warning-fg); }
+.erp-ds .org-persona-acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.erp-ds .org-a-resultados { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; scrollbar-width: none; }
+.erp-ds .org-a-resultados > * { flex-shrink: 0; }
+.erp-ds .org-a-resultados .org-cargo { align-items: flex-start; padding-top: 6px; padding-bottom: 6px; }
+.erp-ds .org-a-persona { gap: 2px; padding: 8px 10px; }
+.erp-ds .org-aviso { flex-shrink: 0; }
+/* Formularios del organigrama: 560 px (guía: formularios cortos). */
+.erp-ds dialog.modal#org-dlg-puesto[open],
+.erp-ds dialog.modal#org-dlg-asignar[open],
+.erp-ds dialog.modal#org-dlg-unidad[open],
+.erp-ds dialog.modal#org-dlg-criterio[open] { width: min(560px, calc(100% - 32px)); }
+.erp-ds dialog.modal#org-dlg-mof[open] { width: min(720px, calc(100% - 32px)); }
+.erp-ds dialog.modal#org-dlg-mof .modal-body { overflow-y: auto; scrollbar-width: none; }
+/* MOF en el panel del puesto */
+.erp-ds .org-mof-ver { display: flex; flex-direction: column; gap: 8px; }
+.erp-ds .org-mof-sec { display: flex; flex-direction: column; gap: 2px; }
+.erp-ds .org-mof-sec p, .erp-ds .org-mof-sec li { font-size: 12.5px; line-height: 18px; color: var(--text); white-space: pre-line; }
+.erp-ds .org-mof-sec ol { margin: 0; padding-left: 18px; }
+.erp-ds .org-mof-pie { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erp-ds .org-cargo.is-selected .hint-text { color: var(--accent-text); }
+.erp-ds .org-criterio { display: inline-flex; align-items: center; gap: 2px; }
+.erp-ds .org-criterio-quitar { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-right: -4px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
+.erp-ds .org-criterio-quitar:hover { background: var(--hover); }
+.erp-ds .org-resumen-acciones { display: flex; gap: 6px; margin-left: auto; align-self: flex-start; flex-wrap: wrap; }
+/* Personal a lo ancho: datos de la persona a la izquierda, cargo y fechas a la derecha. */
+.erp-ds .org-persona { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: 16px; row-gap: 4px; align-items: start; }
+.erp-ds .org-persona-top,
+.erp-ds .org-persona-meta { grid-column: 1; }
+.erp-ds .org-persona-cargo { grid-column: 2; grid-row: 1 / span 2; }
+.erp-ds .org-persona > .card { grid-column: 1 / -1; }
+/* Organigrama interno */
+.erp-ds dialog.modal.org-interno[open] { width: min(1400px, calc(100% - 32px)); height: calc(100dvh - 48px); }
+.erp-ds .org-interno-body { display: flex; flex-direction: column; gap: 10px; }
+.erp-ds .org-interno-canvas { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); }
+.erp-ds .org-grupo { cursor: default; }
+.erp-ds .org-tarjeta-persona { display: flex; flex-direction: column; justify-content: center; gap: 2px; box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-sans); }
+.erp-ds .org-tarjeta-persona.is-suspendido { border-style: dashed; background: var(--field); }
+.erp-ds .org-tarjeta-linea { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.erp-ds .org-tarjeta-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--text); }
+.erp-ds .org-ocupantes { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; border-top: 1px solid var(--border); }
+.erp-ds .org-tarjeta-linea.is-suspendido .org-tarjeta-nombre { color: var(--muted); }
+.erp-ds .org-tarjeta-meta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erp-ds .org-puestos { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.erp-ds .org-puestos-chart { position: relative; flex: 1; min-height: 320px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); overflow: hidden; }
+.erp-ds .org-cargos { display: flex; flex-direction: column; gap: 4px; }
+.erp-ds .org-cargo { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: var(--item); font-size: 12.5px; text-align: left; cursor: pointer; }
+.erp-ds .org-cargo:hover { background: var(--hover); }
+.erp-ds .org-cargo.is-selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.erp-ds .org-puesto { display: flex; flex-direction: column; justify-content: center; gap: 6px; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); cursor: pointer; font-family: var(--font-sans); }
+.erp-ds .org-puesto:hover { border-color: var(--hint); }
+.erp-ds .org-puesto.is-selected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.erp-ds .org-puesto .pill { align-self: flex-start; }
+.erp-ds .org-puesto-nombre { display: flex; align-items: center; gap: 4px; font-size: 12.5px; line-height: 16px; font-weight: 600; color: var(--text); overflow: hidden; }
+.erp-ds .org-personal { min-height: 0; }
+.erp-ds .org-personal .panel-body { scrollbar-width: none; }
+.erp-ds .org-personal .panel-body::-webkit-scrollbar { display: none; }
+.erp-ds .org-personal-filtro { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.erp-ds .org-puestos > .stat-label,
+.erp-ds #org-puestos-lista > .stat-label { display: block; margin-top: 6px; }
+.erp-ds #org-puestos-lista { display: flex; flex-direction: column; gap: 6px; }
+.erp-ds .org-personal .chips:empty { display: none; }
+.erp-ds .org-persona { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.erp-ds .org-persona:last-child { border-bottom: 0; }
+.erp-ds .org-persona-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erp-ds .org-persona-nombre { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text); }
+.erp-ds .org-persona-cod { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.erp-ds .org-susp { height: auto; align-self: flex-start; }
+.erp-ds .org-susp .badge { margin-left: 4px; }
+.erp-ds .org-persona-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erp-ds .org-persona-cargo { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 17px; color: var(--item); }
+.erp-ds .org-persona-cargo b { font-weight: 600; color: var(--text); }
+.erp-ds .org-mof { gap: 4px; }
+@media (max-width: 1023px) {
+  .erp-ds .org-unidad-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); overflow-y: auto; }
+  .erp-ds .org-puestos { overflow: visible; }
+  .erp-ds .org-puestos-chart { min-height: 260px; }
+  .erp-ds .org-personal { min-height: 420px; }
+  .erp-ds .org-leyenda { display: none; }
+}
+@media (max-width: 767px) {
+  .erp-ds.org-page .page-actions { display: none; }
+  .erp-ds .org-toolbar .dropdown { flex: 1 1 140px; }
+  .erp-ds dialog.modal.org-modal[open] { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .erp-ds dialog.modal.org-modal .modal-body { overflow-y: auto; }
+  .erp-ds .org-zoom .icon-btn { width: 44px; height: 44px; }
+  .erp-ds .org-persona { grid-template-columns: minmax(0, 1fr); }
+  .erp-ds .org-persona-cargo { grid-column: 1; grid-row: auto; }
+  .erp-ds dialog.modal.org-interno[open] { width: 100%; height: 100dvh; }
+}
+.erp-ds .tc-confirma-casilla { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--field); font-size: 12.5px; line-height: 18px; cursor: pointer; }
+.erp-ds .tc-confirma-casilla[hidden] { display: none; }
+.erp-ds .tc-confirma-casilla input { margin-top: 2px; accent-color: var(--accent); }
+/* Telecrédito: paneles claros como en Campos y campañas (antes transparentes sobre el gris de la página). */
+.erp-ds .tc-card,
+.erp-ds .tc-ops-lista { background: var(--panel); }
+.erp-ds .tc-op:not(.is-selected) { background: var(--panel); }
+.erp-ds .tc-op:not(.is-selected):hover { background: var(--hover); }
+/* Control de fertilización: tarjetas claras sobre el gris de la página (como Campos y campañas). */
+#fert-control .card:not(.muted) { background: var(--panel); --bs-card-bg: var(--panel); }
