@@ -1,0 +1,337 @@
+@page "/presupuesto/consumo/{anio:int}/{correlativo}"
+@model ErpAndahuasi.Pages.Presupuesto.Consumo.DetalleModel
+@{
+  ViewData["Title"] = "Presupuesto de consumo";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+  <style>
+    #ppto-det .ppto-scroll { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); }
+    #ppto-det table { border-collapse: separate; border-spacing: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+    #ppto-det th, #ppto-det td { padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--panel); }
+    #ppto-det th { position: sticky; top: 0; z-index: 2; background: var(--field); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); }
+    #ppto-det td.fija, #ppto-det th.fija { position: sticky; left: 0; z-index: 1; }
+    #ppto-det th.fija { z-index: 3; }
+    #ppto-det tr.pie td { font-weight: 600; background: var(--field); }
+    #ppto-det .num { text-align: right; }
+    #ppto-det .sub { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+    #ppto-det dialog.modal.ancho { width: min(880px, calc(100% - 32px)); }
+    #ppto-det .meses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    #ppto-det .mes { display: flex; align-items: center; gap: 8px; }
+    #ppto-det .mes input[type="number"] { width: 72px; }
+  </style>
+}
+
+<div class="erp-ds erp-ds--fill" id="ppto-det" data-anio="@Model.Anio" data-correlativo="@Model.Correlativo">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title" id="ppto-titulo">Presupuesto de consumo</h1>
+      <p class="page-sub" id="ppto-sub">Materiales</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn" href="/presupuesto/consumo"><i class="ri ri-arrow-left-line"></i>Volver</a>
+      <div class="segmented" style="width:220px" role="group" aria-label="Unidad de los meses">
+        <input type="radio" name="ppto-modo" id="ppto-modo-cant" value="cantidad" checked />
+        <label for="ppto-modo-cant">Cantidad</label>
+        <input type="radio" name="ppto-modo" id="ppto-modo-monto" value="monto" />
+        <label for="ppto-modo-monto">Monto</label>
+      </div>
+      <button type="button" class="btn btn-primary" id="ppto-agregar"><i class="ri ri-add-line"></i>Agregar</button>
+    </div>
+  </div>
+  <div class="ppto-scroll" style="margin-top:12px">
+    <table id="ppto-tabla">
+      <thead>
+        <tr>
+          <th class="fija">Código</th><th>Descripción</th><th class="num">Precio</th>
+          <th class="num">Ene</th><th class="num">Feb</th><th class="num">Mar</th><th class="num">Abr</th>
+          <th class="num">May</th><th class="num">Jun</th><th class="num">Jul</th><th class="num">Ago</th>
+          <th class="num">Set</th><th class="num">Oct</th><th class="num">Nov</th><th class="num">Dic</th>
+          <th class="num">Total cant.</th><th class="num">Total S/</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="ppto-cuerpo"></tbody>
+    </table>
+  </div>
+
+  <dialog class="modal ancho" id="ppto-dlg-item" aria-labelledby="ppto-dlg-item-t">
+    <div class="modal-head">
+      <i class="ri ri-archive-line"></i>
+      <span class="modal-title" id="ppto-dlg-item-t">Material</span>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <label class="field" id="ppto-buscar-wrap">
+        <span class="field-label">Material</span>
+        <input class="input" id="ppto-buscar" placeholder="Código o descripción" autocomplete="off" />
+      </label>
+      <div id="ppto-buscar-lista"></div>
+      <p id="ppto-item-meta" class="hint-text"></p>
+      <div class="meses" id="ppto-meses" hidden></div>
+      <p class="field-error" id="ppto-item-error" hidden></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="ppto-guardar">Guardar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="ppto-dlg-borrar" aria-labelledby="ppto-dlg-borrar-t">
+    <div class="modal-head">
+      <i class="ri ri-delete-bin-line"></i>
+      <span class="modal-title" id="ppto-dlg-borrar-t">Eliminar material</span>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body"><p id="ppto-borrar-texto"></p></div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="button" class="btn btn-danger" id="ppto-borrar-ok">Eliminar</button>
+    </div>
+  </dialog>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const root = document.getElementById('ppto-det');
+  const anio = root.dataset.anio;
+  const correlativo = root.dataset.correlativo;
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];
+  const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = n => Number(n || 0).toLocaleString('es-PE', { maximumFractionDigits: 3 });
+  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+  const modo = () => document.querySelector('input[name="ppto-modo"]:checked').value;
+  let documento = null;
+  let precioActual = null;
+  let borrarCodigo = '';
+
+  function td(texto, clase) {
+    const celda = document.createElement('td');
+    if (clase) celda.className = clase;
+    celda.textContent = texto;
+    return celda;
+  }
+
+  function pintar() {
+    const cuerpo = document.getElementById('ppto-cuerpo');
+    cuerpo.replaceChildren();
+    if (!documento?.baseResponse?.success) return;
+    const verMonto = modo() === 'monto';
+    for (const linea of documento.lineas || []) {
+      const tr = document.createElement('tr');
+      const codigo = td(linea.codigo, 'fija');
+      const quien = document.createElement('span');
+      quien.className = 'sub';
+      quien.textContent = [linea.usuarioNombre || linea.usrSistema, linea.gdsNombre].filter(Boolean).join(' · ');
+      const desc = document.createElement('td');
+      desc.textContent = linea.descripcion;
+      if (quien.textContent) desc.appendChild(quien);
+      tr.append(codigo, desc, td(linea.precioVaria ? 'Varía' : soles(linea.precio), 'num'));
+      for (const mes of linea.meses) tr.appendChild(td(verMonto ? num(mes.monto) : num(mes.cantidad), 'num'));
+      tr.append(td(num(linea.totalCantidad), 'num'), td(soles(linea.totalMonto), 'num'));
+      const acc = document.createElement('td');
+      const editar = document.createElement('button');
+      editar.type = 'button';
+      editar.className = 'icon-btn';
+      editar.setAttribute('aria-label', 'Modificar');
+      editar.innerHTML = '<i class="ri ri-pencil-line"></i>';
+      editar.addEventListener('click', () => abrirItem(linea));
+      const eliminar = document.createElement('button');
+      eliminar.type = 'button';
+      eliminar.className = 'icon-btn';
+      eliminar.setAttribute('aria-label', 'Eliminar');
+      eliminar.innerHTML = '<i class="ri ri-delete-bin-line"></i>';
+      eliminar.addEventListener('click', () => {
+        borrarCodigo = linea.codigo;
+        document.getElementById('ppto-borrar-texto').textContent = `Se quitará ${linea.codigo} ${linea.descripcion} de este presupuesto.`;
+        document.getElementById('ppto-dlg-borrar').showModal();
+      });
+      acc.append(editar, eliminar);
+      tr.appendChild(acc);
+      cuerpo.appendChild(tr);
+    }
+    const pie = document.createElement('tr');
+    pie.className = 'pie';
+    pie.append(td(''), td('Total'), td(''));
+    for (const monto of documento.totalesMes || []) pie.appendChild(td(soles(monto), 'num'));
+    pie.append(td(''), td(soles(documento.totalMonto), 'num'), td(''));
+    cuerpo.appendChild(pie);
+  }
+
+  async function cargar() {
+    const res = await fetch(`?handler=Documento&anio=${anio}&correlativo=${correlativo}`);
+    documento = await res.json();
+    if (!documento.baseResponse?.success) {
+      document.getElementById('ppto-sub').textContent = documento.baseResponse?.message || 'No se pudo cargar.';
+      return;
+    }
+    document.getElementById('ppto-titulo').textContent = documento.descripcion || 'Presupuesto de consumo';
+    document.getElementById('ppto-sub').textContent = `${documento.centroCodigo} ${documento.centroNombre || ''} · ${documento.gdsNombre || ''} · ${anio} · parte ${correlativo}`;
+    pintar();
+  }
+
+  document.querySelectorAll('input[name="ppto-modo"]').forEach(el => el.addEventListener('change', pintar));
+
+  const dlg = document.getElementById('ppto-dlg-item');
+  dlg.querySelectorAll('[data-cerrar]').forEach(el => el.addEventListener('click', () => dlg.close()));
+  document.getElementById('ppto-dlg-borrar').querySelectorAll('[data-cerrar]').forEach(el => el.addEventListener('click', () => document.getElementById('ppto-dlg-borrar').close()));
+
+  function armarMeses(cantidades) {
+    const caja = document.getElementById('ppto-meses');
+    caja.replaceChildren();
+    caja.hidden = false;
+    precios().forEach((precio, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'mes';
+      const sw = document.createElement('label');
+      sw.className = 'switch';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.dataset.mes = String(i);
+      const ui = document.createElement('span');
+      ui.className = 'switch-ui';
+      sw.append(input, ui);
+      const cant = document.createElement('input');
+      cant.className = 'input';
+      cant.type = 'number';
+      cant.min = '0';
+      cant.step = '0.001';
+      cant.disabled = true;
+      cant.setAttribute('aria-label', `Cantidad ${meses[i]}`);
+      if (cantidades && cantidades[i] > 0) {
+        input.checked = true;
+        cant.disabled = false;
+        cant.value = String(cantidades[i]);
+      }
+      input.addEventListener('change', () => {
+        cant.disabled = !input.checked;
+        if (!input.checked) cant.value = '';
+        else cant.focus();
+      });
+      const nombre = document.createElement('span');
+      nombre.textContent = precioActual.precioVaria ? `${meses[i]} · ${soles(precio)}` : meses[i];
+      wrap.append(sw, cant, nombre);
+      caja.appendChild(wrap);
+    });
+  }
+
+  function precios() { return precioActual?.precios || Array(12).fill(0); }
+
+  function mostrarMeta() {
+    const meta = document.getElementById('ppto-item-meta');
+    if (!precioActual) { meta.textContent = ''; return; }
+    const precio = precioActual.precioVaria ? 'el precio proyectado cambia por mes' : `precio proyectado ${soles(precioActual.precio)}`;
+    meta.textContent = `${precioActual.codigo} · ${precioActual.descripcion} · ${precioActual.unidad || ''} · ${precio}`;
+  }
+
+  async function abrirItem(linea) {
+    document.getElementById('ppto-item-error').hidden = true;
+    document.getElementById('ppto-buscar-wrap').hidden = !!linea;
+    document.getElementById('ppto-buscar-lista').replaceChildren();
+    if (!linea) {
+      precioActual = null;
+      document.getElementById('ppto-buscar').value = '';
+      document.getElementById('ppto-meses').hidden = true;
+      mostrarMeta();
+      dlg.showModal();
+      return;
+    }
+    const res = await fetch(`?handler=Precio&anio=${anio}&codigo=${linea.codigo}`);
+    precioActual = await res.json();
+    if (!precioActual.baseResponse?.success) {
+      document.getElementById('ppto-item-error').hidden = false;
+      document.getElementById('ppto-item-error').textContent = precioActual.baseResponse?.message || 'No se pudo abrir el material.';
+    }
+    mostrarMeta();
+    armarMeses((linea.meses || []).map(m => m.cantidad));
+    dlg.showModal();
+  }
+
+  document.getElementById('ppto-agregar').addEventListener('click', () => abrirItem(null));
+
+  let timer;
+  document.getElementById('ppto-buscar').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const texto = document.getElementById('ppto-buscar').value.trim();
+      const lista = document.getElementById('ppto-buscar-lista');
+      lista.replaceChildren();
+      if (texto.length < 2) return;
+      const res = await fetch(`?handler=Items&anio=${anio}&texto=${encodeURIComponent(texto)}`);
+      const data = await res.json();
+      for (const item of data.items || []) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'menu-item';
+        btn.textContent = `${item.codigo} · ${item.descripcion}`;
+        btn.addEventListener('click', async () => {
+          lista.replaceChildren();
+          const precio = await (await fetch(`?handler=Precio&anio=${anio}&codigo=${item.codigo}`)).json();
+          precioActual = precio;
+          mostrarMeta();
+          if (!precio.baseResponse?.success) {
+            document.getElementById('ppto-item-error').hidden = false;
+            document.getElementById('ppto-item-error').textContent = precio.baseResponse?.message || 'El material no se puede presupuestar.';
+            document.getElementById('ppto-meses').hidden = true;
+            return;
+          }
+          document.getElementById('ppto-item-error').hidden = true;
+          armarMeses(null);
+        });
+        lista.appendChild(btn);
+      }
+    }, 250);
+  });
+
+  document.getElementById('ppto-guardar').addEventListener('click', async () => {
+    const error = document.getElementById('ppto-item-error');
+    error.hidden = true;
+    if (!precioActual?.codigo) {
+      error.hidden = false;
+      error.textContent = 'Elige un material.';
+      return;
+    }
+    const cantidades = Array.from(document.querySelectorAll('#ppto-meses input[type="checkbox"]')).map(sw => {
+      const cant = sw.parentElement.parentElement.querySelector('input[type="number"]');
+      return sw.checked ? Number(cant.value) : 0;
+    });
+    if (cantidades.some((valor, i) => document.querySelectorAll('#ppto-meses input[type="checkbox"]')[i].checked && !(valor > 0))) {
+      error.hidden = false;
+      error.textContent = 'Un mes encendido necesita una cantidad mayor que cero.';
+      return;
+    }
+    const res = await fetch('?handler=Guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({ anio: Number(anio), correlativo, codigo: precioActual.codigo, cantidades })
+    });
+    const data = await res.json();
+    if (!data.baseResponse?.success) {
+      error.hidden = false;
+      error.textContent = data.baseResponse?.message || 'No se pudo guardar.';
+      return;
+    }
+    documento = data;
+    dlg.close();
+    pintar();
+    document.getElementById('ppto-titulo').textContent = documento.descripcion || document.getElementById('ppto-titulo').textContent;
+  });
+
+  document.getElementById('ppto-borrar-ok').addEventListener('click', async () => {
+    const res = await fetch('?handler=Eliminar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({ anio: Number(anio), correlativo, codigo: borrarCodigo })
+    });
+    const data = await res.json();
+    document.getElementById('ppto-dlg-borrar').close();
+    if (data.baseResponse?.success) {
+      documento = data;
+      pintar();
+    }
+  });
+
+  cargar();
+})();
+</script>
+}

@@ -1,0 +1,173 @@
+@page "/presupuesto/consumo"
+@model ErpAndahuasi.Pages.Presupuesto.Consumo.IndexModel
+@{
+  ViewData["Title"] = "Presupuesto de consumo";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds erp-ds--fill" id="ppto-bandeja">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Presupuesto de consumo</h1>
+      <p class="page-sub">Materiales · anual</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-primary" id="ppto-nuevo"><i class="ri ri-add-line"></i>Nuevo</button>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="margin-top:12px">
+    <div class="stat-card is-selected">
+      <span class="stat-icon"><i class="ri ri-file-list-3-line"></i></span>
+      <span style="min-width:0"><span class="stat-label">Presupuestos</span><span class="stat-value" id="ppto-n">0</span></span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon success"><i class="ri ri-money-dollar-circle-line"></i></span>
+      <span style="min-width:0"><span class="stat-label">Monto anual</span><span class="stat-value" id="ppto-monto">S/ 0.00</span></span>
+    </div>
+  </div>
+
+  <div class="toolbar" style="display:flex;gap:8px;align-items:center;margin:12px 0">
+    <label class="field" style="width:96px">
+      <span class="field-label">Año</span>
+      <input class="input" id="ppto-anio" type="number" min="2000" max="2100" />
+    </label>
+    <div class="segmented" style="width:280px;margin-top:18px" role="group" aria-label="Mirada">
+      <input type="radio" name="ppto-mirada" id="ppto-mirada-centros" value="centros" checked />
+      <label for="ppto-mirada-centros">Mis centros</label>
+      <input type="radio" name="ppto-mirada" id="ppto-mirada-cargado" value="cargado" />
+      <label for="ppto-mirada-cargado">Cargado por mi gente</label>
+    </div>
+    <p class="hint-text" id="ppto-gds" style="margin:18px 0 0"></p>
+  </div>
+
+  <div class="data-table" style="--dt-cols:88px minmax(180px,1.2fr) minmax(160px,1fr) minmax(140px,.8fr) 72px 120px;flex:1">
+    <div class="dt-head"><span>Parte</span><span>Descripción</span><span>Centro de costo</span><span>GDS</span><span>Ítems</span><span>Monto</span></div>
+    <div class="dt-body" id="ppto-filas"></div>
+    <div class="dt-foot"><span id="ppto-estado">Cargando…</span></div>
+  </div>
+
+  <dialog class="modal" id="ppto-dlg-nuevo" aria-labelledby="ppto-dlg-nuevo-t">
+    <div class="modal-head">
+      <i class="ri ri-add-line"></i>
+      <span class="modal-title" id="ppto-dlg-nuevo-t">Nuevo presupuesto</span>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span class="field-label">Descripción</span>
+        <input class="input" id="ppto-desc" maxlength="50" />
+      </label>
+      <label class="field">
+        <span class="field-label">Centro de costo</span>
+        <input class="input" id="ppto-cc" placeholder="Código o nombre" autocomplete="off" />
+      </label>
+      <div id="ppto-cc-lista"></div>
+      <p class="field-error" id="ppto-nuevo-error" hidden></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-cerrar>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="ppto-crear">Guardar</button>
+    </div>
+  </dialog>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const anioEl = document.getElementById('ppto-anio');
+  const filas = document.getElementById('ppto-filas');
+  const hoy = new Date();
+  anioEl.value = hoy.getMonth() >= 8 ? hoy.getFullYear() + 1 : hoy.getFullYear();
+  let centro = '';
+
+  const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+  const mirada = () => document.querySelector('input[name="ppto-mirada"]:checked').value;
+
+  async function cargar() {
+    document.getElementById('ppto-estado').textContent = 'Cargando…';
+    const res = await fetch(`?handler=Bandeja&anio=${anioEl.value}&mirada=${mirada()}`);
+    const data = await res.json();
+    const ok = data.baseResponse?.success;
+    document.getElementById('ppto-gds').textContent = data.gds?.nombre || '';
+    filas.replaceChildren();
+    if (!ok) {
+      document.getElementById('ppto-estado').textContent = data.baseResponse?.message || 'No se pudo cargar.';
+      document.getElementById('ppto-n').textContent = '0';
+      document.getElementById('ppto-monto').textContent = soles(0);
+      return;
+    }
+    const items = data.items || [];
+    document.getElementById('ppto-n').textContent = String(items.length);
+    document.getElementById('ppto-monto').textContent = soles(data.monto);
+    document.getElementById('ppto-estado').textContent = items.length ? `${items.length} presupuestos` : 'No hay presupuestos para esta mirada.';
+    for (const item of items) {
+      const a = document.createElement('a');
+      a.className = 'dt-row';
+      a.href = `/presupuesto/consumo/${item.anio}/${item.correlativo}`;
+      for (const texto of [item.correlativo, item.descripcion, `${item.centroCodigo} ${item.centroNombre || ''}`.trim(), item.gdsNombre || '', String(item.items), soles(item.monto)]) {
+        const span = document.createElement('span');
+        span.textContent = texto || '';
+        a.appendChild(span);
+      }
+      filas.appendChild(a);
+    }
+  }
+
+  anioEl.addEventListener('change', cargar);
+  document.querySelectorAll('input[name="ppto-mirada"]').forEach(el => el.addEventListener('change', cargar));
+
+  const dlg = document.getElementById('ppto-dlg-nuevo');
+  document.getElementById('ppto-nuevo').addEventListener('click', () => { centro = ''; dlg.showModal(); });
+  dlg.querySelectorAll('[data-cerrar]').forEach(el => el.addEventListener('click', () => dlg.close()));
+
+  let timer;
+  document.getElementById('ppto-cc').addEventListener('input', () => {
+    centro = '';
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const texto = document.getElementById('ppto-cc').value.trim();
+      const lista = document.getElementById('ppto-cc-lista');
+      lista.replaceChildren();
+      if (texto.length < 2) return;
+      const res = await fetch(`?handler=Centros&anio=${anioEl.value}&texto=${encodeURIComponent(texto)}`);
+      const data = await res.json();
+      for (const item of data.items || []) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'menu-item';
+        btn.textContent = `${item.codigo} · ${item.descripcion}`;
+        btn.addEventListener('click', () => {
+          centro = item.codigo;
+          document.getElementById('ppto-cc').value = btn.textContent;
+          lista.replaceChildren();
+        });
+        lista.appendChild(btn);
+      }
+    }, 250);
+  });
+
+  document.getElementById('ppto-crear').addEventListener('click', async () => {
+    const error = document.getElementById('ppto-nuevo-error');
+    error.hidden = true;
+    const res = await fetch('?handler=Crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({ anio: Number(anioEl.value), descripcion: document.getElementById('ppto-desc').value, centroCosto: centro })
+    });
+    const data = await res.json();
+    if (!data.baseResponse?.success) {
+      error.hidden = false;
+      error.textContent = data.baseResponse?.message || 'No se pudo crear.';
+      return;
+    }
+    location.href = `/presupuesto/consumo/${anioEl.value}/${data.correlativo}`;
+  });
+
+  cargar();
+})();
+</script>
+}
