@@ -24,6 +24,8 @@ public class TelecreditoCrearRequest : TelecreditoRequest
 public class TelecreditoOperacionRequest : TelecreditoRequest
 {
     public int OperacionId { get; set; }
+    /// <summary>Al cerrar: bloquear las boletas del mes (ProcesoPlanilla y MovimientoPlanillaCabecera) de la lista.</summary>
+    public bool BloquearBoletas { get; set; }
     /// <summary>Fecha de proceso del Excel (C7). Si falta, la API usa el día de generación.</summary>
     public DateTime? FechaProceso { get; set; }
 }

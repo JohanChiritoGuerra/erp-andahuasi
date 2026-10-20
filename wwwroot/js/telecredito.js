@@ -63,6 +63,12 @@
     lista.hidden = !items.length;
     lista.innerHTML = items.map((n) => '<li>' + esc(n) + '</li>').join('') +
       ((op.lista || []).length > items.length ? '<li>y ' + (op.lista.length - items.length) + ' más</li>' : '');
+    // Casilla opcional (por ejemplo, bloquear boletas al cerrar). Su valor se lee luego en $('tc-confirma-casilla').checked.
+    $('tc-confirma-casilla-field').hidden = !op.casilla;
+    if (op.casilla) {
+      $('tc-confirma-casilla-texto').textContent = op.casilla.texto;
+      $('tc-confirma-casilla').checked = !!op.casilla.marcada;
+    }
     const campoFecha = $('tc-confirma-fecha-field');
     const inputFecha = $('tc-confirma-fecha');
     if (op.fechaProceso) {
@@ -473,16 +479,23 @@
   }
 
   async function cerrar() {
+    const conMensualidad = actual.tipoOperacion === 'M' || actual.tipoOperacion === 'ML';
     const ok = await confirmar({
       titulo: 'Cerrar operación',
       icono: 'ri-lock-line',
       texto: 'Se cerrará la ' + nombreOperacion(actual) + ' con los archivos generados el ' + fecha(actual.fecArchivo) +
         '. Antes se comprueba que los montos y cuentas sigan iguales; si algo cambió, habrá que volver a generarlos. ' +
         'Después no se podrá editar la lista ni volver a generar los archivos: solo descargarlos.',
+      casilla: {
+        texto: 'Bloquear las boletas de ' + actual.mes + '/' + actual.anio + ' de los ' + detalle.length +
+          ' trabajadores de la lista (ProcesoPlanilla y MovimientoPlanillaCabecera).',
+        marcada: conMensualidad
+      },
       boton: 'Cerrar operación'
     });
     if (!ok) return;
-    const data = await accion('Cerrar');
+    const bloquearBoletas = $('tc-confirma-casilla').checked;
+    const data = await accion('Cerrar', { bloquearBoletas });
     if (!data) return;
     aplicar(data.datos);
     aviso(data.message);
