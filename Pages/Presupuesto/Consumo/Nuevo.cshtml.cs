@@ -19,11 +19,31 @@ public class NuevoModel(ErpApiClient api, IErpSessionAccessor session) : PageMod
     public Task<IActionResult> OnGetTiposAsync() =>
         Leer($"api/Presupuesto/Consumo/Tipos?empresaId={Empresa()}");
 
+    public Task<IActionResult> OnGetPeriodoAsync(int anio) =>
+        Leer($"api/Presupuesto/Consumo/Periodo?empresaId={Empresa()}&anio={anio}");
+
     public Task<IActionResult> OnGetCentroAsync(int anio, string codigo) =>
         Leer($"api/Presupuesto/Consumo/ConsultarCentro?empresaId={Empresa()}&usrSistema={Usuario()}&anio={anio}&codigo={Uri.EscapeDataString(codigo ?? "")}");
 
     public Task<IActionResult> OnGetCentrosAsync(int anio, string texto) =>
         Leer($"api/Presupuesto/Consumo/BuscarCentros?empresaId={Empresa()}&usrSistema={Usuario()}&anio={anio}&texto={Uri.EscapeDataString(texto ?? "")}");
+
+    public Task<IActionResult> OnGetItemsAsync(int anio, string texto) =>
+        Leer($"api/Presupuesto/Consumo/BuscarItems?empresaId={Empresa()}&usrSistema={Usuario()}&anio={anio}&texto={Uri.EscapeDataString(texto ?? "")}");
+
+    public Task<IActionResult> OnGetPrecioAsync(int anio, string codigo) =>
+        Leer($"api/Presupuesto/Consumo/PrecioItem?empresaId={Empresa()}&usrSistema={Usuario()}&anio={anio}&codigo={Uri.EscapeDataString(codigo ?? "")}");
+
+    public Task<IActionResult> OnPostGuardarAsync([FromBody] GuardarMaterial comando) =>
+        Enviar("api/Presupuesto/Consumo/GuardarItem", new
+        {
+            EmpresaId = Empresa(),
+            UsrSistema = Usuario(),
+            comando.Anio,
+            comando.Correlativo,
+            comando.Codigo,
+            comando.Cantidades
+        });
 
     public Task<IActionResult> OnPostCrearAsync([FromBody] CrearPresupuesto comando) =>
         Enviar("api/Presupuesto/Consumo/Crear", new
@@ -67,5 +87,13 @@ public class NuevoModel(ErpApiClient api, IErpSessionAccessor session) : PageMod
         public int Anio { get; set; }
         public string Descripcion { get; set; } = "";
         public string CentroCosto { get; set; } = "";
+    }
+
+    public class GuardarMaterial
+    {
+        public int Anio { get; set; }
+        public string Correlativo { get; set; } = "";
+        public string Codigo { get; set; } = "";
+        public List<decimal> Cantidades { get; set; } = [];
     }
 }

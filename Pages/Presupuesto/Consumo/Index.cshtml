@@ -5,13 +5,21 @@
 }
 @section PageStyles {
   <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+  <style>
+    #ppto-bandeja .ppto-marca { display: flex; align-items: center; gap: 12px; }
+  </style>
 }
 
 <div class="erp-ds erp-ds--fill" id="ppto-bandeja">
   <div class="page-head">
     <div>
-      <h1 class="page-title">Presupuesto de consumo</h1>
-      <p class="page-sub">Materiales · anual</p>
+      <div class="ppto-marca">
+        <span class="stat-icon info" title="Consumo"><i class="ri ri-archive-line"></i></span>
+        <div>
+          <h1 class="page-title">Presupuesto de consumo</h1>
+          <p class="page-sub">Materiales · anual</p>
+        </div>
+      </div>
     </div>
     <div class="page-actions">
       <a class="btn btn-primary" id="ppto-nuevo" href="/presupuesto/consumo/nuevo?anio=@DateTime.Today.Year"><i class="ri ri-add-line"></i>Nuevo</a>

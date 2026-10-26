@@ -19,14 +19,22 @@
     #ppto-det .meses { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     #ppto-det .mes { display: flex; align-items: center; gap: 8px; }
     #ppto-det .mes input[type="number"] { width: 72px; }
+    #ppto-det .ppto-marca { display: flex; align-items: center; gap: 12px; }
+    #ppto-det .ppto-anio { margin-left: 8px; font-variant-numeric: tabular-nums; }
+    #ppto-det .ppto-cc { max-width: 480px; margin-top: 12px; }
   </style>
 }
 
 <div class="erp-ds erp-ds--fill" id="ppto-det" data-anio="@Model.Anio" data-correlativo="@Model.Correlativo">
   <div class="page-head">
     <div>
-      <h1 class="page-title" id="ppto-titulo">Presupuesto de consumo</h1>
-      <p class="page-sub" id="ppto-sub">Materiales</p>
+      <div class="ppto-marca">
+        <span class="stat-icon info" title="Consumo"><i class="ri ri-archive-line"></i></span>
+        <div>
+          <h1 class="page-title">Presupuesto de consumo <span class="ppto-anio">@Model.Anio</span></h1>
+          <p class="page-sub" id="ppto-sub">Materiales · anual</p>
+        </div>
+      </div>
     </div>
     <div class="page-actions">
       <a class="btn" href="/presupuesto/consumo"><i class="ri ri-arrow-left-line"></i>Volver</a>
@@ -39,6 +47,11 @@
       <button type="button" class="btn btn-primary" id="ppto-agregar"><i class="ri ri-add-line"></i>Agregar</button>
     </div>
   </div>
+  <label class="field ppto-cc">
+    <span class="field-label">Centro de costos</span>
+    <input class="input" id="ppto-cc" readonly tabindex="-1" />
+    <span class="field-help">Quedó fijo al grabar el presupuesto.</span>
+  </label>
   <div class="ppto-scroll" style="margin-top:12px">
     <table id="ppto-tabla">
       <thead>
@@ -165,8 +178,8 @@
       document.getElementById('ppto-sub').textContent = documento.baseResponse?.message || 'No se pudo cargar.';
       return;
     }
-    document.getElementById('ppto-titulo').textContent = documento.descripcion || 'Presupuesto de consumo';
-    document.getElementById('ppto-sub').textContent = `${documento.centroCodigo} ${documento.centroNombre || ''} · ${documento.gdsNombre || ''} · ${anio} · parte ${correlativo}`;
+    document.getElementById('ppto-cc').value = `${documento.centroCodigo || ''} ${documento.centroNombre || ''}`.trim();
+    document.getElementById('ppto-sub').textContent = [documento.descripcion, documento.gdsNombre, `parte ${correlativo}`].filter(Boolean).join(' · ');
     pintar();
   }
 
@@ -314,7 +327,6 @@
     documento = data;
     dlg.close();
     pintar();
-    document.getElementById('ppto-titulo').textContent = documento.descripcion || document.getElementById('ppto-titulo').textContent;
   });
 
   document.getElementById('ppto-borrar-ok').addEventListener('click', async () => {
