@@ -110,14 +110,16 @@
     } else {
       body.innerHTML = rows.map((t) => {
         const id = idDe(t);
+        const tieneBoleta = !!(t.procesadoExitoso || t.bloqueado);
         const quitar = manual
           ? `<button type="button" class="icon-btn" data-quitar="${esc(id)}" aria-label="Quitar de la lista"><i class="ri ri-close-line"></i></button>`
           : '';
-        return `<div class="dt-row" data-trab="${esc(id)}">
+        return `<div class="dt-row${tieneBoleta ? ' pl-row-boleta' : ''}" data-trab="${esc(id)}">
           <span class="dt-code">${esc(id)}</span>
           <span class="dt-desc">${esc(t.nombre)}</span>
           <span class="dt-muted">${esc(textoSeccion(t.seccionId, t.seccionNombre))}</span>
           <span>${estadoHtml(t)}</span>
+          <span class="pl-ver"><button type="button" class="icon-btn" data-ver="${esc(id)}" aria-label="Visualizar boleta de ${esc(t.nombre)}" title="${tieneBoleta ? 'Visualizar boleta' : 'Aún no hay boleta'}" ${tieneBoleta ? '' : 'disabled'}><i class="ri ri-file-list-3-line"></i></button></span>
           ${manual ? '<span class="pl-quitar">' + quitar + '</span>' : ''}
         </div>`;
       }).join('');
@@ -509,9 +511,20 @@
 
   $('pl-body').addEventListener('click', (ev) => {
     const quitar = ev.target.closest('[data-quitar]');
-    if (!quitar || forma() !== 'PorTrabajador') return;
-    elegidos = elegidos.filter((t) => idDe(t) !== quitar.dataset.quitar);
-    pintar();
+    if (quitar && forma() === 'PorTrabajador') {
+      elegidos = elegidos.filter((t) => idDe(t) !== quitar.dataset.quitar);
+      pintar();
+      return;
+    }
+    const ver = ev.target.closest('[data-ver]');
+    if (ver) {
+      if (!ver.disabled) visualizarBoleta(ver.dataset.ver);
+      return;
+    }
+    if (ev.target.closest('button')) return;
+    const row = ev.target.closest('[data-trab]');
+    if (!row || !row.classList.contains('pl-row-boleta')) return;
+    visualizarBoleta(row.dataset.trab);
   });
   $('pl-body').addEventListener('contextmenu', (ev) => {
     const row = ev.target.closest('[data-trab]');
