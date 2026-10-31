@@ -73,6 +73,19 @@ public class ErpApiClient
         return await response.Content.ReadAsByteArrayAsync(ct);
     }
 
+    public async Task<(byte[]? Bytes, string? FileName, string? ContentType)> GetArchivoAsync(string path, CancellationToken ct = default)
+    {
+        using var response = await SendRawAsync(HttpMethod.Get, path, null, null, ct);
+        if (!response.IsSuccessStatusCode)
+            return (null, null, null);
+
+        var nombre = response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ContentDisposition?.FileName;
+        nombre = nombre?.Trim().Trim('"');
+        var tipo = response.Content.Headers.ContentType?.MediaType;
+        return (await response.Content.ReadAsByteArrayAsync(ct), nombre, tipo);
+    }
+
     public async Task<T> SendMultipartAsync<T>(HttpMethod method, string path, MultipartFormDataContent content, CancellationToken ct = default)
     {
         using var response = await SendRawAsync(method, path, null, content, ct);

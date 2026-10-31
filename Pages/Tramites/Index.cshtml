@@ -1,0 +1,140 @@
+@page "/tramites"
+@model ErpAndahuasi.Pages.Tramites.IndexModel
+@{
+  ViewData["Title"] = "Facturación de servicios";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds erp-ds--fill" id="tr-bandeja">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Facturación de servicios</h1>
+      <p class="page-sub">Liquidaciones de asociados · factura y autodetracción</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn btn-primary" id="tr-nuevo" href="/tramites/nuevo" hidden><i class="ri ri-add-line"></i>Nueva facturación</a>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="margin-top:12px;grid-template-columns:repeat(3,minmax(0,1fr))">
+    <button type="button" class="stat-card is-selected" data-mirada="accion">
+      <span class="stat-icon warning"><i class="ri ri-inbox-line"></i></span>
+      <span style="min-width:0"><span class="stat-label">Para mi acción</span><span class="stat-value" id="tr-n-accion">0</span></span>
+    </button>
+    <button type="button" class="stat-card" data-mirada="copia">
+      <span class="stat-icon info"><i class="ri ri-mail-line"></i></span>
+      <span style="min-width:0"><span class="stat-label">En copia</span><span class="stat-value" id="tr-n-copia">0</span></span>
+    </button>
+    <button type="button" class="stat-card" data-mirada="cerrados">
+      <span class="stat-icon success"><i class="ri ri-checkbox-circle-line"></i></span>
+      <span style="min-width:0"><span class="stat-label">Cerrados</span><span class="stat-value" id="tr-n-cerrados">0</span></span>
+    </button>
+  </div>
+
+  <div class="toolbar" style="display:flex;gap:8px;align-items:center;margin:12px 0">
+    <label class="search" style="flex:1;max-width:420px">
+      <i class="ri ri-search-line"></i>
+      <input type="search" id="tr-texto" placeholder="Liquidación, campo, cuenta o asociado" aria-label="Buscar trámite" />
+      <button type="button" class="search-clear" id="tr-limpiar" aria-label="Borrar búsqueda" hidden><i class="ri ri-close-line"></i></button>
+    </label>
+  </div>
+
+  <div class="data-table" style="--dt-cols:88px minmax(160px,1.1fr) minmax(140px,.9fr) minmax(140px,.8fr) 110px 120px;flex:1">
+    <div class="dt-head"><span>Liquidación</span><span>Servicio</span><span>Asociado</span><span>Paso</span><span>Estado</span><span>Desde</span></div>
+    <div class="dt-body" id="tr-filas"></div>
+    <div class="dt-foot"><span id="tr-estado">Cargando…</span></div>
+  </div>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const filas = document.getElementById('tr-filas');
+  const texto = document.getElementById('tr-texto');
+  let mirada = 'accion';
+
+  const fecha = iso => iso ? new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  const pill = (estado, nombre) => {
+    const s = document.createElement('span');
+    s.className = 'pill' + (estado === 'E' ? ' pill-warning' : estado === 'C' ? ' pill-success' : '');
+    s.textContent = nombre || '';
+    return s;
+  };
+
+  document.querySelectorAll('[data-mirada]').forEach(card => {
+    card.addEventListener('click', () => {
+      mirada = card.dataset.mirada;
+      document.querySelectorAll('[data-mirada]').forEach(c => c.classList.toggle('is-selected', c === card));
+      cargar();
+    });
+  });
+  texto.addEventListener('input', () => {
+    document.getElementById('tr-limpiar').hidden = texto.value.length === 0;
+    clearTimeout(texto._t);
+    texto._t = setTimeout(cargar, 250);
+  });
+  document.getElementById('tr-limpiar').addEventListener('click', () => { texto.value = ''; texto.dispatchEvent(new Event('input')); });
+
+  async function cargar() {
+    document.getElementById('tr-estado').textContent = 'Cargando…';
+    const res = await fetch(`?handler=Bandeja&mirada=${mirada}&texto=${encodeURIComponent(texto.value)}`);
+    const data = await res.json();
+    const ok = data.baseResponse?.success;
+    document.getElementById('tr-n-accion').textContent = data.paraMiAccion ?? 0;
+    document.getElementById('tr-n-copia').textContent = data.enCopia ?? 0;
+    document.getElementById('tr-n-cerrados').textContent = data.cerrados ?? 0;
+    document.getElementById('tr-nuevo').hidden = !data.puedeIniciar;
+    filas.replaceChildren();
+    if (!ok) {
+      document.getElementById('tr-estado').textContent = data.baseResponse?.message || 'No se pudo cargar la bandeja.';
+      return;
+    }
+    const items = data.items || [];
+    if (!items.length) {
+      const vacio = document.createElement('div');
+      vacio.className = 'dt-empty';
+      vacio.textContent = data.sinOficina
+        ? (data.baseResponse?.message || 'Tu usuario no tiene oficina en este trámite.')
+        : 'No hay trámites en esta mirada.';
+      filas.append(vacio);
+    }
+    for (const item of items) {
+      const a = document.createElement('a');
+      a.className = 'dt-row';
+      a.href = `/tramites/${item.tramiteId}`;
+      const celda = (codigo, desc) => {
+        const span = document.createElement('span');
+        const b = document.createElement('span');
+        b.className = 'dt-code';
+        b.textContent = codigo || '';
+        span.append(b);
+        if (desc) {
+          const d = document.createElement('span');
+          d.className = 'dt-desc';
+          d.textContent = desc;
+          span.append(d);
+        }
+        return span;
+      };
+      a.append(
+        celda(item.numeroLiquidacion, item.campoId),
+        celda(item.asunto, item.ctaCteId ? 'Cta. ' + item.ctaCteId : ''),
+        celda(item.agricultor, ''),
+        celda(item.pasoNombre || '—', item.oficinaNombre),
+        pill(item.estado, item.estadoNombre)
+      );
+      const cuando = document.createElement('span');
+      cuando.className = 'dt-muted';
+      cuando.textContent = fecha(item.fecPaso || item.fecCrea);
+      a.append(cuando);
+      filas.append(a);
+    }
+    document.getElementById('tr-estado').textContent = ok ? `${items.length} trámites` : '';
+  }
+
+  cargar();
+})();
+</script>
+}

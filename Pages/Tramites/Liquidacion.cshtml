@@ -1,0 +1,105 @@
+@page "/tramites/liquidacion/{ancla}"
+@model ErpAndahuasi.Pages.Tramites.LiquidacionModel
+@{
+  ViewData["Title"] = "Trámites de la liquidación";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds" id="tr-liq" data-ancla="@Model.Ancla" style="max-width:960px">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title" id="tr-titulo">Liquidación</h1>
+      <p class="page-sub" id="tr-sub">Cargando…</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn" href="/tramites">Bandeja</a>
+      <a class="btn btn-primary" id="tr-nueva" href="/tramites/nuevo"><i class="ri ri-add-line"></i>Nueva facturación</a>
+    </div>
+  </div>
+
+  <div class="field-grid" id="tr-datos" style="margin-top:16px"></div>
+  <p class="hint-text" id="tr-conceptos" style="margin-top:8px"></p>
+
+  <div class="data-table" style="--dt-cols:minmax(180px,1.2fr) 120px minmax(140px,.8fr) 110px 140px;margin-top:16px">
+    <div class="dt-head"><span>Servicio</span><span>Monto ref.</span><span>Paso</span><span>Estado</span><span>Actualizado</span></div>
+    <div class="dt-body" id="tr-filas" style="min-height:120px"></div>
+    <div class="dt-foot"><span id="tr-estado"></span></div>
+  </div>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const ancla = document.getElementById('tr-liq').dataset.ancla;
+  const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fecha = iso => iso ? new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '';
+
+  function campo(etiqueta, valor) {
+    const label = document.createElement('label');
+    label.className = 'field';
+    const span = document.createElement('span');
+    span.className = 'field-label';
+    span.textContent = etiqueta;
+    const input = document.createElement('input');
+    input.className = 'input';
+    input.readOnly = true;
+    input.value = valor || '—';
+    label.append(span, input);
+    return label;
+  }
+
+  async function cargar() {
+    const res = await fetch(`?handler=Datos&ancla=${encodeURIComponent(ancla)}`);
+    const data = await res.json();
+    if (!data.baseResponse?.success || !data.liquidacion) {
+      document.getElementById('tr-sub').textContent = data.baseResponse?.message || 'No se encontró la liquidación.';
+      return;
+    }
+    const liq = data.liquidacion;
+    document.getElementById('tr-titulo').textContent = `Liquidación ${liq.numero}`;
+    document.getElementById('tr-sub').textContent = `${liq.tipoAsociacion || 'Asociado'} · ${fecha(liq.fecha)}`;
+    document.getElementById('tr-nueva').hidden = !data.puedeIniciar;
+    document.getElementById('tr-nueva').href = `/tramites/nuevo?liquidacion=${encodeURIComponent(liq.liqAsocCabId)}`;
+    document.getElementById('tr-datos').replaceChildren(
+      campo('Campo', `${liq.campoId || ''} · ${liq.campoNombre || ''}`.replace(/ · $/, '')),
+      campo('Cuenta corriente', liq.ctaCteId),
+      campo('Asociado', `${liq.agricultor || ''}${liq.dni ? ' · ' + liq.dni : ''}`)
+    );
+    const conceptos = data.conceptos || [];
+    document.getElementById('tr-conceptos').textContent = conceptos.length
+      ? conceptos.map(c => `${c.nombre} ${soles(c.monto)}`).join(' · ')
+      : '';
+    const filas = document.getElementById('tr-filas');
+    filas.replaceChildren();
+    const items = data.tramites || [];
+    if (!items.length) {
+      const vacio = document.createElement('div');
+      vacio.className = 'dt-empty';
+      vacio.textContent = 'Todavía no hay facturaciones sobre esta liquidación.';
+      filas.append(vacio);
+    }
+    for (const item of items) {
+      const a = document.createElement('a');
+      a.className = 'dt-row';
+      a.href = `/tramites/${item.tramiteId}`;
+      const celda = texto => {
+        const span = document.createElement('span');
+        span.className = 'dt-desc';
+        span.textContent = texto || '—';
+        return span;
+      };
+      const pill = document.createElement('span');
+      pill.className = 'pill' + (item.estado === 'E' ? ' pill-warning' : item.estado === 'C' ? ' pill-success' : '');
+      pill.textContent = item.estadoNombre;
+      a.append(celda(item.asunto), celda(soles(item.montoReferencia)), celda(item.pasoNombre || item.oficinaNombre || '—'), pill, celda(fecha(item.fecPaso || item.fecCrea)));
+      filas.append(a);
+    }
+    document.getElementById('tr-estado').textContent = `${items.length} trámites`;
+  }
+
+  cargar();
+})();
+</script>
+}

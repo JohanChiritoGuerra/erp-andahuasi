@@ -307,6 +307,15 @@
 .pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .pop-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .pop-body { max-height: 280px; overflow-y: auto; }
+.pop-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); font-size: 12px; font-weight: 600; }
+.pop-foot a, .pop-foot button { border: 0; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--accent-text); cursor: pointer; }
+.notif { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; }
+.notif:hover { background: var(--hover); color: inherit; }
+.notif .mark { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--hint); }
+.notif.unread .mark { background: var(--accent); border-color: var(--accent); }
+.notif b { display: block; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--text); }
+.notif.unread b { font-weight: 600; }
+.notif small { display: block; font-size: 11.5px; line-height: 16px; color: var(--muted); }
 .dt-empty { padding: 16px 12px; font-size: 12px; color: var(--faint); }
 
 #nav-flyout { width: 322px; display: flex; flex-direction: column; box-shadow: var(--shadow-flyout); overflow: hidden; }

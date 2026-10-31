@@ -61,6 +61,56 @@
 @section PageScripts {
   <script src="~/js/shell.js" asp-append-version="true"></script>
   <script src="~/js/fecha.js" asp-append-version="true"></script>
+  <script>
+    (() => {
+      const cuerpo = document.getElementById('pop-notif-body');
+      if (!cuerpo) return;
+      const puntos = document.querySelectorAll('[data-notif-dot]');
+      const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+      const hace = iso => {
+        const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+        if (min < 1) return 'ahora';
+        if (min < 60) return 'hace ' + min + ' min';
+        const horas = Math.round(min / 60);
+        if (horas < 24) return 'hace ' + horas + ' h';
+        return new Date(iso).toLocaleDateString('es-PE');
+      };
+      const pintar = data => {
+        const items = data?.items || [];
+        const noLeidas = data?.noLeidas || 0;
+        puntos.forEach(p => { p.hidden = noLeidas === 0; });
+        cuerpo.replaceChildren();
+        if (!items.length) {
+          const vacio = document.createElement('div');
+          vacio.className = 'dt-empty';
+          vacio.textContent = 'No tienes notificaciones.';
+          cuerpo.append(vacio);
+          return;
+        }
+        for (const item of items) {
+          const a = document.createElement('a');
+          a.className = 'notif' + (item.leida ? '' : ' unread');
+          a.href = '/tramites/' + item.tramiteId;
+          const mark = document.createElement('span');
+          mark.className = 'mark';
+          const texto = document.createElement('span');
+          const titulo = document.createElement('b');
+          titulo.textContent = item.titulo || '';
+          const sub = document.createElement('small');
+          sub.textContent = (item.mensaje || '') + ' · ' + hace(item.fec);
+          texto.append(titulo, sub);
+          a.append(mark, texto);
+          cuerpo.append(a);
+        }
+      };
+      const cargar = () => fetch('/tramites?handler=Avisos').then(r => r.ok ? r.json() : null).then(pintar).catch(() => {});
+      document.getElementById('notif-leidas')?.addEventListener('click', () => {
+        fetch('/tramites?handler=AvisosLeer', { method: 'POST', headers: { 'RequestVerificationToken': token() } })
+          .then(r => r.ok ? r.json() : null).then(pintar).catch(() => {});
+      });
+      cargar();
+    })();
+  </script>
   @RenderSection("PageScripts", required: false)
 }
 
@@ -111,6 +161,7 @@
       <span class="sb-user"><b>@displayName</b><small>@cargo</small></span>
       <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="right-end" aria-label="Notificaciones" aria-expanded="false">
         <i class="ri ri-notification-3-line"></i>
+        <span class="dot" data-notif-dot hidden></span>
       </button>
     </div>
   </aside>
@@ -126,6 +177,7 @@
       </a>
       <button type="button" class="icon-btn has-dot" data-popover="pop-notif" data-placement="bottom-end" aria-label="Notificaciones" aria-expanded="false">
         <i class="ri ri-notification-3-line"></i>
+        <span class="dot" data-notif-dot hidden></span>
       </button>
       <button type="button" class="avatar" data-popover="pop-cuenta" data-placement="bottom-end" aria-label="Cuenta" aria-expanded="false">
         @if (!string.IsNullOrWhiteSpace(user.PhotoUrl))
@@ -158,8 +210,12 @@
     <div class="pop-head">
       <span class="pop-title">Notificaciones</span>
     </div>
-    <div class="pop-body">
+    <div class="pop-body" id="pop-notif-body">
       <div class="dt-empty">No tienes notificaciones.</div>
+    </div>
+    <div class="pop-foot">
+      <button type="button" id="notif-leidas">Marcar leídas</button>
+      <a href="/tramites">Ver bandeja</a>
     </div>
   </div>
 

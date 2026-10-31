@@ -1,0 +1,235 @@
+@page "/tramites/nuevo"
+@model ErpAndahuasi.Pages.Tramites.NuevoModel
+@{
+  ViewData["Title"] = "Nueva facturación";
+  var preset = Request.Query["liquidacion"].ToString();
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds" id="tr-nuevo" data-preset="@preset" style="max-width:880px">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Nueva facturación</h1>
+      <p class="page-sub">Contabilidad solicita el servicio que Comercialización debe facturar a la cuenta del asociado</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn" href="/tramites">Volver a la bandeja</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <label class="field">
+      <span class="field-label">Liquidación</span>
+      <span class="search">
+        <i class="ri ri-search-line"></i>
+        <input type="search" id="tr-q" placeholder="001/2026, código o campo" aria-label="Buscar liquidación" />
+      </span>
+    </label>
+    <div id="tr-resultados"></div>
+    <p class="hint-text" id="tr-buscar-msg"></p>
+  </div>
+
+  <div id="tr-ficha" hidden style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+    <div class="card">
+      <div class="step-head"><span class="step-num">1</span>Datos de la liquidación</div>
+      <div class="field-grid" id="tr-datos"></div>
+      <div id="tr-conceptos"></div>
+    </div>
+    <div class="card">
+      <div class="step-head"><span class="step-num">2</span>Servicio a facturar</div>
+      <p class="hint-text">Puedes abrir otro trámite después, sobre la misma liquidación, para un servicio distinto.</p>
+      <div id="tr-servicios" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <label class="field">
+      <span class="field-label">Comentario</span>
+      <textarea class="input input--area" id="tr-comentario" maxlength="500" placeholder="Opcional. Llega a Comercialización junto con el servicio."></textarea>
+    </label>
+    <div class="page-actions">
+      <button type="button" class="btn btn-primary" id="tr-enviar">Enviar a Comercialización</button>
+    </div>
+    <p class="note note-danger" id="tr-error" hidden></p>
+  </div>
+
+  <dialog class="modal" id="tr-conf" aria-labelledby="tr-conf-t">
+    <div class="modal-head">
+      <i class="ri ri-send-plane-line"></i>
+      <span class="modal-title" id="tr-conf-t">Enviar solicitud</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body"><p id="tr-conf-txt"></p></div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="tr-conf-ok">Enviar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="tr-espera" aria-labelledby="tr-espera-t">
+    <div class="modal-head">
+      <i class="ri ri-loader-4-line"></i>
+      <span class="modal-title" id="tr-espera-t">Espere</span>
+    </div>
+    <div class="modal-body"><p>Enviando la solicitud a Comercialización.</p></div>
+  </dialog>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const root = document.getElementById('tr-nuevo');
+  const q = document.getElementById('tr-q');
+  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+  const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fecha = iso => iso ? new Date(iso).toLocaleDateString('es-PE') : '';
+  let liquidacion = null;
+  let servicio = '';
+
+  function dato(etiqueta, valor) {
+    const label = document.createElement('label');
+    label.className = 'field';
+    const span = document.createElement('span');
+    span.className = 'field-label';
+    span.textContent = etiqueta;
+    const input = document.createElement('input');
+    input.className = 'input';
+    input.readOnly = true;
+    input.value = valor || '—';
+    label.append(span, input);
+    return label;
+  }
+
+  function pintar(data) {
+    const liq = data.liquidacion;
+    liquidacion = liq;
+    servicio = '';
+    document.getElementById('tr-ficha').hidden = false;
+    const datos = document.getElementById('tr-datos');
+    datos.replaceChildren(
+      dato('Número', liq.numero),
+      dato('Fecha', fecha(liq.fecha)),
+      dato('Tipo', liq.tipoAsociacion),
+      dato('Campo', (liq.campoId || '') + (liq.campoNombre ? ' · ' + liq.campoNombre : '')),
+      dato('Cuenta corriente', liq.ctaCteId),
+      dato('Asociado', (liq.agricultor || '') + (liq.dni ? ' · ' + liq.dni : ''))
+    );
+    const conceptos = document.getElementById('tr-conceptos');
+    conceptos.replaceChildren();
+    const lineas = data.conceptos || [];
+    if (lineas.length) {
+      const p = document.createElement('p');
+      p.className = 'hint-text';
+      p.textContent = lineas.map(c => `${c.nombre} ${soles(c.monto)}`).join(' · ');
+      conceptos.append(p);
+    }
+    const servicios = document.getElementById('tr-servicios');
+    servicios.replaceChildren();
+    const opciones = data.servicios || [];
+    if (!opciones.length) {
+      const vacio = document.createElement('div');
+      vacio.className = 'empty';
+      vacio.textContent = 'Esta liquidación no tiene servicios con monto para facturar.';
+      servicios.append(vacio);
+      return;
+    }
+    for (const op of opciones) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card';
+      btn.style.textAlign = 'left';
+      const titulo = document.createElement('strong');
+      titulo.textContent = op.nombre + ' · ' + soles(op.monto);
+      btn.append(titulo);
+      if (op.detalle) {
+        const d = document.createElement('span');
+        d.className = 'hint-text';
+        d.textContent = op.detalle;
+        btn.append(d);
+      }
+      btn.addEventListener('click', () => {
+        servicio = op.codigo;
+        servicios.querySelectorAll('.card').forEach(c => c.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+      });
+      servicios.append(btn);
+    }
+    if (opciones.length === 1) servicios.firstElementChild.click();
+  }
+
+  async function ficha(id) {
+    document.getElementById('tr-buscar-msg').textContent = 'Cargando liquidación…';
+    const res = await fetch(`?handler=Ficha&id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    document.getElementById('tr-buscar-msg').textContent = data.baseResponse?.success ? '' : (data.baseResponse?.message || 'No se encontró.');
+    if (data.baseResponse?.success) pintar(data);
+  }
+
+  async function buscar() {
+    const texto = q.value.trim();
+    document.getElementById('tr-resultados').replaceChildren();
+    if (texto.length < 3) {
+      document.getElementById('tr-buscar-msg').textContent = 'Escribe al menos 3 caracteres.';
+      return;
+    }
+    document.getElementById('tr-buscar-msg').textContent = 'Buscando…';
+    const res = await fetch(`?handler=Buscar&texto=${encodeURIComponent(texto)}`);
+    const data = await res.json();
+    document.getElementById('tr-buscar-msg').textContent = data.baseResponse?.message || '';
+    const items = data.items || [];
+    if (items.length === 1) { ficha(items[0].liqAsocCabId); return; }
+    const lista = document.getElementById('tr-resultados');
+    for (const item of items) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'menu-item';
+      btn.textContent = `${item.numero} · ${item.campoId} · ${item.agricultor || ''}`;
+      btn.addEventListener('click', () => ficha(item.liqAsocCabId));
+      lista.append(btn);
+    }
+  }
+
+  q.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); buscar(); } });
+  let timer;
+  q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(buscar, 350); });
+
+  document.getElementById('tr-enviar').addEventListener('click', () => {
+    const error = document.getElementById('tr-error');
+    error.hidden = true;
+    if (!liquidacion || !servicio) {
+      error.hidden = false;
+      error.textContent = 'Elige la liquidación y el servicio.';
+      return;
+    }
+    const op = [...document.querySelectorAll('#tr-servicios .card.is-selected strong')][0];
+    document.getElementById('tr-conf-txt').textContent = `Se enviará ${op ? op.textContent : 'el servicio'} de la liquidación ${liquidacion.numero} a Comercialización.`;
+    document.getElementById('tr-conf').showModal();
+  });
+
+  document.getElementById('tr-conf-ok').addEventListener('click', async () => {
+    document.getElementById('tr-conf').close();
+    document.getElementById('tr-espera').showModal();
+    const res = await fetch('?handler=Crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({
+        liqAsocCabId: liquidacion.liqAsocCabId,
+        servicioCodigo: servicio,
+        comentario: document.getElementById('tr-comentario').value
+      })
+    });
+    const data = await res.json();
+    document.getElementById('tr-espera').close();
+    if (data.baseResponse?.success && data.tramiteId) {
+      location.href = `/tramites/${data.tramiteId}`;
+      return;
+    }
+    const error = document.getElementById('tr-error');
+    error.hidden = false;
+    error.textContent = data.baseResponse?.message || 'No se pudo enviar.';
+  });
+
+  const preset = root.dataset.preset;
+  if (preset) { q.value = preset; ficha(preset); }
+})();
+</script>
+}

@@ -1,0 +1,230 @@
+@page "/tramites/{id:int}"
+@model ErpAndahuasi.Pages.Tramites.DetalleModel
+@{
+  ViewData["Title"] = "Trámite de facturación";
+}
+@section PageStyles {
+  <link rel="stylesheet" href="~/css/andahuasi-pages.css" asp-append-version="true" />
+}
+
+<div class="erp-ds" id="tr-det" data-id="@Model.TramiteId" style="max-width:880px">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title" id="tr-titulo">Trámite</h1>
+      <p class="page-sub" id="tr-sub">Cargando…</p>
+    </div>
+    <div class="page-actions">
+      <a class="btn" id="tr-liq" href="/tramites">Liquidación</a>
+      <a class="btn" href="/tramites">Bandeja</a>
+    </div>
+  </div>
+
+  <div class="field-grid" id="tr-meta" style="margin-top:16px"></div>
+  <div id="tr-linea" style="display:flex;flex-direction:column;gap:8px;margin-top:16px"></div>
+
+  <form class="card" id="tr-accion" hidden style="margin-top:16px">
+    <div class="step-head"><span class="step-num" id="tr-paso-num">2</span><span id="tr-paso-nombre">Responder</span></div>
+    <label class="field" id="tr-ref-campo" hidden>
+      <span class="field-label" id="tr-ref-etiq">Número</span>
+      <input class="input" id="tr-ref" maxlength="40" />
+    </label>
+    <label class="field" id="tr-arch-campo" hidden>
+      <span class="field-label">Documento</span>
+      <input class="input" id="tr-arch" type="file" accept=".pdf,.jpg,.jpeg,.png,.xml,application/pdf,image/jpeg,image/png,text/xml,application/xml" />
+      <span class="hint-text">PDF, imagen o XML. Hasta 8 MB.</span>
+    </label>
+    <label class="field">
+      <span class="field-label">Comentario</span>
+      <textarea class="input input--area" id="tr-com" maxlength="500"></textarea>
+    </label>
+    <div class="page-actions">
+      <button type="button" class="btn" id="tr-devolver" hidden>Devolver</button>
+      <button type="button" class="btn btn-danger" id="tr-anular">Anular</button>
+      <button type="button" class="btn btn-primary" id="tr-ok">Registrar</button>
+    </div>
+    <p class="note note-danger" id="tr-error" hidden></p>
+  </form>
+
+  <dialog class="modal" id="tr-conf" aria-labelledby="tr-conf-t">
+    <div class="modal-head">
+      <i class="ri ri-question-line"></i>
+      <span class="modal-title" id="tr-conf-t">Confirmar</span>
+      <button type="button" class="icon-btn" data-modal-close aria-label="Cerrar"><i class="ri ri-close-line"></i></button>
+    </div>
+    <div class="modal-body"><p id="tr-conf-txt"></p></div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-modal-close>Cancelar</button>
+      <button type="button" class="btn btn-primary" id="tr-conf-ok">Continuar</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="tr-espera" aria-labelledby="tr-espera-t">
+    <div class="modal-head">
+      <i class="ri ri-loader-4-line"></i>
+      <span class="modal-title" id="tr-espera-t">Espere</span>
+    </div>
+    <div class="modal-body"><p id="tr-espera-txt">Guardando el paso.</p></div>
+  </dialog>
+</div>
+
+@section PageScripts {
+<script>
+(() => {
+  const root = document.getElementById('tr-det');
+  const id = root.dataset.id;
+  const token = () => document.querySelector('#erp-antiforgery input')?.value || '';
+  const soles = n => 'S/ ' + Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fecha = iso => iso ? new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  let pendiente = null;
+
+  function campo(etiqueta, valor) {
+    const label = document.createElement('label');
+    label.className = 'field';
+    const span = document.createElement('span');
+    span.className = 'field-label';
+    span.textContent = etiqueta;
+    const input = document.createElement('input');
+    input.className = 'input';
+    input.readOnly = true;
+    input.value = valor || '—';
+    label.append(span, input);
+    return label;
+  }
+
+  function pintar(t) {
+    document.getElementById('tr-titulo').textContent = t.asunto;
+    const pill = document.createElement('span');
+    pill.className = 'pill' + (t.estado === 'E' ? ' pill-warning' : t.estado === 'C' ? ' pill-success' : '');
+    pill.textContent = t.estadoNombre;
+    const sub = document.getElementById('tr-sub');
+    sub.replaceChildren(document.createTextNode(`Liquidación ${t.numeroLiquidacion} · `), pill);
+    document.getElementById('tr-liq').href = `/tramites/liquidacion/${encodeURIComponent(t.anclaId)}`;
+    document.getElementById('tr-meta').replaceChildren(
+      campo('Campo', `${t.campoId} · ${t.campoNombre || ''}`.replace(/ · $/, '')),
+      campo('Cuenta corriente', t.ctaCteId),
+      campo('Asociado', t.agricultor),
+      campo('Monto de referencia', soles(t.montoReferencia)),
+      campo('Factura', t.referenciaDocumento),
+      campo('Constancia de detracción', t.referenciaPago)
+    );
+    const linea = document.getElementById('tr-linea');
+    linea.replaceChildren();
+    for (const m of t.movimientos || []) {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const head = document.createElement('div');
+      head.className = 'step-head';
+      head.textContent = `${m.accionNombre} · ${m.pasoNombre}`;
+      const meta = document.createElement('p');
+      meta.className = 'hint-text';
+      meta.textContent = `${m.oficinaNombre} · ${m.usuario} · ${fecha(m.fec)}` + (m.referencia ? ` · ${m.referencia}` : '');
+      card.append(head, meta);
+      if (m.comentario) {
+        const p = document.createElement('p');
+        p.textContent = m.comentario;
+        card.append(p);
+      }
+      for (const a of m.adjuntos || []) {
+        const link = document.createElement('a');
+        link.className = 'btn';
+        link.href = `?handler=Adjunto&adjuntoId=${a.adjuntoId}`;
+        link.textContent = a.nombre;
+        card.append(link);
+      }
+      linea.append(card);
+    }
+    const accion = document.getElementById('tr-accion');
+    accion.hidden = !t.puedeActuar;
+    if (!t.puedeActuar) return;
+    document.getElementById('tr-paso-nombre').textContent = t.accionNombre || t.pasoNombre;
+    document.getElementById('tr-ok').textContent = t.accionNombre || 'Registrar';
+    document.getElementById('tr-ref-campo').hidden = !t.exigeReferencia;
+    document.getElementById('tr-ref-etiq').textContent = t.referenciaEtiqueta || 'Número';
+    document.getElementById('tr-arch-campo').hidden = !t.exigeAdjunto;
+    document.getElementById('tr-devolver').hidden = !t.puedeDevolver;
+  }
+
+  async function cargar() {
+    const res = await fetch(`?handler=Datos&id=${id}`);
+    const data = await res.json();
+    if (!data.baseResponse?.success || !data.tramite) {
+      document.getElementById('tr-sub').textContent = data.baseResponse?.message || 'No se pudo abrir el trámite.';
+      return;
+    }
+    pintar(data.tramite);
+  }
+
+  function confirmar(titulo, texto, peligro, okTexto) {
+    document.getElementById('tr-conf-t').textContent = titulo;
+    document.getElementById('tr-conf-txt').textContent = texto;
+    const ok = document.getElementById('tr-conf-ok');
+    ok.textContent = okTexto;
+    ok.className = peligro ? 'btn btn-danger' : 'btn btn-primary';
+    const dialogo = document.getElementById('tr-conf');
+    dialogo.returnValue = '';
+    dialogo.showModal();
+    return new Promise(resolve => { pendiente = resolve; });
+  }
+  document.getElementById('tr-conf-ok').addEventListener('click', () => {
+    document.getElementById('tr-conf').close('ok');
+  });
+  document.getElementById('tr-conf').addEventListener('close', () => {
+    if (!pendiente) return;
+    const resolver = pendiente;
+    pendiente = null;
+    resolver(document.getElementById('tr-conf').returnValue === 'ok');
+  });
+
+  function error(texto) {
+    const n = document.getElementById('tr-error');
+    n.hidden = !texto;
+    n.textContent = texto || '';
+  }
+
+  document.getElementById('tr-ok').addEventListener('click', async () => {
+    error('');
+    const si = await confirmar('Registrar paso', 'El trámite pasará a la siguiente oficina, con copia a quien corresponda.', false, document.getElementById('tr-ok').textContent);
+    if (!si) return;
+    document.getElementById('tr-espera-txt').textContent = 'Guardando el paso y avisando a la siguiente oficina.';
+    document.getElementById('tr-espera').showModal();
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('comentario', document.getElementById('tr-com').value);
+    fd.append('referencia', document.getElementById('tr-ref').value);
+    const archivo = document.getElementById('tr-arch').files[0];
+    if (archivo) fd.append('archivo', archivo);
+    const res = await fetch('?handler=Responder', { method: 'POST', headers: { 'RequestVerificationToken': token() }, body: fd });
+    const data = await res.json();
+    document.getElementById('tr-espera').close();
+    if (!data.baseResponse?.success) { error(data.baseResponse?.message || 'No se pudo registrar.'); return; }
+    location.reload();
+  });
+
+  async function accion(handler, titulo, texto, peligro) {
+    error('');
+    const comentario = document.getElementById('tr-com').value.trim();
+    if (!comentario) { error('Escribe el motivo en el comentario.'); return; }
+    const si = await confirmar(titulo, texto, peligro, titulo);
+    if (!si) return;
+    document.getElementById('tr-espera-txt').textContent = 'Guardando.';
+    document.getElementById('tr-espera').showModal();
+    const res = await fetch(`?handler=${handler}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+      body: JSON.stringify({ tramiteId: Number(id), comentario })
+    });
+    const data = await res.json();
+    document.getElementById('tr-espera').close();
+    if (!data.baseResponse?.success) { error(data.baseResponse?.message || 'No se pudo guardar.'); return; }
+    location.reload();
+  }
+
+  document.getElementById('tr-devolver').addEventListener('click', () =>
+    accion('Devolver', 'Devolver', 'El trámite regresa a la oficina anterior, con tu comentario en el historial.', false));
+  document.getElementById('tr-anular').addEventListener('click', () =>
+    accion('Anular', 'Anular', 'El trámite queda anulado. Las otras oficinas reciben el aviso.', true));
+
+  cargar();
+})();
+</script>
+}
