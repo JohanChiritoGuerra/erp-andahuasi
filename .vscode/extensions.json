@@ -1,8 +1,6 @@
 {
   "recommendations": [
     "ms-dotnettools.csharp",
-    "jorgeserrano.vscode-csharp-snippets",
-    "esbenp.prettier-vscode",
-    "editorconfig.editorconfig"
+    "esbenp.prettier-vscode"
   ]
 }
